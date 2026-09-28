@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: "Rust Workspace — Testes, Build & Deploy"
+    name: "Validar Workspace, CLI & Wasm"
     runs-on: ubuntu-latest
     container:
       image: codeberg.org/lumenpink/gost-ci-wasm:latest
@@ -42,15 +42,33 @@ jobs:
           cp -r assets ../../site/ || true
           cp index.html ../../dist/web/
 
-      - name: "Upload Artifacts"
-        uses: actions/upload-artifact@v4
-        continue-on-error: true
+      - name: "Verify Build Artifacts"
+        run: |
+          test -f dist/bin/navalha-linux-x86_64 || { echo "CLI binary missing"; exit 1; }
+          test -f site/pkg/navalha_web_bg.wasm || { echo "Wasm binary missing"; exit 1; }
+          echo "Todos os testes e artefatos validados com sucesso."
+
+  deploy:
+    name: "Deploy Cloudflare Workers & Codeberg Pages"
+    runs-on: ubuntu-latest
+    container:
+      image: codeberg.org/lumenpink/gost-ci-wasm:latest
+    needs: [test]
+    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push'
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
         with:
-          name: navalha-dist
-          path: dist/
+          fetch-depth: 0
+
+      - name: "Compile WebAssembly for Production"
+        run: |
+          mkdir -p site/pkg
+          cd crates/navalha-web
+          wasm-pack build --target web --out-dir ../../site/pkg
+          cp -r assets ../../site/ || true
 
       - name: "Deploy to Cloudflare Workers"
-        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -63,7 +81,6 @@ jobs:
           fi
 
       - name: "Deploy to Codeberg Pages (Fallback)"
-        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push'
         uses: https://codeberg.org/actions/pages@v1
         with:
           path: site
