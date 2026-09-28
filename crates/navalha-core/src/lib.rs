@@ -10,6 +10,7 @@ pub mod ascii;
 pub mod dither;
 pub mod guillotine;
 pub mod palette;
+pub mod plates;
 pub mod prep;
 pub mod presets;
 pub mod press;
@@ -20,6 +21,9 @@ pub use ascii::{image_to_ascii, render_ascii_to_image, ASCII_DENSITY_RAMP, ASCII
 pub use dither::{apply_dither, DitherAlgorithm};
 pub use guillotine::{apply_guillotine, GuillotineConfig};
 pub use palette::{Palette, RgbColor};
+pub use plates::{
+    generate_plates_pdf, separate_plates, PlateError, PlateMode, PlateSeparationConfig, PrintPlate,
+};
 pub use prep::{
     apply_image_orientation_and_zoom, apply_image_zoom, compute_otsu_threshold, prepare_plate,
     PrepConfig,

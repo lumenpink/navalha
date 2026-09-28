@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Features
+  - (core) separacao de chapas para impressao risografia e silk-screen (#3)
   - (core) consolidar motor deterministico navalha com 20 presets canonicos (#1)
 
 ### Bug Fixes

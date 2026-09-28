@@ -16,6 +16,7 @@ use navalha_core::{
     generate_poster_svg, AestheticPreset, DamageEffect, DamageElement,
     DitherAlgorithm, Palette, ScaleFactor, StickerBorder, StickerElement, StickerKind, TarjaEffect,
 };
+use navalha_core::plates::{generate_plates_pdf, separate_plates, PlateSeparationConfig};
 use std::io::Cursor;
 use wasm_bindgen::prelude::*;
 use web_sys::{HtmlAnchorElement, HtmlInputElement};
@@ -158,6 +159,7 @@ pub fn App() -> Element {
     // Sinais para retenção do cartaz renderizado e status de debounce/processamento
     let mut rendered_png_uri = use_signal(|| String::new());
     let mut rendered_svg = use_signal(|| String::new());
+    let mut latest_poster = use_signal(|| None::<RgbaImage>);
     let mut is_processing = use_signal(|| false);
     let render_seq = use_hook(|| std::rc::Rc::new(std::cell::Cell::new(0u64)));
     let subject_cache = use_hook(|| std::rc::Rc::new(std::cell::RefCell::new(navalha_core::SubjectLayerCache::new())));
@@ -509,6 +511,7 @@ pub fn App() -> Element {
                 if checker.get() == my_seq {
                     rendered_png_uri.set(png_data_uri);
                     rendered_svg.set(svg_string);
+                    latest_poster.set(Some(poster));
                     is_processing.set(false);
                 }
             });
@@ -815,6 +818,20 @@ pub fn App() -> Element {
         }
     };
 
+    // Callback de download de chapas para impressão (PDF)
+    let download_pdf_chapas = move |_| {
+        if let Some(poster) = latest_poster() {
+            let config = PlateSeparationConfig::default();
+            if let Ok(plates) = separate_plates(&poster, &config) {
+                if let Ok(pdf_bytes) = generate_plates_pdf(&plates, Some("Navalha - Chapas Riso/Silk")) {
+                    let pdf_b64 = BASE64.encode(&pdf_bytes);
+                    let pdf_data_uri = format!("data:application/pdf;base64,{pdf_b64}");
+                    trigger_download(&pdf_data_uri, "navalha_chapas.pdf");
+                }
+            }
+        }
+    };
+
     // Strings de display formatadas
     let unsharp_display = format!("{:.1}x", unsharp_slider() as f32 / 10.0);
     let stretch_y_display = format!("{:.1}x", stretch_y_slider() as f32 / 10.0);
@@ -907,6 +924,11 @@ pub fn App() -> Element {
                             class: "btn-download-secondary",
                             onclick: download_svg,
                             "📐 EXPORTAR VETOR (SVG)"
+                        }
+                        button {
+                            class: "btn-download-secondary",
+                            onclick: download_pdf_chapas,
+                            "🖨️ CHAPAS RISO/SILK (PDF)"
                         }
                     }
 

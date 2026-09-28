@@ -7,9 +7,11 @@
 use clap::{Parser, Subcommand};
 use image::{ImageFormat, ImageReader};
 use navalha_core::{
-    generate_poster_svg, process_subject, render_poster, AestheticPreset,
-    DamageElement, DitherAlgorithm, GuillotineConfig, Palette, PosterComposition, PrepConfig,
-    PunkOverlayConfig, RgbColor, ScaleFactor, StickerBorder, StickerElement, StickerKind, TarjaBorderFinish, TarjaEffect, TextElement,
+    generate_plates_pdf, generate_poster_svg, process_subject, render_poster, separate_plates,
+    AestheticPreset, DamageElement, DitherAlgorithm, GuillotineConfig, Palette,
+    PlateMode, PlateSeparationConfig, PosterComposition, PrepConfig, PrintPlate,
+    PunkOverlayConfig, RgbColor, ScaleFactor, StickerBorder, StickerElement, StickerKind,
+    TarjaBorderFinish, TarjaEffect, TextElement,
 };
 use std::fs::File;
 use std::io::{self, Cursor, Read, Write};
@@ -154,6 +156,14 @@ enum Commands {
         #[arg(long = "recorte-inverter", default_value_t = false)]
         recorte_inverter: bool,
 
+        /// Exporta separação de chapas por cor pura para risografia e silk-screen
+        #[arg(long = "separar-chapas", default_value_t = false)]
+        separar_chapas: bool,
+
+        /// Diretório personalizado para salvar as chapas (opcional)
+        #[arg(long = "chapas-dir")]
+        chapas_dir: Option<PathBuf>,
+
         /// Arquivo de saída (.png ou .svg)
         #[arg(short = 'o', long = "saida", default_value = "poster.png")]
         saida: PathBuf,
@@ -282,8 +292,46 @@ enum Commands {
         #[arg(long)]
         texto_extra: Vec<String>,
 
+        /// Exporta separação de chapas por cor pura para risografia e silk-screen
+        #[arg(long = "separar-chapas", default_value_t = false)]
+        separar_chapas: bool,
+
+        /// Diretório personalizado para salvar as chapas (opcional)
+        #[arg(long = "chapas-dir")]
+        chapas_dir: Option<PathBuf>,
+
         /// Arquivo de saída (.png ou .svg)
         #[arg(short = 'o', long = "saida", default_value = "poster_composto.png")]
+        saida: PathBuf,
+    },
+
+    /// 🖨️ Separação de Chapas para Impressão (Risografia e Silk-Screen)
+    Chapas {
+        /// Imagem ou pôster de entrada (ou '-' para stdin)
+        input: String,
+
+        /// Formato de exportação: png, pdf ou ambos (padrão: ambos)
+        #[arg(short, long, default_value = "ambos")]
+        formato: String,
+
+        /// Modo visual da chapa: fotolito (P&B para matriz), colorido ou branco
+        #[arg(short, long, default_value = "fotolito")]
+        modo: String,
+
+        /// Desativa as marcas de registro/cruzes de mira nas margens
+        #[arg(long, default_value_t = false)]
+        sem_registro: bool,
+
+        /// Desativa o cabeçalho técnico informativo
+        #[arg(long, default_value_t = false)]
+        sem_cabecalho: bool,
+
+        /// Margem extra em pixels para as marcas de registro e texto (padrão 50)
+        #[arg(long, default_value_t = 50)]
+        margem: u32,
+
+        /// Diretório de saída para salvar os arquivos
+        #[arg(short = 'o', long = "saida", default_value = "chapas")]
         saida: PathBuf,
     },
 
@@ -336,6 +384,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             recorte,
             recorte_threshold,
             recorte_inverter,
+            separar_chapas,
+            chapas_dir,
             saida,
         } => {
             eprintln!("[navalha] ⚡ Afiando a lâmina anti-design...");
@@ -461,6 +511,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             save_output(&poster, &comp, &saida)?;
             eprintln!("[navalha] 💀 Pôster gerado com sucesso em: {}", saida.display());
+
+            if separar_chapas {
+                let out_dir = chapas_dir.unwrap_or_else(|| {
+                    let stem = saida.file_stem().unwrap_or_default().to_string_lossy();
+                    saida.parent().unwrap_or_else(|| Path::new(".")).join(format!("{}_chapas", stem))
+                });
+                let plate_cfg = PlateSeparationConfig::default();
+                let plates = separate_plates(&poster, &plate_cfg)?;
+                eprintln!("[navalha] 🖨️ Separando {} chapas de impressão (Risografia / Silk-screen)...", plates.len());
+                export_plates_to_dir(&plates, &out_dir, "ambos")?;
+            }
         }
 
         Commands::Dither {
@@ -511,6 +572,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             sticker_custom,
             filtrar_stickers,
             texto_extra,
+            separar_chapas,
+            chapas_dir,
             saida,
         } => {
             eprintln!("[navalha] 📐 Montando prensagem brutalista em 5 camadas...");
@@ -639,6 +702,47 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let poster = navalha_core::render_poster(&comp, Some(&processed));
             save_output(&poster, &comp, &saida)?;
             eprintln!("[navalha] ⚡ Composição gravada em: {}", saida.display());
+
+            if separar_chapas {
+                let out_dir = chapas_dir.unwrap_or_else(|| {
+                    let stem = saida.file_stem().unwrap_or_default().to_string_lossy();
+                    saida.parent().unwrap_or_else(|| Path::new(".")).join(format!("{}_chapas", stem))
+                });
+                let plate_cfg = PlateSeparationConfig::default();
+                let plates = separate_plates(&poster, &plate_cfg)?;
+                eprintln!("[navalha] 🖨️ Separando {} chapas de impressão (Risografia / Silk-screen)...", plates.len());
+                export_plates_to_dir(&plates, &out_dir, "ambos")?;
+            }
+        }
+
+        Commands::Chapas {
+            input,
+            formato,
+            modo,
+            sem_registro,
+            sem_cabecalho,
+            margem,
+            saida,
+        } => {
+            eprintln!("[navalha] 🖨️ Analisando cores e gerando matrizes de impressão...");
+            let img = load_image(&input)?;
+            let plate_mode = PlateMode::parse(&modo).unwrap_or(PlateMode::InsolationMask);
+            let plate_cfg = PlateSeparationConfig {
+                mode: plate_mode,
+                registration_marks: !sem_registro,
+                margin_px: margem,
+                include_header: !sem_cabecalho,
+                min_coverage_threshold: 0.0005,
+            };
+
+            let plates = separate_plates(&img, &plate_cfg)?;
+            eprintln!("[navalha] 📄 Identificadas {} chapas de cor pura na arte:", plates.len());
+            for p in &plates {
+                eprintln!("   - Chapa #{}: {} ({:.1}% de cobertura)", p.index, p.color_hex, p.coverage_percentage);
+            }
+
+            export_plates_to_dir(&plates, &saida, &formato.to_lowercase())?;
+            eprintln!("[navalha] ⚡ Chapas exportadas com sucesso no diretório: {}", saida.display());
         }
 
         Commands::Ascii {
@@ -854,3 +958,46 @@ fn save_output(
     poster.save_with_format(saida, ImageFormat::Png)?;
     Ok(())
 }
+
+fn export_plates_to_dir(
+    plates: &[PrintPlate],
+    out_dir: &Path,
+    format: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    std::fs::create_dir_all(out_dir)?;
+
+    let export_png = format == "png" || format == "ambos" || format == "both";
+    let export_pdf = format == "pdf" || format == "ambos" || format == "both";
+
+    if export_png {
+        for plate in plates {
+            let filename = format!(
+                "chapa_{:02}_{}.png",
+                plate.index,
+                plate.color_hex.trim_start_matches('#')
+            );
+            let p = out_dir.join(filename);
+            plate.image.save_with_format(&p, ImageFormat::Png)?;
+            eprintln!(
+                "   -> Chapa #{}: {} (cobertura: {:.1}%) salva em: {}",
+                plate.index,
+                plate.color_hex,
+                plate.coverage_percentage,
+                p.display()
+            );
+        }
+    }
+
+    if export_pdf {
+        let pdf_data = generate_plates_pdf(plates, Some("Navalha - Chapas de Impressão (Risografia / Silk-screen)"))?;
+        let pdf_path = out_dir.join("chapas.pdf");
+        std::fs::write(&pdf_path, pdf_data)?;
+        eprintln!(
+            "   -> Documento PDF multichapas gerado em: {}",
+            pdf_path.display()
+        );
+    }
+
+    Ok(())
+}
+
