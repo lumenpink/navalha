@@ -137,7 +137,26 @@ O motor de montagem organiza o pôster em 5 camadas físicas:
 5. **Camada 4 — Riscos e Marcas de Registro**: Elementos vetoriais agressivos (cruzes de corte em quinas, linhas de corte a laser/lâmina e moldura periférica de 3px).
 6. **Camada 5 — Stickers Temáticos e Elementos de Recorte**: Adesivos de protesto e recortes gráficos (`StickerElement`) com suporte tanto a variantes canônicas de vetor/símbolo quanto a upload de imagens personalizadas (`custom_image: Option<Arc<RgbaImage>>`), reamostradas com filtro Nearest Neighbor proporcionalmente ao tamanho configurado, colados sobre a chapa com suporte a rotação angular contínua, filtragem tonal pela paleta do preset e acabamento morfológico de corte/borda (`StickerBorder`: `DieCutBranco` com margem expandida e vinco perimetral de estilete, `Picote` perfurado destacável, borda `Serrilhada` com dentes de serra, `LinhaPreta` de contorno nankin e modo `Nenhuma`), implementado via dilatação morfológica euclidiana determinística (`apply_sticker_border`) com padding dinâmico e renderização em SVG correspondente via serialização pura em Base64 (`bytes_to_base64`).
 
+### 3.6. Módulo 6 — Separação de Chapas para Riso e Silk-Screen (`plates.rs`)
+
+O motor de separação de cores extrai fotolitos analógicos diretamente da composição final:
+1. **Histograma e Deduplicação Cromática**:
+   - Varre a imagem pixel a pixel agrupando cores com canal alfa opaco ($A > 0$).
+   - Computa a cobertura relativa ($\%$) de cada chapa na área total.
+2. **Modos de Exibição de Fotolito (`PlateMode`)**:
+   - `InsolationMask`: Converte os pixels da cor ativa em preto absoluto (`#000000`) e todo o restante em branco translúcido (`#FFFFFF`), gerando a máscara ideal para insolamento UV em serigrafia ou gravação térmica de master na Risografia.
+   - `ColorPreview`: Preserva a cor original sobre fundo transparente para sobreposição de camadas.
+   - `ColorOnWhite`: Renderiza a cor original sobre fundo branco para provas de prelo.
+3. **Marcas de Registro e Cruzes de Mira (`draw_registration_marks`)**:
+   - Desenha cruzes de alinhamento e círculos concêntricos nos 4 cantos e centros das bordas externas com espessura controlada.
+4. **Cabeçalho Técnico Informativo (`draw_plate_header`)**:
+   - Insere na margem superior a identificação da chapa, nome do arquivo, código hexadecimal, percentual de cobertura e índice sequencial.
+5. **Geração Nativa de PDF Multipágina (`generate_plates_pdf`)**:
+   - Implementado em Rust puro sem dependências externas de bibliotecas C, compatível tanto com Linux/macOS/Windows nativo quanto com WebAssembly.
+   - Emite PDF 1.4 válido com streams comprimidos via `miniz_oxide` (FlateDecode) e tabela de referências cruzadas (`xref`) bit-a-bit determinística.
+
 ---
+
 
 ## 5. Simetria CLI e Web & Motor Reativo com Debounce
 

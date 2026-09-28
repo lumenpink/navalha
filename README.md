@@ -144,6 +144,20 @@ navalha compor entrada.jpg \
   -o composicao.png
 ```
 
+#### 🖨️ Separação de Chapas para Impressão (Risografia e Silk-Screen)
+Gera fotolitos em preto e branco e provas coloridas separadas por cor pura, com marcas de registro e cabeçalho técnico com código HEX e percentual de cobertura:
+```bash
+# Exporta PDF multipágina com fotolitos P&B (máscara de insolamento)
+navalha chapas cartaz.png --formato pdf -o chapas.pdf
+
+# Exporta diretório com PNGs individuais de cada matriz em prova de cor com registros
+navalha chapas cartaz.png --formato png --modo cor -o ./saida_chapas/
+
+# Gera o pôster e já extrai as chapas prontas simultaneamente
+navalha poster foto.jpg --frase "RESISTÊNCIA" --estetica punk-riot --separar-chapas --chapas-dir ./fotolitos/
+```
+
+
 ---
 
 ### 2. Interface Web & App (`navalha-web` com Dioxus 0.7.10)
@@ -162,7 +176,7 @@ Acesse em: `http://localhost:8080`
 
 * **Layout de Tela Única Sem Scroll (100dvh)**: Interface adaptativa que cabe em uma única viewport vertical no desktop, eliminando rolagem externa e organizando controles táteis em três abas especializadas:
   * `⚡ BARRA SUPERIOR`: Cabeçalho integrado com identidade visual, manifesto anti-design e link direto e compacto para a documentação/manifesto (`/doc`), otimizando o espaço vertical útil da aplicação.
-  * `💾 EXPORTAÇÃO NO TOPO`: Botões de download fixos no topo do painel de controles com descrições diretas (`💾 BAIXAR PÔSTER (PNG)` e `📐 EXPORTAR VETOR (SVG)`), evitando dúvidas na navegação e mantendo a ação principal sempre visível.
+  * `💾 EXPORTAÇÃO NO TOPO`: Botões de download fixos no topo do painel de controles com descrições diretas (`💾 BAIXAR PÔSTER (PNG)`, `📐 EXPORTAR VETOR (SVG)` e `🖨️ CHAPAS RISO/SILK (PDF)`), evitando dúvidas na navegação e mantendo as ações principais sempre visíveis.
   * `⚡ PÔSTER`: Carregamento, rotação, **posição nos eixos X e Y da foto** (0% a 100% com botão de atalho `↺ CENTRALIZAR`) e **zoom granular da foto** (de 0.25x a 3.0x com botões de atalho 0.7x afastar / 1.5x aproximar; o zoom atua no corte da guilhotina sem alterar o tamanho do ponto do halftone), **faixas de texto superior (opcional) e inferior com consistência visual e estilística automática de acordo com o preset ativo**, e **seletor dropdown brutalista com síntese técnica instantânea**, otimizando o espaço vertical. Todos os ajustes atualizam a imagem instantaneamente em tempo real.
   * `🎨 INTERVENÇÃO`: Danos físicos (tiro, rasgo, chuva, sangue, tinta, faca, pixo, censura, puliça) e adesivos/stickers punk com **subpainéis interativos de ajuste granular de posição (X/Y), tamanho/escala e rotação individual** para cada item ativo, além de opção de paleta cromática e **gerenciador de caixas de texto extras com estilos de acabamento (tarja punk, xerox com falhas de toner e riscos, tape, serrilhado e rasgo) e preview em tempo real**.
   * `⚙️ AJUSTES`: Controles manuais finos de corte guilhotina, nitidez unsharp, distorção tipográfica, algoritmo de dither, paleta cromática e ampliação nearest-neighbor.
@@ -173,7 +187,7 @@ Acesse em: `http://localhost:8080`
   * **Touch Targets Seguros**: Dimensões ergonômicas (mínimo 44px) e proteção nativa contra zoom indesejado no Safari/iOS.
 * **Renderização Assíncrona com Debounce (250ms)**: Digitação fluida e arraste contínuo de controles deslizantes sem congelamento da thread do navegador; o reprocessamento da imagem é executado de modo assíncrono após breve inatividade, mantendo o pôster visível na tela e exibindo um indicador brutalista `[ RENDERIZANDO... ]`.
 * **Espelho da CLI em Tempo Real**: O rodapé exibe o comando exato correspondente às escolhas feitas na tela, com botão de cópia rápida.
-* **Exportação e Download Direto**: Descarrega o pôster final em PNG de alta resolução com pixels duros e/ou em SVG com os elementos vetoriais.
+* **Exportação e Download Direto**: Descarrega o pôster final em PNG de alta resolução com pixels duros, vetor SVG limpo e/ou **PDF multipágina com separação de chapas (fotolitos P&B) para risografia e serigrafia**.
 
 ---
 
