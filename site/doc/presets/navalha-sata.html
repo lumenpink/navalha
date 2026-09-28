@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navalha Satã — Especificação Técnica &amp; Algorítmica | NAVALHA</title>
+    <meta name="description" content="Especificação técnica e matemática detalhada do preset Navalha Satã do Navalha para reimplementação agnóstica.">
+    <link rel="stylesheet" href="../../assets/style.css">
+    <style>
+        html, body {
+            height: auto !important;
+            min-height: 100% !important;
+            max-height: none !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+        .doc-container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 30px 20px 80px 20px;
+        }
+        .nav-breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .nav-breadcrumbs a {
+            color: #00f0ff;
+            text-decoration: none;
+        }
+        .nav-breadcrumbs a:hover {
+            text-decoration: underline;
+        }
+        .nav-breadcrumbs span {
+            color: #666;
+        }
+        .doc-hero-preset {
+            background-color: #141416;
+            border-left: 6px solid #e2f835;
+            border-top: 1px solid #333;
+            border-right: 1px solid #333;
+            border-bottom: 1px solid #333;
+            padding: 28px;
+            margin-bottom: 35px;
+            box-shadow: 6px 6px 0px #000;
+        }
+        .preset-badge-tag {
+            display: inline-block;
+            background-color: #e2f835;
+            color: #000000;
+            font-size: 12px;
+            font-weight: 900;
+            padding: 3px 8px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .preset-page-title {
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+        }
+        .preset-page-subtitle {
+            font-size: 15px;
+            color: #00f0ff;
+            letter-spacing: 1px;
+            margin: 0 0 16px 0;
+            text-transform: uppercase;
+        }
+        .quick-nav-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px dashed #333;
+        }
+        .quick-nav-btn {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 6px 12px;
+            background: #1c1c22;
+            color: #e2f835;
+            border: 1px solid #444;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .quick-nav-btn:hover {
+            background: #e2f835;
+            color: #000;
+        }
+        .doc-section {
+            margin-bottom: 45px;
+            background-color: #0f0f12;
+            border: 2px solid #222226;
+            padding: 32px;
+            box-shadow: 4px 4px 0px #000;
+        }
+        .doc-section h2 {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #e2f835;
+            margin-top: 0;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .doc-section h3 {
+            font-size: 18px;
+            font-weight: 800;
+            color: #ff0033;
+            margin: 26px 0 12px 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .doc-section p {
+            font-size: 15px;
+            line-height: 1.85;
+            color: #dcdad5;
+            margin-bottom: 16px;
+        }
+        .doc-section ul, .doc-section ol {
+            font-size: 15px;
+            line-height: 1.85;
+            color: #dcdad5;
+            margin-bottom: 18px;
+            padding-left: 24px;
+        }
+        .doc-section li {
+            margin-bottom: 8px;
+        }
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .palette-card {
+            background: #16161b;
+            border: 2px solid #333;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .palette-swatch {
+            height: 50px;
+            border: 1px solid #444;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.5);
+        }
+        .palette-meta {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .palette-meta strong {
+            color: #00f0ff;
+        }
+        .code-block-container {
+            position: relative;
+            margin: 20px 0;
+            background: #060608;
+            border: 1px solid #333;
+            border-left: 4px solid #00f0ff;
+        }
+        .code-block-header {
+            background: #111116;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+        }
+        .code-block {
+            margin: 0;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #aae0ff;
+            background: transparent;
+        }
+        .math-matrix-box {
+            background: #08080c;
+            border: 1px dashed #444;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #e2f835;
+            overflow-x: auto;
+        }
+        .formula-callout {
+            background: #121218;
+            border-left: 4px solid #ff0033;
+            padding: 12px 18px;
+            margin: 16px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            color: #ffffff;
+        }
+        .tribute-box {
+            background-color: #121216;
+            border-left: 4px solid #e2f835;
+            padding: 18px;
+            margin: 20px 0;
+        }
+        .tribute-name {
+            font-size: 16px;
+            font-weight: 900;
+            color: #e2f835;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .preview-flex {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #050507;
+            border: 2px solid #282830;
+            padding: 16px;
+            margin: 24px 0;
+        }
+        .preview-img {
+            max-width: 100%;
+            height: auto;
+            max-height: 560px;
+            border: 1px solid #222;
+        }
+        .preview-caption {
+            margin-top: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            color: #00f0ff;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .cli-box-dark {
+            background: #08080a;
+            border: 1px solid #333;
+            border-left: 3px solid #ff0033;
+            padding: 12px 16px;
+            margin-top: 14px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            color: #00f0ff;
+            word-break: break-all;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="doc-container">
+        <!-- Navegação Breadcrumbs -->
+        <nav class="nav-breadcrumbs" aria-label="Navegação">
+            <a href="../../">Navalha App</a>
+            <span>/</span>
+            <a href="../">Documentação</a>
+            <span>/</span>
+            <a href="../#secao-presets">Catálogo de Presets</a>
+            <span>/</span>
+            <strong style="color: #e2f835;">02. Navalha Satã</strong>
+        </nav>
+
+        <!-- Cabeçalho do Preset -->
+        <header class="doc-hero-preset">
+            <span class="preset-badge-tag">PRESET CANÔNICO #02</span>
+            <h1 class="preset-page-title">Navalha Satã</h1>
+            <div class="preset-page-subtitle">Linóleo & Ouro Queimado // Madame Satã</div>
+            <p style="color: #bbb; font-size: 14px; margin: 0; line-height: 1.6;">
+                Especificação de engenharia reversa e guia algorítmico rigoroso para reimplementação independente em qualquer linguagem ou pipeline de shaders.
+            </p>
+            <div class="quick-nav-bar">
+                <a href="#memorial" class="quick-nav-btn">1. Memorial &amp; Contexto</a>
+                <a href="#paleta" class="quick-nav-btn">2. Paleta Canônica</a>
+                <a href="#algoritmo" class="quick-nav-btn">3. Método Algorítmico</a>
+                <a href="#pipeline" class="quick-nav-btn">4. Pipeline de Dados</a>
+                <a href="#reimplementacao" class="quick-nav-btn">5. Código de Reimplementação</a>
+                <a href="../../" class="quick-nav-btn" style="background:#ff0033; color:#fff; border-color:#ff0033;">⚡ Testar no App</a>
+            </div>
+        </header>
+
+        <!-- SEÇÃO 1: MEMORIAL HISTÓRICO -->
+        <section class="doc-section" id="memorial">
+            <h2>1. Memorial Histórico &amp; Contexto Contracultural</h2>
+            <p>
+                Evoca a mítica e indomável figura de Madame Satã nos cortiços e cabarés da Lapa boêmia carioca do início do século XX. O contraste áspero do entalhe em madeira e linóleo popular reflete a malandragem indócil, o capoeirista imbatível e a resistência de corpos negros e dissidentes contra a repressão policial da Primeira República.
+            </p>
+            <div class="tribute-box">
+                <div class="tribute-name">★ Memória & Legado — Madame Satã (João Francisco dos Santos, 1900–1976)</div>
+                <p style="margin: 0; font-size: 14px; color: #ccc; line-height: 1.7;">
+                    Memória & Legado — Madame Satã (João Francisco dos Santos, 1900–1976): Artista, cozinheiro, malandro lendário e símbolo monumental de resistência e insubmissão na Lapa do Rio de Janeiro. Negro, homossexual e de destreza física avassaladora na capoeira, Satã encarava cordões inteiros de policiais armados e transformou a perseguição cotidiana em mito revolucionário. Criador de performances teatrais e personificação da audácia periférica, seu nome ecoa na cultura brasileira como a encarnação viva de quem nunca abaixou a cabeça para o poder opressor.
+                </p>
+            </div>
+            <div class="preview-flex">
+                <img src="../../assets/exemplos/exemplo-navalha-sata.png" alt="Cartaz de referência Navalha Satã" class="preview-img">
+                <div class="preview-caption">
+                    <strong>MADAME SATÃ (O Mito da Lapa &amp; A Lâmina no Calcanhar)</strong><br/>
+<em>"NO FIO DA NAVALHA // QUEM ME PROTEGE NÃO DORME"</em>
+                </div>
+                <div class="cli-box-dark">
+                    $navalha poster madame-sata.jpg --estetica navalha-sata --frase "NO FIO DA NAVALHA // QUEM ME PROTEGE NÃO DORME" -o madame-sata-poster.png
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 2: PALETA CROMÁTICA -->
+        <section class="doc-section" id="paleta">
+            <h2>2. Paleta Cromática Canônica &amp; Mapeamento</h2>
+            <p>
+                O preset reduz estritamente o espaço de cores contínuo da imagem para a seguinte paleta canônica indexada:
+            </p>
+            <div class="palette-grid">
+                
+        <div class="palette-card">
+            <div class="palette-swatch" style="background-color: #1A1412;"></div>
+            <div class="palette-meta">
+                <strong>Carvão Linóleo</strong><br>
+                HEX: <code>#1A1412</code>
+            </div>
+        </div>
+        <div class="palette-card">
+            <div class="palette-swatch" style="background-color: #D4883A;"></div>
+            <div class="palette-meta">
+                <strong>Ouro Cru Queimado</strong><br>
+                HEX: <code>#D4883A</code>
+            </div>
+        </div>
+        <div class="palette-card">
+            <div class="palette-swatch" style="background-color: #FFFFFF;"></div>
+            <div class="palette-meta">
+                <strong>Branco Navalha</strong><br>
+                HEX: <code>#FFFFFF</code>
+            </div>
+        </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 3: MÉTODO ALGORÍTMICO -->
+        <section class="doc-section" id="algoritmo">
+            <h2>3. Especificação Algorítmica Passo a Passo (Rigor Matemático)</h2>
+            <p>
+                Opera com segmentação estrita por luminância e difusão de erro Atkinson acentuada com filtro unsharp de 3.0x. A paleta tricromática em carvão linóleo e ouro queimado sobre papel kraft resgata o corte dramático da gravura popular e o fio cortante de navalhas no calcanhar.
+            </p>
+
+            <h3>Etapa 3.1: Resolução Base &amp; Downsampling</h3>
+            <p>
+                A largura base é parametrizada em <strong>720px (Lanczos3)</strong>. O redimensionamento deve ocorrer antes da difusão de erro para que os grãos ou blocos de retícula tenham escala física perceptível ao olhar humano.
+            </p>
+
+            <h3>Etapa 3.2: Tratamento Tonal &amp; Unsharp Masking</h3>
+            <p>
+                Luminância ITU-R BT.601 + Unsharp Mask (r=1.8, k=2.8) + Queima de Níveis Severa (Min=20, Max=235).
+            </p>
+            <div class="formula-callout">
+                L(x, y) = 0.299 · R(x, y) + 0.587 · G(x, y) + 0.114 · B(x, y)
+            </div>
+
+            <h3>Etapa 3.3: Algoritmo de Dither &amp; Difusão de Erro / Retícula</h3>
+            <p>
+                <strong>Algoritmo Central:</strong> Atkinson Dithering com Queima Tonal de Xilogravura
+            </p>
+            <div class="math-matrix-box">
+Atkinson 75% com threshold de corte ajustado para linóleo escuro:
+Dispersão de 1/8 nos 6 pontos canônicos:
+[ x+1, y ], [ x+2, y ], [ x-1, y+1 ], [ x, y+1 ], [ x+1, y+1 ], [ x, y+2 ]
+Quantização em 3 tons estritos: Carvão #1A1412, Ouro Cru #D4883A, Branco #FFFFFF
+            </div>
+            <p>
+                <strong>Particularidade do Preset:</strong> Textura de gravura popular talhada em linóleo; contraste brutal que enaltece a musculatura e o corte do olhar sobre dourado queimado.
+            </p>
+        </section>
+
+        <!-- SEÇÃO 4: DIAGRAMA DE PIPELINE -->
+        <section class="doc-section" id="pipeline">
+            <h2>4. Diagrama de Pipeline de Dados</h2>
+            <div class="code-block-container">
+                <div class="code-block-header">Fluxo Unidirecional Determinístico</div>
+                <pre class="code-block">
+[ Imagem de Entrada (RGB/RGBA) ]
+               │
+               ▼
+[ 1. Downsampling Físico: 720px (Lanczos3) ]
+               │
+               ▼
+[ 2. Conversão de Luminância ITU-R BT.601 &amp; Filtro Espacial ]
+               │
+               ▼
+[ 3. Pré-processamento Tonal &amp; Queima de Níveis ]
+               │
+               ▼
+[ 4. Retícula &amp; Dither: Atkinson Dithering com Queima Tonal de Xilogravura ]
+               │
+               ▼
+[ 5. Mapeamento Estrito na Paleta de Cores ]
+               │
+               ▼
+[ 6. Prensagem de Tarjas, Tipografia e Moldura ]
+               │
+               ▼
+[ Pôster Final Renderizado Bit-a-Bit Idêntico ]
+                </pre>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 5: GUIA DE REIMPLEMENTAÇÃO AGNÓSTICA -->
+        <section class="doc-section" id="reimplementacao">
+            <h2>5. Guia de Reimplementação Agnóstica (Código de Referência)</h2>
+            <p>
+                Código autocontido em <strong>Python 3 com NumPy e Pillow</strong> implementando o núcleo matemático deste preset para você rodar ou portar para outra linguagem:
+            </p>
+
+            <div class="code-block-container">
+                <div class="code-block-header">
+                    <span>reimplement_navalha_sata.py (Python 3 + NumPy)</span>
+                    <span style="color:#00f0ff;">LICENÇA: GPL-3.0 / MIT</span>
+                </div>
+                <pre class="code-block">
+import numpy as np
+from PIL import Image, ImageFilter
+
+def atkinson_dither(gray: np.ndarray) -> np.ndarray:
+    h, w = gray.shape
+    buf = gray.astype(np.float32)
+    out = np.zeros((h, w), dtype=np.uint8)
+    for y in range(h):
+        for x in range(w):
+            val = buf[y, x]
+            q = 255.0 if val >= 128.0 else 0.0
+            out[y, x] = int(q)
+            err = (val - q) / 8.0
+            if x + 1 < w: buf[y, x + 1] += err
+            if x + 2 < w: buf[y, x + 2] += err
+            if y + 1 < h:
+                if x - 1 >= 0: buf[y + 1, x - 1] += err
+                buf[y + 1, x] += err
+                if x + 1 < w: buf[y + 1, x + 1] += err
+            if y + 2 < h: buf[y + 2, x] += err
+    return out
+
+def render_navalha_sata(input_path: str, output_path: str):
+    img = Image.open(input_path).convert('RGB')
+    w, h = img.size
+    img = img.resize((720, int(round(h * 720 / w))), Image.Resampling.LANCZOS)
+    gray = img.convert('L')
+    blur = gray.filter(ImageFilter.BoxBlur(1.8))
+    arr_gray = np.array(gray, dtype=np.float32)
+    unsharp = np.clip(arr_gray + 2.8 * (arr_gray - np.array(blur, dtype=np.float32)), 0, 255)
+    levels = np.clip((unsharp - 20.0) / 215.0 * 255.0, 0, 255)
+    dithered = atkinson_dither(levels)
+    h, w = dithered.shape
+    poster = np.zeros((h, w, 3), dtype=np.uint8)
+    poster[:, :] = [212, 136, 58] # Fundo Ouro Cru #D4883A
+    poster[dithered == 0] = [26, 20, 18] # Carvão #1A1412
+    poster[(dithered == 255) & (arr_gray < 220)] = [255, 255, 255] # Branco #FFFFFF
+    Image.fromarray(poster).save(output_path)
+                </pre>
+            </div>
+
+            <h3>Fragment Shader GLSL (Para Processamento em GPU em Tempo Real)</h3>
+            <div class="code-block-container">
+                <div class="code-block-header">navalha_sata_shader.glsl</div>
+                <pre class="code-block">
+// Fragment Shader Navalha Satã
+precision mediump float;
+uniform sampler2D u_tex;
+varying vec2 v_uv;
+void main() {
+    vec4 c = texture2D(u_tex, v_uv);
+    float l = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+    l = clamp((l - 0.08) / 0.84, 0.0, 1.0);
+    vec3 colCarvao = vec3(0.102, 0.078, 0.071); // #1A1412
+    vec3 colOuro   = vec3(0.831, 0.533, 0.227); // #D4883A
+    vec3 colBranco = vec3(1.0, 1.0, 1.0);
+    if (l < 0.38) gl_FragColor = vec4(colCarvao, 1.0);
+    else if (l > 0.88) gl_FragColor = vec4(colOuro, 1.0);
+    else gl_FragColor = vec4(colBranco, 1.0);
+}
+                </pre>
+            </div>
+        </section>
+
+        <!-- RODAPÉ DE NAVEGAÇÃO -->
+        <footer style="margin-top: 50px; padding: 24px; background: #121216; border-top: 2px solid #333; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <a href="punk-riot.html" style="color: #00f0ff; text-decoration: none; font-weight: 800; font-size: 14px;">← ANTERIOR: PUNK RIOT</a>
+            <a href="../#secao-presets" style="color: #fff; text-decoration: none; font-weight: 800; font-size: 14px; background: #222; padding: 6px 12px; border: 1px solid #444;">CATÁLOGO GERAL</a>
+            <a href="xerox-podre.html" style="color: #e2f835; text-decoration: none; font-weight: 800; font-size: 14px;">PRÓXIMO: XEROX PODRE →</a>
+        </footer>
+    </div>
+</body>
+</html>

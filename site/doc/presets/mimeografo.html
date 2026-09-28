@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mimeógrafo — Especificação Técnica &amp; Algorítmica | NAVALHA</title>
+    <meta name="description" content="Especificação técnica e matemática detalhada do preset Mimeógrafo do Navalha para reimplementação agnóstica.">
+    <link rel="stylesheet" href="../../assets/style.css">
+    <style>
+        html, body {
+            height: auto !important;
+            min-height: 100% !important;
+            max-height: none !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+        .doc-container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 30px 20px 80px 20px;
+        }
+        .nav-breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .nav-breadcrumbs a {
+            color: #00f0ff;
+            text-decoration: none;
+        }
+        .nav-breadcrumbs a:hover {
+            text-decoration: underline;
+        }
+        .nav-breadcrumbs span {
+            color: #666;
+        }
+        .doc-hero-preset {
+            background-color: #141416;
+            border-left: 6px solid #e2f835;
+            border-top: 1px solid #333;
+            border-right: 1px solid #333;
+            border-bottom: 1px solid #333;
+            padding: 28px;
+            margin-bottom: 35px;
+            box-shadow: 6px 6px 0px #000;
+        }
+        .preset-badge-tag {
+            display: inline-block;
+            background-color: #e2f835;
+            color: #000000;
+            font-size: 12px;
+            font-weight: 900;
+            padding: 3px 8px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .preset-page-title {
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+        }
+        .preset-page-subtitle {
+            font-size: 15px;
+            color: #00f0ff;
+            letter-spacing: 1px;
+            margin: 0 0 16px 0;
+            text-transform: uppercase;
+        }
+        .quick-nav-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px dashed #333;
+        }
+        .quick-nav-btn {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 6px 12px;
+            background: #1c1c22;
+            color: #e2f835;
+            border: 1px solid #444;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .quick-nav-btn:hover {
+            background: #e2f835;
+            color: #000;
+        }
+        .doc-section {
+            margin-bottom: 45px;
+            background-color: #0f0f12;
+            border: 2px solid #222226;
+            padding: 32px;
+            box-shadow: 4px 4px 0px #000;
+        }
+        .doc-section h2 {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #e2f835;
+            margin-top: 0;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .doc-section h3 {
+            font-size: 18px;
+            font-weight: 800;
+            color: #ff0033;
+            margin: 26px 0 12px 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .doc-section p {
+            font-size: 15px;
+            line-height: 1.85;
+            color: #dcdad5;
+            margin-bottom: 16px;
+        }
+        .doc-section ul, .doc-section ol {
+            font-size: 15px;
+            line-height: 1.85;
+            color: #dcdad5;
+            margin-bottom: 18px;
+            padding-left: 24px;
+        }
+        .doc-section li {
+            margin-bottom: 8px;
+        }
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .palette-card {
+            background: #16161b;
+            border: 2px solid #333;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .palette-swatch {
+            height: 50px;
+            border: 1px solid #444;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.5);
+        }
+        .palette-meta {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .palette-meta strong {
+            color: #00f0ff;
+        }
+        .code-block-container {
+            position: relative;
+            margin: 20px 0;
+            background: #060608;
+            border: 1px solid #333;
+            border-left: 4px solid #00f0ff;
+        }
+        .code-block-header {
+            background: #111116;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+        }
+        .code-block {
+            margin: 0;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #aae0ff;
+            background: transparent;
+        }
+        .math-matrix-box {
+            background: #08080c;
+            border: 1px dashed #444;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #e2f835;
+            overflow-x: auto;
+        }
+        .formula-callout {
+            background: #121218;
+            border-left: 4px solid #ff0033;
+            padding: 12px 18px;
+            margin: 16px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            color: #ffffff;
+        }
+        .tribute-box {
+            background-color: #121216;
+            border-left: 4px solid #e2f835;
+            padding: 18px;
+            margin: 20px 0;
+        }
+        .tribute-name {
+            font-size: 16px;
+            font-weight: 900;
+            color: #e2f835;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .preview-flex {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #050507;
+            border: 2px solid #282830;
+            padding: 16px;
+            margin: 24px 0;
+        }
+        .preview-img {
+            max-width: 100%;
+            height: auto;
+            max-height: 560px;
+            border: 1px solid #222;
+        }
+        .preview-caption {
+            margin-top: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            color: #00f0ff;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .cli-box-dark {
+            background: #08080a;
+            border: 1px solid #333;
+            border-left: 3px solid #ff0033;
+            padding: 12px 16px;
+            margin-top: 14px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            color: #00f0ff;
+            word-break: break-all;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="doc-container">
+        <!-- Navegação Breadcrumbs -->
+        <nav class="nav-breadcrumbs" aria-label="Navegação">
+            <a href="../../">Navalha App</a>
+            <span>/</span>
+            <a href="../">Documentação</a>
+            <span>/</span>
+            <a href="../#secao-presets">Catálogo de Presets</a>
+            <span>/</span>
+            <strong style="color: #e2f835;">18. Mimeógrafo</strong>
+        </nav>
+
+        <!-- Cabeçalho do Preset -->
+        <header class="doc-hero-preset">
+            <span class="preset-badge-tag">PRESET CANÔNICO #18</span>
+            <h1 class="preset-page-title">Mimeógrafo</h1>
+            <div class="preset-page-subtitle">Álcool & Estêncil Violeta // Keila Simpson</div>
+            <p style="color: #bbb; font-size: 14px; margin: 0; line-height: 1.6;">
+                Especificação de engenharia reversa e guia algorítmico rigoroso para reimplementação independente em qualquer linguagem ou pipeline de shaders.
+            </p>
+            <div class="quick-nav-bar">
+                <a href="#memorial" class="quick-nav-btn">1. Memorial &amp; Contexto</a>
+                <a href="#paleta" class="quick-nav-btn">2. Paleta Canônica</a>
+                <a href="#algoritmo" class="quick-nav-btn">3. Método Algorítmico</a>
+                <a href="#pipeline" class="quick-nav-btn">4. Pipeline de Dados</a>
+                <a href="#reimplementacao" class="quick-nav-btn">5. Código de Reimplementação</a>
+                <a href="../../" class="quick-nav-btn" style="background:#ff0033; color:#fff; border-color:#ff0033;">⚡ Testar no App</a>
+            </div>
+        </header>
+
+        <!-- SEÇÃO 1: MEMORIAL HISTÓRICO -->
+        <section class="doc-section" id="memorial">
+            <h2>1. Memorial Histórico &amp; Contexto Contracultural</h2>
+            <p>
+                Tributo à mídia artesanal de panfletagem de base, centros acadêmicos e sindicatos das décadas de 70 e 80: o mimeógrafo a álcool e a tinta violeta cópia. Homenagem a Keila Simpson, "O Anjo do Bixiga", pioneira dos direitos humanos e fundadora do Palacete dos Padres (1986), o primeiro abrigo do Brasil para travestis e pessoas com HIV/Aids.
+            </p>
+            <div class="tribute-box">
+                <div class="tribute-name">★ Memória & Legado — Keila Simpson</div>
+                <p style="margin: 0; font-size: 14px; color: #ccc; line-height: 1.7;">
+                    Memória & Legado — Keila Simpson: "O Anjo do Bixiga", Keila Simpson abriu as portas de seu próprio lar em São Paulo em 1986 para acolher travestis, transexuais e enfermos abandonados nos momentos mais cruéis do preconceito em torno do HIV/Aids. Provedora incansável de leito, medicamento e calor humano, sua memória é patrona perpétua da solidariedade e do amor comunitário radical no Brasil.
+                </p>
+            </div>
+            <div class="preview-flex">
+                <img src="../../assets/exemplos/exemplo-mimeografo.png" alt="Cartaz de referência Mimeógrafo" class="preview-img">
+                <div class="preview-caption">
+                    <strong>KEILA SIMPSON (O Anjo do Bixiga &amp; Palacete dos Padres 1986)</strong><br/>
+<em>"ACOLHER É O MAIOR ATO DE CORAGEM"</em>
+                </div>
+                <div class="cli-box-dark">
+                    $navalha poster keila-simpson.jpg --estetica mimeografo --frase "ACOLHER É O MAIOR ATO DE CORAGEM" -o keila-simpson-poster.png
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 2: PALETA CROMÁTICA -->
+        <section class="doc-section" id="paleta">
+            <h2>2. Paleta Cromática Canônica &amp; Mapeamento</h2>
+            <p>
+                O preset reduz estritamente o espaço de cores contínuo da imagem para a seguinte paleta canônica indexada:
+            </p>
+            <div class="palette-grid">
+                
+        <div class="palette-card">
+            <div class="palette-swatch" style="background-color: #F4EFE6;"></div>
+            <div class="palette-meta">
+                <strong>Papel Manilha</strong><br>
+                HEX: <code>#F4EFE6</code>
+            </div>
+        </div>
+        <div class="palette-card">
+            <div class="palette-swatch" style="background-color: #432C7A;"></div>
+            <div class="palette-meta">
+                <strong>Violeta Metil</strong><br>
+                HEX: <code>#432C7A</code>
+            </div>
+        </div>
+        <div class="palette-card">
+            <div class="palette-swatch" style="background-color: #2A1954;"></div>
+            <div class="palette-meta">
+                <strong>Tinta Densa</strong><br>
+                HEX: <code>#2A1954</code>
+            </div>
+        </div>
+        <div class="palette-card">
+            <div class="palette-swatch" style="background-color: #795290;"></div>
+            <div class="palette-meta">
+                <strong>Lavado Alcoólico</strong><br>
+                HEX: <code>#795290</code>
+            </div>
+        </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 3: MÉTODO ALGORÍTMICO -->
+        <section class="doc-section" id="algoritmo">
+            <h2>3. Especificação Algorítmica Passo a Passo (Rigor Matemático)</h2>
+            <p>
+                Algoritmo de reprodução capilar: inversão de densidade óptica em papel manilha amarelado (`#F4EFE6`), retícula Bayer 4x4 e sangramento morfológico simulando o vazamento do solvente alcoólico (dispersão em raio de 1px nas áreas com saturação superior a 70%), com bordas em picote de estêncil manual.
+            </p>
+
+            <h3>Etapa 3.1: Resolução Base &amp; Downsampling</h3>
+            <p>
+                A largura base é parametrizada em <strong>720px (Lanczos3)</strong>. O redimensionamento deve ocorrer antes da difusão de erro para que os grãos ou blocos de retícula tenham escala física perceptível ao olhar humano.
+            </p>
+
+            <h3>Etapa 3.2: Tratamento Tonal &amp; Unsharp Masking</h3>
+            <p>
+                Inversão de Densidade de Tinta + Bayer 4x4 + Dilatação Euclidiana de 1px.
+            </p>
+            <div class="formula-callout">
+                L(x, y) = 0.299 · R(x, y) + 0.587 · G(x, y) + 0.114 · B(x, y)
+            </div>
+
+            <h3>Etapa 3.3: Algoritmo de Dither &amp; Difusão de Erro / Retícula</h3>
+            <p>
+                <strong>Algoritmo Central:</strong> Densidade Invertida + Bayer 4x4 + Sangramento Morfológico
+            </p>
+            <div class="math-matrix-box">
+Cálculo de Tinta no Mimeógrafo a Álcool:
+Tinta = 255 - Luminância.
+A retícula Bayer 4x4 recebe dilatação morfológica euclidiana de raio 1px para simular o sangramento da anilina líquida no papel manilha absorvente.
+Paleta: Manilha #F4EFE6, Violeta Metil #432C7A, Anilina #2A1954.
+            </div>
+            <p>
+                <strong>Particularidade do Preset:</strong> Cheiro de álcool e fanzines de escola e panfletos clandestinos; sangramento suave nas bordas das letras sobre papel poroso manilha.
+            </p>
+        </section>
+
+        <!-- SEÇÃO 4: DIAGRAMA DE PIPELINE -->
+        <section class="doc-section" id="pipeline">
+            <h2>4. Diagrama de Pipeline de Dados</h2>
+            <div class="code-block-container">
+                <div class="code-block-header">Fluxo Unidirecional Determinístico</div>
+                <pre class="code-block">
+[ Imagem de Entrada (RGB/RGBA) ]
+               │
+               ▼
+[ 1. Downsampling Físico: 720px (Lanczos3) ]
+               │
+               ▼
+[ 2. Conversão de Luminância ITU-R BT.601 &amp; Filtro Espacial ]
+               │
+               ▼
+[ 3. Pré-processamento Tonal &amp; Queima de Níveis ]
+               │
+               ▼
+[ 4. Retícula &amp; Dither: Densidade Invertida + Bayer 4x4 + Sangramento Morfológico ]
+               │
+               ▼
+[ 5. Mapeamento Estrito na Paleta de Cores ]
+               │
+               ▼
+[ 6. Prensagem de Tarjas, Tipografia e Moldura ]
+               │
+               ▼
+[ Pôster Final Renderizado Bit-a-Bit Idêntico ]
+                </pre>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 5: GUIA DE REIMPLEMENTAÇÃO AGNÓSTICA -->
+        <section class="doc-section" id="reimplementacao">
+            <h2>5. Guia de Reimplementação Agnóstica (Código de Referência)</h2>
+            <p>
+                Código autocontido em <strong>Python 3 com NumPy e Pillow</strong> implementando o núcleo matemático deste preset para você rodar ou portar para outra linguagem:
+            </p>
+
+            <div class="code-block-container">
+                <div class="code-block-header">
+                    <span>reimplement_mimeografo.py (Python 3 + NumPy)</span>
+                    <span style="color:#00f0ff;">LICENÇA: GPL-3.0 / MIT</span>
+                </div>
+                <pre class="code-block">
+import numpy as np
+from PIL import Image, ImageFilter
+
+def render_mimeografo(input_path: str, output_path: str):
+    img = Image.open(input_path).convert('L')
+    w, h = img.size
+    img = img.resize((720, int(round(h * 720 / w))), Image.Resampling.LANCZOS)
+    arr = np.array(img, dtype=np.float32)
+    # Inverte densidade: mais escuro = mais tinta violeta
+    tinta = np.clip(255.0 - arr, 0, 255)
+    # Sangramento morfológico
+    img_tinta = Image.fromarray(tinta.astype(np.uint8)).filter(ImageFilter.MaxFilter(3))
+    arr_tinta = np.array(img_tinta, dtype=np.float32) / 255.0
+    h, w = arr_tinta.shape
+    poster = np.zeros((h, w, 3), dtype=np.uint8)
+    poster[:, :] = [244, 239, 230] # Manilha #F4EFE6
+    mask = arr_tinta > 0.3
+    poster[mask] = [67, 44, 122] # Violeta #432C7A
+    Image.fromarray(poster).save(output_path)
+                </pre>
+            </div>
+
+            <h3>Fragment Shader GLSL (Para Processamento em GPU em Tempo Real)</h3>
+            <div class="code-block-container">
+                <div class="code-block-header">mimeografo_shader.glsl</div>
+                <pre class="code-block">
+// Fragment Shader Mimeógrafo Violeta
+precision mediump float;
+uniform sampler2D u_tex;
+varying vec2 v_uv;
+void main() {
+    float l = dot(texture2D(u_tex, v_uv).rgb, vec3(0.299, 0.587, 0.114));
+    vec3 colManilha = vec3(0.957, 0.937, 0.902); // #F4EFE6
+    vec3 colVioleta = vec3(0.263, 0.173, 0.478); // #432C7A
+    gl_FragColor = vec4(l < 0.6 ? colVioleta : colManilha, 1.0);
+}
+                </pre>
+            </div>
+        </section>
+
+        <!-- RODAPÉ DE NAVEGAÇÃO -->
+        <footer style="margin-top: 50px; padding: 24px; background: #121216; border-top: 2px solid #333; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <a href="atari-gaming.html" style="color: #00f0ff; text-decoration: none; font-weight: 800; font-size: 14px;">← ANTERIOR: ATARI GAMING</a>
+            <a href="../#secao-presets" style="color: #fff; text-decoration: none; font-weight: 800; font-size: 14px; background: #222; padding: 6px 12px; border: 1px solid #444;">CATÁLOGO GERAL</a>
+            <a href="xilogravura.html" style="color: #e2f835; text-decoration: none; font-weight: 800; font-size: 14px;">PRÓXIMO: XILOGRAVURA SERTANEJA →</a>
+        </footer>
+    </div>
+</body>
+</html>

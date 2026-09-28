@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brutalismo — Especificação Técnica &amp; Algorítmica | NAVALHA</title>
+    <meta name="description" content="Especificação técnica e matemática detalhada do preset Brutalismo do Navalha para reimplementação agnóstica.">
+    <link rel="stylesheet" href="../../assets/style.css">
+    <style>
+        html, body {
+            height: auto !important;
+            min-height: 100% !important;
+            max-height: none !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+        .doc-container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 30px 20px 80px 20px;
+        }
+        .nav-breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .nav-breadcrumbs a {
+            color: #00f0ff;
+            text-decoration: none;
+        }
+        .nav-breadcrumbs a:hover {
+            text-decoration: underline;
+        }
+        .nav-breadcrumbs span {
+            color: #666;
+        }
+        .doc-hero-preset {
+            background-color: #141416;
+            border-left: 6px solid #e2f835;
+            border-top: 1px solid #333;
+            border-right: 1px solid #333;
+            border-bottom: 1px solid #333;
+            padding: 28px;
+            margin-bottom: 35px;
+            box-shadow: 6px 6px 0px #000;
+        }
+        .preset-badge-tag {
+            display: inline-block;
+            background-color: #e2f835;
+            color: #000000;
+            font-size: 12px;
+            font-weight: 900;
+            padding: 3px 8px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .preset-page-title {
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+        }
+        .preset-page-subtitle {
+            font-size: 15px;
+            color: #00f0ff;
+            letter-spacing: 1px;
+            margin: 0 0 16px 0;
+            text-transform: uppercase;
+        }
+        .quick-nav-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px dashed #333;
+        }
+        .quick-nav-btn {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 6px 12px;
+            background: #1c1c22;
+            color: #e2f835;
+            border: 1px solid #444;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .quick-nav-btn:hover {
+            background: #e2f835;
+            color: #000;
+        }
+        .doc-section {
+            margin-bottom: 45px;
+            background-color: #0f0f12;
+            border: 2px solid #222226;
+            padding: 32px;
+            box-shadow: 4px 4px 0px #000;
+        }
+        .doc-section h2 {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #e2f835;
+            margin-top: 0;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .doc-section h3 {
+            font-size: 18px;
+            font-weight: 800;
+            color: #ff0033;
+            margin: 26px 0 12px 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .doc-section p {
+            font-size: 15px;
+            line-height: 1.85;
+            color: #dcdad5;
+            margin-bottom: 16px;
+        }
+        .doc-section ul, .doc-section ol {
+            font-size: 15px;
+            line-height: 1.85;
+            color: #dcdad5;
+            margin-bottom: 18px;
+            padding-left: 24px;
+        }
+        .doc-section li {
+            margin-bottom: 8px;
+        }
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .palette-card {
+            background: #16161b;
+            border: 2px solid #333;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .palette-swatch {
+            height: 50px;
+            border: 1px solid #444;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.5);
+        }
+        .palette-meta {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .palette-meta strong {
+            color: #00f0ff;
+        }
+        .code-block-container {
+            position: relative;
+            margin: 20px 0;
+            background: #060608;
+            border: 1px solid #333;
+            border-left: 4px solid #00f0ff;
+        }
+        .code-block-header {
+            background: #111116;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+        }
+        .code-block {
+            margin: 0;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #aae0ff;
+            background: transparent;
+        }
+        .math-matrix-box {
+            background: #08080c;
+            border: 1px dashed #444;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #e2f835;
+            overflow-x: auto;
+        }
+        .formula-callout {
+            background: #121218;
+            border-left: 4px solid #ff0033;
+            padding: 12px 18px;
+            margin: 16px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            color: #ffffff;
+        }
+        .tribute-box {
+            background-color: #121216;
+            border-left: 4px solid #e2f835;
+            padding: 18px;
+            margin: 20px 0;
+        }
+        .tribute-name {
+            font-size: 16px;
+            font-weight: 900;
+            color: #e2f835;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .preview-flex {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #050507;
+            border: 2px solid #282830;
+            padding: 16px;
+            margin: 24px 0;
+        }
+        .preview-img {
+            max-width: 100%;
+            height: auto;
+            max-height: 560px;
+            border: 1px solid #222;
+        }
+        .preview-caption {
+            margin-top: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            color: #00f0ff;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .cli-box-dark {
+            background: #08080a;
+            border: 1px solid #333;
+            border-left: 3px solid #ff0033;
+            padding: 12px 16px;
+            margin-top: 14px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            color: #00f0ff;
+            word-break: break-all;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="doc-container">
+        <!-- Navegação Breadcrumbs -->
+        <nav class="nav-breadcrumbs" aria-label="Navegação">
+            <a href="../../">Navalha App</a>
+            <span>/</span>
+            <a href="../">Documentação</a>
+            <span>/</span>
+            <a href="../#secao-presets">Catálogo de Presets</a>
+            <span>/</span>
+            <strong style="color: #e2f835;">15. Brutalismo</strong>
+        </nav>
+
+        <!-- Cabeçalho do Preset -->
+        <header class="doc-hero-preset">
+            <span class="preset-badge-tag">PRESET CANÔNICO #15</span>
+            <h1 class="preset-page-title">Brutalismo</h1>
+            <div class="preset-page-subtitle">Concreto & Blocos Maciços // Drica D'arc Meirelles</div>
+            <p style="color: #bbb; font-size: 14px; margin: 0; line-height: 1.6;">
+                Especificação de engenharia reversa e guia algorítmico rigoroso para reimplementação independente em qualquer linguagem ou pipeline de shaders.
+            </p>
+            <div class="quick-nav-bar">
+                <a href="#memorial" class="quick-nav-btn">1. Memorial &amp; Contexto</a>
+                <a href="#paleta" class="quick-nav-btn">2. Paleta Canônica</a>
+                <a href="#algoritmo" class="quick-nav-btn">3. Método Algorítmico</a>
+                <a href="#pipeline" class="quick-nav-btn">4. Pipeline de Dados</a>
+                <a href="#reimplementacao" class="quick-nav-btn">5. Código de Reimplementação</a>
+                <a href="../../" class="quick-nav-btn" style="background:#ff0033; color:#fff; border-color:#ff0033;">⚡ Testar no App</a>
+            </div>
+        </header>
+
+        <!-- SEÇÃO 1: MEMORIAL HISTÓRICO -->
+        <section class="doc-section" id="memorial">
+            <h2>1. Memorial Histórico &amp; Contexto Contracultural</h2>
+            <p>
+                Inspirado na rigidez construtivista e na arquitetura brutalista urbana: concreto aparente, blocos ortogonais sem concessões estéticas fáceis e o peso da resistência coletiva nas metrópoles. Homenagem a Drica D'arc Meirelles, fundadora e liderança histórica da ADEH (Associação em Defesa dos Direitos Humanos com Enfoque na Sexualidade) em Santa Catarina, combatente incansável da letalidade policial e esteio de acolhimento de base para pessoas trans em extrema vulnerabilidade.
+            </p>
+            <div class="tribute-box">
+                <div class="tribute-name">★ Memória & Legado — Drica D'arc Meirelles</div>
+                <p style="margin: 0; font-size: 14px; color: #ccc; line-height: 1.7;">
+                    Memória & Legado — Drica D'arc Meirelles: Ativista histórica, fundadora e coordenadora da ADEH em Santa Catarina. Sua liderança pioneira foi pilar de sustentação na acolhida a travestis e transexuais em situação de vulnerabilidade extrema, denunciando execuções sumárias, abusos de poder e estruturando redes de assistência jurídica, psicológica e social quando o poder público se omitia por completo.
+                </p>
+            </div>
+            <div class="preview-flex">
+                <img src="../../assets/exemplos/exemplo-brutalismo.png" alt="Cartaz de referência Brutalismo" class="preview-img">
+                <div class="preview-caption">
+                    <strong>DRICA D'ARC MEIRELLES (Fundadora da ADEH &amp; Direitos Humanos)</strong><br/>
+<em>"CONCRETO, ACOLHIMENTO E LUTA"</em>
+                </div>
+                <div class="cli-box-dark">
+                    $navalha poster drica-meirelles.jpg --estetica brutalismo --frase "CONCRETO, ACOLHIMENTO E LUTA" -o drica-meirelles-poster.png
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 2: PALETA CROMÁTICA -->
+        <section class="doc-section" id="paleta">
+            <h2>2. Paleta Cromática Canônica &amp; Mapeamento</h2>
+            <p>
+                O preset reduz estritamente o espaço de cores contínuo da imagem para a seguinte paleta canônica indexada:
+            </p>
+            <div class="palette-grid">
+                
+        <div class="palette-card">
+            <div class="palette-swatch" style="background-color: #0A0A0A;"></div>
+            <div class="palette-meta">
+                <strong>Preto Piche</strong><br>
+                HEX: <code>#0A0A0A</code>
+            </div>
+        </div>
+        <div class="palette-card">
+            <div class="palette-swatch" style="background-color: #E5E5E5;"></div>
+            <div class="palette-meta">
+                <strong>Concreto</strong><br>
+                HEX: <code>#E5E5E5</code>
+            </div>
+        </div>
+        <div class="palette-card">
+            <div class="palette-swatch" style="background-color: #FAFAFA;"></div>
+            <div class="palette-meta">
+                <strong>Branco Gesso</strong><br>
+                HEX: <code>#FAFAFA</code>
+            </div>
+        </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 3: MÉTODO ALGORÍTMICO -->
+        <section class="doc-section" id="algoritmo">
+            <h2>3. Especificação Algorítmica Passo a Passo (Rigor Matemático)</h2>
+            <p>
+                Downsampling para largura base de 720px com pré-processamento de máscara de nitidez brutal (unsharp masking 3.5x). Binarização ótica estrita por limiar médio de luminância (Threshold Global), eliminando dispersões estocásticas para produzir silhuetas pesadas e cortes ortogonais contrastantes sobre textura de concreto.
+            </p>
+
+            <h3>Etapa 3.1: Resolução Base &amp; Downsampling</h3>
+            <p>
+                A largura base é parametrizada em <strong>720px (Lanczos3)</strong>. O redimensionamento deve ocorrer antes da difusão de erro para que os grãos ou blocos de retícula tenham escala física perceptível ao olhar humano.
+            </p>
+
+            <h3>Etapa 3.2: Tratamento Tonal &amp; Unsharp Masking</h3>
+            <p>
+                Unsharp Masking (k=3.5) + Limiarização Direta por Corte Fixo.
+            </p>
+            <div class="formula-callout">
+                L(x, y) = 0.299 · R(x, y) + 0.587 · G(x, y) + 0.114 · B(x, y)
+            </div>
+
+            <h3>Etapa 3.3: Algoritmo de Dither &amp; Difusão de Erro / Retícula</h3>
+            <p>
+                <strong>Algoritmo Central:</strong> Binarização por Média Ponderada Sem Dither
+            </p>
+            <div class="math-matrix-box">
+Sem difusão de erro ou retícula:
+q = 0 se L < 128, senão 255.
+Formas ortogonais puras, grandes blocos monocromáticos de concreto aparente #0A0A0A e #FAFAFA.
+            </div>
+            <p>
+                <strong>Particularidade do Preset:</strong> Arquitetura brutalista paulista, concreto aparente, ausência total de suavização e tipografia monumental maciça.
+            </p>
+        </section>
+
+        <!-- SEÇÃO 4: DIAGRAMA DE PIPELINE -->
+        <section class="doc-section" id="pipeline">
+            <h2>4. Diagrama de Pipeline de Dados</h2>
+            <div class="code-block-container">
+                <div class="code-block-header">Fluxo Unidirecional Determinístico</div>
+                <pre class="code-block">
+[ Imagem de Entrada (RGB/RGBA) ]
+               │
+               ▼
+[ 1. Downsampling Físico: 720px (Lanczos3) ]
+               │
+               ▼
+[ 2. Conversão de Luminância ITU-R BT.601 &amp; Filtro Espacial ]
+               │
+               ▼
+[ 3. Pré-processamento Tonal &amp; Queima de Níveis ]
+               │
+               ▼
+[ 4. Retícula &amp; Dither: Binarização por Média Ponderada Sem Dither ]
+               │
+               ▼
+[ 5. Mapeamento Estrito na Paleta de Cores ]
+               │
+               ▼
+[ 6. Prensagem de Tarjas, Tipografia e Moldura ]
+               │
+               ▼
+[ Pôster Final Renderizado Bit-a-Bit Idêntico ]
+                </pre>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 5: GUIA DE REIMPLEMENTAÇÃO AGNÓSTICA -->
+        <section class="doc-section" id="reimplementacao">
+            <h2>5. Guia de Reimplementação Agnóstica (Código de Referência)</h2>
+            <p>
+                Código autocontido em <strong>Python 3 com NumPy e Pillow</strong> implementando o núcleo matemático deste preset para você rodar ou portar para outra linguagem:
+            </p>
+
+            <div class="code-block-container">
+                <div class="code-block-header">
+                    <span>reimplement_brutalismo.py (Python 3 + NumPy)</span>
+                    <span style="color:#00f0ff;">LICENÇA: GPL-3.0 / MIT</span>
+                </div>
+                <pre class="code-block">
+import numpy as np
+from PIL import Image, ImageFilter
+
+def render_brutalismo(input_path: str, output_path: str):
+    img = Image.open(input_path).convert('RGB')
+    w, h = img.size
+    img = img.resize((720, int(round(h * 720 / w))), Image.Resampling.LANCZOS)
+    gray = img.convert('L')
+    blur = gray.filter(ImageFilter.BoxBlur(1.5))
+    arr = np.array(gray, dtype=np.float32)
+    unsharp = np.clip(arr + 3.5 * (arr - np.array(blur, dtype=np.float32)), 0, 255)
+    binary = np.where(unsharp >= 128, 250, 10).astype(np.uint8)
+    h, w = binary.shape
+    poster = np.repeat(binary[:, :, np.newaxis], 3, axis=2)
+    Image.fromarray(poster).save(output_path)
+                </pre>
+            </div>
+
+            <h3>Fragment Shader GLSL (Para Processamento em GPU em Tempo Real)</h3>
+            <div class="code-block-container">
+                <div class="code-block-header">brutalismo_shader.glsl</div>
+                <pre class="code-block">
+// Fragment Shader Brutalismo
+precision mediump float;
+uniform sampler2D u_tex;
+varying vec2 v_uv;
+void main() {
+    float l = dot(texture2D(u_tex, v_uv).rgb, vec3(0.299, 0.587, 0.114));
+    gl_FragColor = vec4(l >= 0.5 ? vec3(0.98) : vec3(0.04), 1.0);
+}
+                </pre>
+            </div>
+        </section>
+
+        <!-- RODAPÉ DE NAVEGAÇÃO -->
+        <footer style="margin-top: 50px; padding: 24px; background: #121216; border-top: 2px solid #333; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <a href="tabloide-popular.html" style="color: #00f0ff; text-decoration: none; font-weight: 800; font-size: 14px;">← ANTERIOR: TABLOIDE POPULAR</a>
+            <a href="../#secao-presets" style="color: #fff; text-decoration: none; font-weight: 800; font-size: 14px; background: #222; padding: 6px 12px; border: 1px solid #444;">CATÁLOGO GERAL</a>
+            <a href="trash-polka.html" style="color: #e2f835; text-decoration: none; font-weight: 800; font-size: 14px;">PRÓXIMO: TRASH POLKA →</a>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viagem Solitária — Especificação Técnica &amp; Algorítmica | NAVALHA</title>
+    <meta name="description" content="Especificação técnica e matemática detalhada do preset Viagem Solitária do Navalha para reimplementação agnóstica.">
+    <link rel="stylesheet" href="../../assets/style.css">
+    <style>
+        html, body {
+            height: auto !important;
+            min-height: 100% !important;
+            max-height: none !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+        .doc-container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 30px 20px 80px 20px;
+        }
+        .nav-breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .nav-breadcrumbs a {
+            color: #00f0ff;
+            text-decoration: none;
+        }
+        .nav-breadcrumbs a:hover {
+            text-decoration: underline;
+        }
+        .nav-breadcrumbs span {
+            color: #666;
+        }
+        .doc-hero-preset {
+            background-color: #141416;
+            border-left: 6px solid #e2f835;
+            border-top: 1px solid #333;
+            border-right: 1px solid #333;
+            border-bottom: 1px solid #333;
+            padding: 28px;
+            margin-bottom: 35px;
+            box-shadow: 6px 6px 0px #000;
+        }
+        .preset-badge-tag {
+            display: inline-block;
+            background-color: #e2f835;
+            color: #000000;
+            font-size: 12px;
+            font-weight: 900;
+            padding: 3px 8px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .preset-page-title {
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+        }
+        .preset-page-subtitle {
+            font-size: 15px;
+            color: #00f0ff;
+            letter-spacing: 1px;
+            margin: 0 0 16px 0;
+            text-transform: uppercase;
+        }
+        .quick-nav-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px dashed #333;
+        }
+        .quick-nav-btn {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 6px 12px;
+            background: #1c1c22;
+            color: #e2f835;
+            border: 1px solid #444;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .quick-nav-btn:hover {
+            background: #e2f835;
+            color: #000;
+        }
+        .doc-section {
+            margin-bottom: 45px;
+            background-color: #0f0f12;
+            border: 2px solid #222226;
+            padding: 32px;
+            box-shadow: 4px 4px 0px #000;
+        }
+        .doc-section h2 {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #e2f835;
+            margin-top: 0;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .doc-section h3 {
+            font-size: 18px;
+            font-weight: 800;
+            color: #ff0033;
+            margin: 26px 0 12px 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .doc-section p {
+            font-size: 15px;
+            line-height: 1.85;
+            color: #dcdad5;
+            margin-bottom: 16px;
+        }
+        .doc-section ul, .doc-section ol {
+            font-size: 15px;
+            line-height: 1.85;
+            color: #dcdad5;
+            margin-bottom: 18px;
+            padding-left: 24px;
+        }
+        .doc-section li {
+            margin-bottom: 8px;
+        }
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .palette-card {
+            background: #16161b;
+            border: 2px solid #333;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .palette-swatch {
+            height: 50px;
+            border: 1px solid #444;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.5);
+        }
+        .palette-meta {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .palette-meta strong {
+            color: #00f0ff;
+        }
+        .code-block-container {
+            position: relative;
+            margin: 20px 0;
+            background: #060608;
+            border: 1px solid #333;
+            border-left: 4px solid #00f0ff;
+        }
+        .code-block-header {
+            background: #111116;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+        }
+        .code-block {
+            margin: 0;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #aae0ff;
+            background: transparent;
+        }
+        .math-matrix-box {
+            background: #08080c;
+            border: 1px dashed #444;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #e2f835;
+            overflow-x: auto;
+        }
+        .formula-callout {
+            background: #121218;
+            border-left: 4px solid #ff0033;
+            padding: 12px 18px;
+            margin: 16px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            color: #ffffff;
+        }
+        .tribute-box {
+            background-color: #121216;
+            border-left: 4px solid #e2f835;
+            padding: 18px;
+            margin: 20px 0;
+        }
+        .tribute-name {
+            font-size: 16px;
+            font-weight: 900;
+            color: #e2f835;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .preview-flex {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #050507;
+            border: 2px solid #282830;
+            padding: 16px;
+            margin: 24px 0;
+        }
+        .preview-img {
+            max-width: 100%;
+            height: auto;
+            max-height: 560px;
+            border: 1px solid #222;
+        }
+        .preview-caption {
+            margin-top: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            color: #00f0ff;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .cli-box-dark {
+            background: #08080a;
+            border: 1px solid #333;
+            border-left: 3px solid #ff0033;
+            padding: 12px 16px;
+            margin-top: 14px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            color: #00f0ff;
+            word-break: break-all;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="doc-container">
+        <!-- Navegação Breadcrumbs -->
+        <nav class="nav-breadcrumbs" aria-label="Navegação">
+            <a href="../../">Navalha App</a>
+            <span>/</span>
+            <a href="../">Documentação</a>
+            <span>/</span>
+            <a href="../#secao-presets">Catálogo de Presets</a>
+            <span>/</span>
+            <strong style="color: #e2f835;">04. Viagem Solitária</strong>
+        </nav>
+
+        <!-- Cabeçalho do Preset -->
+        <header class="doc-hero-preset">
+            <span class="preset-badge-tag">PRESET CANÔNICO #04</span>
+            <h1 class="preset-page-title">Viagem Solitária</h1>
+            <div class="preset-page-subtitle">Papel Kraft & Datilografia // João W. Nery</div>
+            <p style="color: #bbb; font-size: 14px; margin: 0; line-height: 1.6;">
+                Especificação de engenharia reversa e guia algorítmico rigoroso para reimplementação independente em qualquer linguagem ou pipeline de shaders.
+            </p>
+            <div class="quick-nav-bar">
+                <a href="#memorial" class="quick-nav-btn">1. Memorial &amp; Contexto</a>
+                <a href="#paleta" class="quick-nav-btn">2. Paleta Canônica</a>
+                <a href="#algoritmo" class="quick-nav-btn">3. Método Algorítmico</a>
+                <a href="#pipeline" class="quick-nav-btn">4. Pipeline de Dados</a>
+                <a href="#reimplementacao" class="quick-nav-btn">5. Código de Reimplementação</a>
+                <a href="../../" class="quick-nav-btn" style="background:#ff0033; color:#fff; border-color:#ff0033;">⚡ Testar no App</a>
+            </div>
+        </header>
+
+        <!-- SEÇÃO 1: MEMORIAL HISTÓRICO -->
+        <section class="doc-section" id="memorial">
+            <h2>1. Memorial Histórico &amp; Contexto Contracultural</h2>
+            <p>
+                Inspirado na estética documental dos manuscritos e fichários datilografados em máquinas Olivetti durante os anos 70 e 80. Referencia a publicação clandestina e a escrita corajosa de cartas e relatórios médicos em papel kraft e fita de carbono oxidada que abriram caminho para os direitos transmasculinos no Brasil.
+            </p>
+            <div class="tribute-box">
+                <div class="tribute-name">★ Memória & Legado — João W. Nery (1950–2018)</div>
+                <p style="margin: 0; font-size: 14px; color: #ccc; line-height: 1.7;">
+                    Memória & Legado — João W. Nery (1950–2018): Escritor, psicólogo e ativista lendário, reconhecido como o primeiro homem trans a ser operado e documentar sua transição no Brasil em plena ditadura militar. Autor do clássico autobiográfico Viagem Solitária (1984/2011), João desafiou a clandestinidade civil e a violência institucional para educar gerações, lutar pela retificação de registro civil e inspirar o projeto de lei de identidade de gênero no Congresso Nacional.
+                </p>
+            </div>
+            <div class="preview-flex">
+                <img src="../../assets/exemplos/exemplo-viagem-solitaria.png" alt="Cartaz de referência Viagem Solitária" class="preview-img">
+                <div class="preview-caption">
+                    <strong>JOÃO W. NERY (Pioneiro Transmasculino &amp; Datilografia Subversiva)</strong><br/>
+<em>"VIAGEM SOLITÁRIA: MEU CORPO, MINHA LEI"</em>
+                </div>
+                <div class="cli-box-dark">
+                    $navalha poster joao-w-nery.jpg --estetica viagem-solitaria --frase "VIAGEM SOLITÁRIA: MEU CORPO, MINHA LEI" -o joao-w-nery-poster.png
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 2: PALETA CROMÁTICA -->
+        <section class="doc-section" id="paleta">
+            <h2>2. Paleta Cromática Canônica &amp; Mapeamento</h2>
+            <p>
+                O preset reduz estritamente o espaço de cores contínuo da imagem para a seguinte paleta canônica indexada:
+            </p>
+            <div class="palette-grid">
+                
+        <div class="palette-card">
+            <div class="palette-swatch" style="background-color: #2B1D0C;"></div>
+            <div class="palette-meta">
+                <strong>Sépia Carbono</strong><br>
+                HEX: <code>#2B1D0C</code>
+            </div>
+        </div>
+        <div class="palette-card">
+            <div class="palette-swatch" style="background-color: #C8A870;"></div>
+            <div class="palette-meta">
+                <strong>Ocre Kraft Cru</strong><br>
+                HEX: <code>#C8A870</code>
+            </div>
+        </div>
+        <div class="palette-card">
+            <div class="palette-swatch" style="background-color: #F5EBE1;"></div>
+            <div class="palette-meta">
+                <strong>Papel Datilografado</strong><br>
+                HEX: <code>#F5EBE1</code>
+            </div>
+        </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 3: MÉTODO ALGORÍTMICO -->
+        <section class="doc-section" id="algoritmo">
+            <h2>3. Especificação Algorítmica Passo a Passo (Rigor Matemático)</h2>
+            <p>
+                Difusão bidimensional Floyd-Steinberg de alta densidade associada a um recorte cirúrgico de silhueta (threshold 0.82) e gama rebaixada (0.85). A fusão do sépia escuro com o ocre kraft reproduz a granulação tátil de documentos antigos arquivados sob sigilo.
+            </p>
+
+            <h3>Etapa 3.1: Resolução Base &amp; Downsampling</h3>
+            <p>
+                A largura base é parametrizada em <strong>640px (Lanczos3)</strong>. O redimensionamento deve ocorrer antes da difusão de erro para que os grãos ou blocos de retícula tenham escala física perceptível ao olhar humano.
+            </p>
+
+            <h3>Etapa 3.2: Tratamento Tonal &amp; Unsharp Masking</h3>
+            <p>
+                Luminância ITU-R BT.601 + Unsharp Suave (r=1.2, k=1.8) + Queima Suave (Levels 10-245).
+            </p>
+            <div class="formula-callout">
+                L(x, y) = 0.299 · R(x, y) + 0.587 · G(x, y) + 0.114 · B(x, y)
+            </div>
+
+            <h3>Etapa 3.3: Algoritmo de Dither &amp; Difusão de Erro / Retícula</h3>
+            <p>
+                <strong>Algoritmo Central:</strong> Floyd-Steinberg Dithering em Serpentina Bidirecional
+            </p>
+            <div class="math-matrix-box">
+Matriz Floyd-Steinberg em Serpentina Alternada:
+Varredura Esquerda->Direita:
+              [ * ]   7/16
+      3/16    5/16    1/16
+Varredura Direita->Esquerda:
+      7/16    [ * ]
+      1/16    5/16    3/16
+Propaga 100% do erro residual eliminando artefatos unidirecionais.
+            </div>
+            <p>
+                <strong>Particularidade do Preset:</strong> Textura de fita de máquina de escrever dos anos 70, papel kraft e sépia queimado; homenagem ao primeiro homem trans operado no Brasil.
+            </p>
+        </section>
+
+        <!-- SEÇÃO 4: DIAGRAMA DE PIPELINE -->
+        <section class="doc-section" id="pipeline">
+            <h2>4. Diagrama de Pipeline de Dados</h2>
+            <div class="code-block-container">
+                <div class="code-block-header">Fluxo Unidirecional Determinístico</div>
+                <pre class="code-block">
+[ Imagem de Entrada (RGB/RGBA) ]
+               │
+               ▼
+[ 1. Downsampling Físico: 640px (Lanczos3) ]
+               │
+               ▼
+[ 2. Conversão de Luminância ITU-R BT.601 &amp; Filtro Espacial ]
+               │
+               ▼
+[ 3. Pré-processamento Tonal &amp; Queima de Níveis ]
+               │
+               ▼
+[ 4. Retícula &amp; Dither: Floyd-Steinberg Dithering em Serpentina Bidirecional ]
+               │
+               ▼
+[ 5. Mapeamento Estrito na Paleta de Cores ]
+               │
+               ▼
+[ 6. Prensagem de Tarjas, Tipografia e Moldura ]
+               │
+               ▼
+[ Pôster Final Renderizado Bit-a-Bit Idêntico ]
+                </pre>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 5: GUIA DE REIMPLEMENTAÇÃO AGNÓSTICA -->
+        <section class="doc-section" id="reimplementacao">
+            <h2>5. Guia de Reimplementação Agnóstica (Código de Referência)</h2>
+            <p>
+                Código autocontido em <strong>Python 3 com NumPy e Pillow</strong> implementando o núcleo matemático deste preset para você rodar ou portar para outra linguagem:
+            </p>
+
+            <div class="code-block-container">
+                <div class="code-block-header">
+                    <span>reimplement_viagem_solitaria.py (Python 3 + NumPy)</span>
+                    <span style="color:#00f0ff;">LICENÇA: GPL-3.0 / MIT</span>
+                </div>
+                <pre class="code-block">
+import numpy as np
+from PIL import Image, ImageFilter
+
+def floyd_steinberg_serpentine(gray: np.ndarray) -> np.ndarray:
+    h, w = gray.shape
+    buf = gray.astype(np.float32)
+    out = np.zeros((h, w), dtype=np.uint8)
+    for y in range(h):
+        left_to_right = (y % 2 == 0)
+        xs = range(w) if left_to_right else range(w - 1, -1, -1)
+        for x in xs:
+            val = buf[y, x]
+            q = 255.0 if val >= 128.0 else 0.0
+            out[y, x] = int(q)
+            err = val - q
+            if left_to_right:
+                if x + 1 < w: buf[y, x + 1] += err * (7/16)
+                if y + 1 < h:
+                    if x - 1 >= 0: buf[y + 1, x - 1] += err * (3/16)
+                    buf[y + 1, x] += err * (5/16)
+                    if x + 1 < w: buf[y + 1, x + 1] += err * (1/16)
+            else:
+                if x - 1 >= 0: buf[y, x - 1] += err * (7/16)
+                if y + 1 < h:
+                    if x + 1 < w: buf[y + 1, x + 1] += err * (3/16)
+                    buf[y + 1, x] += err * (5/16)
+                    if x - 1 >= 0: buf[y + 1, x - 1] += err * (1/16)
+    return out
+
+def render_viagem_solitaria(input_path: str, output_path: str):
+    img = Image.open(input_path).convert('RGB')
+    w, h = img.size
+    img = img.resize((640, int(round(h * 640 / w))), Image.Resampling.LANCZOS)
+    gray = img.convert('L')
+    blur = gray.filter(ImageFilter.BoxBlur(1.2))
+    arr_gray = np.array(gray, dtype=np.float32)
+    unsharp = np.clip(arr_gray + 1.8 * (arr_gray - np.array(blur, dtype=np.float32)), 0, 255)
+    levels = np.clip((unsharp - 10.0) / 235.0 * 255.0, 0, 255)
+    dithered = floyd_steinberg_serpentine(levels)
+    h, w = dithered.shape
+    poster = np.zeros((h, w, 3), dtype=np.uint8)
+    poster[:, :] = [200, 168, 112] # Papel Kraft #C8A870
+    poster[dithered == 0] = [43, 29, 12] # Tinta Carbono #2B1D0C
+    poster[(dithered == 255) & (arr_gray < 230)] = [245, 235, 225] # Branco Fita #F5EBE1
+    Image.fromarray(poster).save(output_path)
+                </pre>
+            </div>
+
+            <h3>Fragment Shader GLSL (Para Processamento em GPU em Tempo Real)</h3>
+            <div class="code-block-container">
+                <div class="code-block-header">viagem_solitaria_shader.glsl</div>
+                <pre class="code-block">
+// Fragment Shader Viagem Solitária
+precision mediump float;
+uniform sampler2D u_tex;
+varying vec2 v_uv;
+void main() {
+    vec4 c = texture2D(u_tex, v_uv);
+    float l = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+    vec3 colCarbono = vec3(0.169, 0.114, 0.047); // #2B1D0C
+    vec3 colKraft   = vec3(0.784, 0.659, 0.439); // #C8A870
+    vec3 colFita    = vec3(0.961, 0.922, 0.882); // #F5EBE1
+    if (l < 0.45) gl_FragColor = vec4(colCarbono, 1.0);
+    else if (l > 0.85) gl_FragColor = vec4(colFita, 1.0);
+    else gl_FragColor = vec4(colKraft, 1.0);
+}
+                </pre>
+            </div>
+        </section>
+
+        <!-- RODAPÉ DE NAVEGAÇÃO -->
+        <footer style="margin-top: 50px; padding: 24px; background: #121216; border-top: 2px solid #333; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <a href="xerox-podre.html" style="color: #00f0ff; text-decoration: none; font-weight: 800; font-size: 14px;">← ANTERIOR: XEROX PODRE</a>
+            <a href="../#secao-presets" style="color: #fff; text-decoration: none; font-weight: 800; font-size: 14px; background: #222; padding: 6px 12px; border: 1px solid #444;">CATÁLOGO GERAL</a>
+            <a href="lapa-noturna.html" style="color: #e2f835; text-decoration: none; font-weight: 800; font-size: 14px;">PRÓXIMO: LAPA NOTURNA →</a>
+        </footer>
+    </div>
+</body>
+</html>

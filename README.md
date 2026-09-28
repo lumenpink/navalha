@@ -165,7 +165,7 @@ navalha poster foto.jpg --frase "RESISTÊNCIA" --estetica punk-riot --separar-ch
 A aplicação web roda **100% no navegador da usuária via WebAssembly**. Suas fotos jamais saem da sua máquina.
 
 * **🌐 Acesso Online Oficial:** [**https://navalha.2lp.in**](https://navalha.2lp.in)
-* **📖 Manifesto e Histórico dos Presets:** [**https://navalha.2lp.in/doc**](https://navalha.2lp.in/doc) (memorial visual em tipografia ampliada de alto contraste, com comandos CLI exatos para cada uma das homenageadas e leitura imersiva de todos os presets)
+* **📖 Manifesto, Histórico & Especificações dos 20 Presets:** [**https://navalha.2lp.in/doc**](https://navalha.2lp.in/doc) (memorial visual e páginas dedicadas com rigor matemático, matrizes de dither, código de referência em Python/NumPy e shaders GLSL para reimplementação aberta de cada um dos 20 presets canônicos)
 
 Para executar localmente em sua máquina:
 ```bash
