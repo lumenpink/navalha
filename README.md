@@ -215,7 +215,17 @@ cd crates/navalha-web && wasm-pack build --target web --out-dir dist/pkg
 ./scripts/build.sh
 ```
 
+### 🔄 Pipeline de Integração Contínua e Deploy (CI/CD)
+
+O ciclo de vida do repositório conta com pipeline unificado em [`.forgejo/workflows/ci.yml`](.forgejo/workflows/ci.yml) executado sob a imagem de container `codeberg.org/lumenpink/gost-ci-wasm:latest`:
+
+1. **Validação do Workspace:** Execução de `cargo check --workspace` e `cargo test --workspace`.
+2. **Build da CLI Nativa:** Compilação do binário release em `dist/bin/navalha-linux-x86_64`.
+3. **Build WebAssembly:** Compilação com `wasm-pack` gerando os módulos em `site/pkg/` e sincronizando assets estáticos.
+4. **Deploy Automatizado (Main / Tags):** Publicação contínua da aplicação web em `https://navalha.2lp.in` via Cloudflare Workers (`wrangler deploy`) e redundância estática no Codeberg Pages (`actions/pages@v1`).
+
 ---
+
 
 ## 📜 Licença & Matriz de Conformidade GOST 1.1.0
 
