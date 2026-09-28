@@ -1,0 +1,24 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/navalha-core",
+    "crates/navalha-cli",
+    "crates/navalha-web",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["Lumen Pink <hi@lumen.pink>"]
+license = "GPL-3.0-or-later"
+repository = "https://codeberg.org/lumenpink/navalha"
+homepage = "https://codeberg.org/lumenpink/navalha"
+
+[workspace.dependencies]
+navalha-core = { path = "crates/navalha-core" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+ab_glyph = "0.2"
+thiserror = "2.0"
+clap = { version = "4.5", features = ["derive", "cargo"] }

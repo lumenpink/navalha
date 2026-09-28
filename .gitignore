@@ -1,0 +1,36 @@
+# Rust
+target/
+**/*.rs.bk
+Cargo.lock
+
+# WebAssembly & Frontend Build
+crates/navalha-web/pkg/
+crates/navalha-web/dist/
+dist/
+pkg/
+
+# Node / Web
+node_modules/
+.wrangler/
+
+# IDEs & OS
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# CCCP / Antigravity
+.antigravity/
+AGENT.md
+AGENTS.md
+tickets.md
+tickets.tmp
+*.tmp
+
+# Local tests outputs
+test_output/
+poster_final.png
+saida.png
+temp_*.png

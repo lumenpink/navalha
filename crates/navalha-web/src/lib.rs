@@ -1,0 +1,2049 @@
+#![allow(
+    non_snake_case,
+    clippy::collapsible_if,
+    clippy::redundant_closure,
+    clippy::useless_borrows_in_formatting,
+    clippy::too_many_arguments,
+    clippy::type_complexity
+)]
+
+use base64::engine::general_purpose::STANDARD as BASE64;
+use base64::Engine;
+use dioxus::prelude::*;
+use gloo_timers::future::TimeoutFuture;
+use image::{ImageFormat, ImageReader, Rgba, RgbaImage};
+use navalha_core::{
+    generate_poster_svg, AestheticPreset, DamageEffect, DamageElement,
+    DitherAlgorithm, Palette, ScaleFactor, StickerBorder, StickerElement, StickerKind, TarjaEffect,
+};
+use std::io::Cursor;
+use wasm_bindgen::prelude::*;
+use web_sys::{HtmlAnchorElement, HtmlInputElement};
+
+#[wasm_bindgen(start)]
+pub fn start() {
+    console_error_panic_hook::set_once();
+    dioxus::launch(App);
+}
+
+fn create_default_graphic(w: u32, h: u32) -> RgbaImage {
+    let mut img = RgbaImage::new(w, h);
+    let cx = w as f32 / 2.0;
+    let cy = h as f32 / 2.0;
+    let r_head = w as f32 * 0.32;
+
+    for y in 0..h {
+        for x in 0..w {
+            let dx = x as f32 - cx;
+            let dy = y as f32 - cy;
+            let dist = (dx * dx + dy * dy).sqrt();
+
+            // Desenha silhueta gráfica tosca para início imediato
+            if dist < r_head {
+                let inside_eye1 = (x as f32 - (cx - 35.0)).powi(2) + (y as f32 - (cy - 20.0)).powi(2) < 220.0;
+                let inside_eye2 = (x as f32 - (cx + 35.0)).powi(2) + (y as f32 - (cy - 20.0)).powi(2) < 220.0;
+                let inside_mouth = y as f32 > cy + 25.0 && (y as f32) < cy + 45.0 && dx.abs() < 40.0;
+
+                if inside_eye1 || inside_eye2 || inside_mouth {
+                    img.put_pixel(x, y, Rgba([255, 255, 255, 255]));
+                } else {
+                    let grad = ((dist / r_head) * 180.0) as u8;
+                    img.put_pixel(x, y, Rgba([grad, grad, grad, 255]));
+                }
+            } else {
+                // Fundo claro recortável pela guilhotina
+                img.put_pixel(x, y, Rgba([245, 245, 245, 255]));
+            }
+        }
+    }
+    img
+}
+
+fn trigger_download(href: &str, filename: &str) {
+    if let Some(window) = web_sys::window() {
+        if let Some(document) = window.document() {
+            if let Ok(elem) = document.create_element("a") {
+                let a: HtmlAnchorElement = elem.unchecked_into();
+                a.set_href(href);
+                a.set_download(filename);
+                a.click();
+            }
+        }
+    }
+}
+
+#[component]
+pub fn App() -> Element {
+    // Imagem base decodificada
+    let raw_image = use_signal(|| create_default_graphic(360, 480));
+
+    // Abas do painel de controle ("poster", "intervencao", "ajustes")
+    let mut active_tab = use_signal(|| String::from("poster"));
+    // Alternador de visão mobile ("controls", "preview")
+    let mut mobile_view = use_signal(|| String::from("controls"));
+
+    // Controles principais do Pôster Relâmpago
+    let mut phrase = use_signal(|| String::from("EU SOBREVIVO AO MUNDO"));
+    let mut phrase_top = use_signal(|| String::new());
+    let mut aesthetic_id = use_signal(|| String::from("punk-riot"));
+    let mut banner_font_family = use_signal(|| String::from("impact"));
+    let mut banner_font_size = use_signal(|| 48u32);
+    let mut banner_auto_fit = use_signal(|| true);
+    let mut banner_pos_x = use_signal(|| 50u32); // 50%
+    let mut banner_pos_y = use_signal(|| 85u32); // 85%
+    let mut banner_rotation = use_signal(|| 0i16); // 0 graus
+    let mut banner_fg_color = use_signal(|| String::from("auto"));
+    let mut banner_bg_color = use_signal(|| String::from("auto"));
+    let mut banner_border_finish = use_signal(|| String::from("nenhuma"));
+    let mut banner_border_width = use_signal(|| 3u32);
+    let banner_border_color = use_signal(|| String::from("auto"));
+    let mut banner_effect = use_signal(|| String::from("solida"));
+    let mut banner_adapt_preset = use_signal(|| true);
+    let mut banner_sem_faixa = use_signal(|| false);
+
+    // Controles de edição de recorte (guilhotina) a partir do preset ativo
+    let mut recorte_adapt_preset = use_signal(|| true);
+    let mut recorte_ativo = use_signal(|| true);
+    let mut recorte_threshold = use_signal(|| 85u32); // 85%
+    let mut recorte_inverter = use_signal(|| true);
+
+    // Painel de ajustes avançados (acordeão)
+    let mut show_advanced = use_signal(|| false);
+    let mut dither_override = use_signal(|| String::from("auto"));
+    let mut palette_override = use_signal(|| String::from("auto"));
+    let mut threshold_slider = use_signal(|| 85u32); // 85%
+    let mut unsharp_slider = use_signal(|| 22u32);   // 2.2x
+    let mut stretch_y_slider = use_signal(|| 15u32); // 1.5x
+    let mut scale_select = use_signal(|| String::from("2x"));
+    let mut rotation_deg = use_signal(|| 0u32);
+    let mut image_zoom = use_signal(|| 100u32); // percentual: 100 = 1.0x
+    let mut image_pos_x = use_signal(|| 50u32); // percentual: 50 = centro (0 a 100)
+    let mut image_pos_y = use_signal(|| 50u32); // percentual: 50 = centro (0 a 100)
+    let mut auto_threshold = use_signal(|| false);
+    let mut active_damages = use_signal(|| Vec::<String>::new());
+    let mut active_stickers = use_signal(|| Vec::<String>::new());
+    let mut filter_stickers = use_signal(|| false);
+
+    // Caixas de texto extras arbitrárias — (texto, pos_x*100, pos_y*100, tamanho, inclinacao, acabamento)
+    // Acabamentos: "tarja", "tape", "serrilhado", "rasgo"
+    let mut extra_texts: Signal<Vec<(String, u32, u32, u32, i32, String)>> = use_signal(|| Vec::new());
+    // Estado do formulário de nova caixa de texto
+    let mut form_texto   = use_signal(|| String::new());
+    let mut form_pos_x   = use_signal(|| 50u32);
+    let mut form_pos_y   = use_signal(|| 50u32);
+    let mut form_tamanho = use_signal(|| 48u32);
+    let mut form_incl    = use_signal(|| 0i32);
+    let mut form_acabamento = use_signal(|| String::from("tarja"));
+    let mut form_editando   = use_signal(|| Option::<usize>::None); // índice em edição
+
+    // Parâmetros individuais de danos: mapa tipo -> (posX*100, posY*100, escala*100)
+    // Posição em % inteiro (0–100), escala em % inteiro (10–500, padrão 100 = 1.0x)
+    use std::collections::HashMap;
+    let mut damage_params = use_signal(|| HashMap::<String, (u32, u32, u32)>::new());
+    // Dano selecionado no subpainel de ajuste
+    let mut selected_damage = use_signal(|| Option::<String>::None);
+
+    // Parâmetros individuais de stickers: mapa tipo -> (posX*100, posY*100, tamanho_px, rotacao)
+    let mut sticker_params = use_signal(|| HashMap::<String, (u32, u32, u32, i32)>::new());
+    // Bordas individuais de stickers: mapa tipo -> (estilo_str, largura_px)
+    let mut sticker_borders = use_signal(|| HashMap::<String, (String, u32)>::new());
+    // Imagem personalizada carregada para sticker/recorte próprio
+    let custom_sticker_image = use_signal(|| Option::<std::sync::Arc<RgbaImage>>::None);
+    // Sticker selecionado no subpainel de ajuste
+    let mut selected_sticker = use_signal(|| Option::<String>::None);
+
+    // Feedback de cópia
+    let mut copy_status = use_signal(|| String::from("COPIAR COMANDO"));
+
+    // Sinais para retenção do cartaz renderizado e status de debounce/processamento
+    let mut rendered_png_uri = use_signal(|| String::new());
+    let mut rendered_svg = use_signal(|| String::new());
+    let mut is_processing = use_signal(|| false);
+    let render_seq = use_hook(|| std::rc::Rc::new(std::cell::Cell::new(0u64)));
+    let subject_cache = use_hook(|| std::rc::Rc::new(std::cell::RefCell::new(navalha_core::SubjectLayerCache::new())));
+
+    // Efeito reativo com debounce para reprocessamento do cartaz
+    {
+        let seq_ref = render_seq.clone();
+        let cache_ref = subject_cache.clone();
+        use_effect(move || {
+            // Rastreamento explícito de todos os sinais que alteram a estética do pôster
+            let raw = raw_image();
+            let phr = phrase();
+            let phr_top = phrase_top();
+            let aes = aesthetic_id();
+            let adv = show_advanced();
+            let d_override = dither_override();
+            let p_override = palette_override();
+            let th_slider = threshold_slider();
+            let un_slider = unsharp_slider();
+            let st_slider = stretch_y_slider();
+            let sc_sel = scale_select();
+            let rot_deg = rotation_deg();
+            let zoom = image_zoom();
+            let pos_x = image_pos_x();
+            let pos_y = image_pos_y();
+            let auto_th = auto_threshold();
+            let damages = active_damages();
+            let d_params = damage_params();
+            let stickers = active_stickers();
+            let s_params = sticker_params();
+            let s_borders = sticker_borders();
+            let custom_stk_img = custom_sticker_image();
+            let f_stickers = filter_stickers();
+            let extras = extra_texts();
+            let f_txt = form_texto();
+            let f_px = form_pos_x();
+            let f_py = form_pos_y();
+            let f_tam = form_tamanho();
+            let f_inc = form_incl();
+            let f_acab = form_acabamento();
+            let f_edit = form_editando();
+            let b_fam = banner_font_family();
+            let b_sz = banner_font_size();
+            let b_af = banner_auto_fit();
+            let b_px = banner_pos_x();
+            let b_py = banner_pos_y();
+            let b_rot = banner_rotation();
+            let b_fg = banner_fg_color();
+            let b_bg = banner_bg_color();
+            let b_bfinish = banner_border_finish();
+            let b_bwidth = banner_border_width();
+            let b_bcol = banner_border_color();
+            let b_eff = banner_effect();
+            let b_adapt = banner_adapt_preset();
+            let b_sem_faixa = banner_sem_faixa();
+            let r_adapt = recorte_adapt_preset();
+            let r_ativo = recorte_ativo();
+            let r_th = recorte_threshold();
+            let r_inv = recorte_inverter();
+
+            let my_seq = seq_ref.get() + 1;
+            seq_ref.set(my_seq);
+
+            let checker = seq_ref.clone();
+            let task_cache = cache_ref.clone();
+            spawn(async move {
+                // Debounce de 250ms após interações do usuário (imediato apenas na carga inicial)
+                if my_seq > 1 {
+                    TimeoutFuture::new(250).await;
+                }
+
+                // Se uma nova interação ocorreu durante a janela de inatividade, descarta esta tarefa obsoleta
+                if checker.get() != my_seq {
+                    return;
+                }
+
+                is_processing.set(true);
+
+                // Libera um micro-tick para permitir que a interface pinte o indicador de carregamento
+                TimeoutFuture::new(0).await;
+                if checker.get() != my_seq {
+                    return;
+                }
+
+                let current_preset = AestheticPreset::parse(&aes).unwrap_or(AestheticPreset::PunkRiot);
+                let (mut g, mut pr, mut dt, mut pal, mut sc, mut comp) =
+                    current_preset.build_pipeline_and_composition_dual(&phr, if phr_top.trim().is_empty() { None } else { Some(&phr_top) });
+
+                if !r_adapt {
+                    g.enabled = r_ativo;
+                    g.threshold = (r_th as f32) / 100.0;
+                    g.invert = r_inv;
+                }
+
+                pr.rotation = rot_deg;
+                pr.zoom = (zoom as f32) / 100.0;
+                comp.subject_offset_x = ((pos_x as i32 - 50) * 800) / 100;
+                comp.subject_offset_y = ((pos_y as i32 - 50) * 1100) / 100;
+                if auto_th {
+                    g.auto_threshold = true;
+                }
+
+                // Injeta danos com posição e escala customizáveis
+                for d_str in damages.iter() {
+                    if let Some(kind) = DamageEffect::parse(d_str) {
+                        let ja_existe = comp.overlay.damage_elements.iter().any(|e| e.kind == kind);
+                        if !ja_existe {
+                            let params = d_params.get(d_str).copied();
+                            let elem = if let Some((px100, py100, sc100)) = params {
+                                DamageElement::new(
+                                    kind,
+                                    (px100 as f32) / 100.0,
+                                    (py100 as f32) / 100.0,
+                                    (sc100 as f32) / 100.0,
+                                )
+                            } else {
+                                DamageElement::default_for(kind)
+                            };
+                            comp.overlay.damage_elements.push(elem);
+                        }
+                    }
+                }
+
+                // Posições automáticas para stickers sem parâmetros customizados
+                let sticker_auto_positions: &[(f32, f32, i16)] = &[
+                    (0.84, 0.16, -10),
+                    (0.16, 0.82, 12),
+                    (0.16, 0.18, -6),
+                    (0.84, 0.78, 8),
+                    (0.85, 0.48, -12),
+                    (0.15, 0.48, 14),
+                ];
+                for (idx, s_str) in stickers.iter().enumerate() {
+                    if let Some(kind) = StickerKind::parse(s_str) {
+                        let params = s_params.get(s_str).copied();
+                        let (px, py, size, rot) = if let Some((px100, py100, sz, rot100)) = params {
+                            ((px100 as f32) / 100.0, (py100 as f32) / 100.0, sz, rot100 as i16)
+                        } else {
+                            let (apx, apy, arot) = sticker_auto_positions[idx % sticker_auto_positions.len()];
+                            (apx, apy, 100, arot)
+                        };
+                        let (b_style, b_width) = s_borders.get(s_str).cloned().unwrap_or_else(|| (String::from("diecut"), 4u32));
+                        let border = StickerBorder::parse(&b_style).unwrap_or(StickerBorder::DieCutBranco);
+                        let el = if kind == StickerKind::Custom {
+                            if let Some(ref c_img) = custom_stk_img {
+                                StickerElement::new_custom(c_img.clone(), px, py, size, rot, f_stickers)
+                            } else {
+                                StickerElement::new(kind, px, py, size, rot, f_stickers)
+                            }
+                        } else {
+                            StickerElement::new(kind, px, py, size, rot, f_stickers)
+                        };
+                        comp.stickers.push(el.with_border(border, b_width));
+                    }
+                }
+
+                // Injeta caixas de texto extras salvas (pulando a que estiver atualmente em edição)
+                for (idx, (txt, px100, py100, tam, incl, acab)) in extras.iter().enumerate() {
+                    if f_edit == Some(idx) {
+                        continue;
+                    }
+                    use navalha_core::{RgbColor, TextElement};
+                    let pos_x = (*px100 as f32) / 100.0;
+                    let pos_y = (*py100 as f32) / 100.0;
+                    let (cor_texto, bg_tarja, padding, tarja_effect) = match acab.as_str() {
+                        "xerox"      => (RgbColor::new(245, 242, 235), Some(RgbColor::new(28, 25, 23)), 14u32, TarjaEffect::Xerox),
+                        "tape"       => (RgbColor::new(20, 20, 20),   Some(RgbColor::new(200, 200, 180)), 6u32, TarjaEffect::Solida),
+                        "serrilhado" => (RgbColor::new(0, 0, 0),      Some(RgbColor::new(255, 230, 0)),   10u32, TarjaEffect::Solida),
+                        "rasgo"      => (RgbColor::new(200, 0, 0),    None,                               0u32,  TarjaEffect::Solida),
+                        _            => (RgbColor::new(255, 255, 255),Some(RgbColor::new(0, 0, 0)),      10u32, TarjaEffect::Solida),
+                    };
+                    comp.foreground_texts.push(TextElement {
+                        text: txt.to_uppercase(),
+                        font_size: *tam as f32,
+                        stretch_x: 1.0,
+                        stretch_y: 1.4,
+                        color: cor_texto,
+                        bg_tarja,
+                        tarja_padding: padding,
+                        pos_x,
+                        pos_y,
+                        center_x: true,
+                        rotation: *incl as i16,
+                        tarja_effect,
+                        ..Default::default()
+                    });
+                }
+
+                // Preview em tempo real da caixa de texto digitada/editada no formulário
+                let form_txt_up = f_txt.trim().to_uppercase();
+                if !form_txt_up.is_empty() {
+                    use navalha_core::{RgbColor, TextElement};
+                    let pos_x = (f_px as f32) / 100.0;
+                    let pos_y = (f_py as f32) / 100.0;
+                    let (cor_texto, bg_tarja, padding, tarja_effect) = match f_acab.as_str() {
+                        "xerox"      => (RgbColor::new(245, 242, 235), Some(RgbColor::new(28, 25, 23)), 14u32, TarjaEffect::Xerox),
+                        "tape"       => (RgbColor::new(20, 20, 20),   Some(RgbColor::new(200, 200, 180)), 6u32, TarjaEffect::Solida),
+                        "serrilhado" => (RgbColor::new(0, 0, 0),      Some(RgbColor::new(255, 230, 0)),   10u32, TarjaEffect::Solida),
+                        "rasgo"      => (RgbColor::new(200, 0, 0),    None,                               0u32,  TarjaEffect::Solida),
+                        _            => (RgbColor::new(255, 255, 255),Some(RgbColor::new(0, 0, 0)),      10u32, TarjaEffect::Solida),
+                    };
+                    comp.foreground_texts.push(TextElement {
+                        text: form_txt_up,
+                        font_size: f_tam as f32,
+                        stretch_x: 1.0,
+                        stretch_y: 1.4,
+                        color: cor_texto,
+                        bg_tarja,
+                        tarja_padding: padding,
+                        pos_x,
+                        pos_y,
+                        center_x: true,
+                        rotation: f_inc as i16,
+                        tarja_effect,
+                        ..Default::default()
+                    });
+                }
+
+                if b_adapt {
+                    let def_banner = current_preset.default_banner_element(&phr);
+                    for t in comp.foreground_texts.iter_mut() {
+                        t.font_family = def_banner.font_family;
+                        t.auto_fit = b_af;
+                    }
+                    if let Some(t) = comp.foreground_texts.get_mut(0) {
+                        t.pos_x = (b_px as f32) / 100.0;
+                        t.pos_y = (b_py as f32) / 100.0;
+                        t.rotation = b_rot;
+                        t.color = def_banner.color;
+                        t.bg_tarja = def_banner.bg_tarja;
+                        t.border_finish = def_banner.border_finish;
+                        t.border_width = def_banner.border_width;
+                        t.border_color = def_banner.border_color;
+                        t.tarja_effect = def_banner.tarja_effect;
+                    }
+                } else {
+                    let parsed_fam = navalha_core::BannerFontFamily::parse(&b_fam).unwrap_or(navalha_core::BannerFontFamily::Impact);
+                    for t in comp.foreground_texts.iter_mut() {
+                        t.font_family = parsed_fam;
+                        t.auto_fit = b_af;
+                    }
+                    if let Some(t) = comp.foreground_texts.get_mut(0) {
+                        t.pos_x = (b_px as f32) / 100.0;
+                        t.pos_y = (b_py as f32) / 100.0;
+                        t.rotation = b_rot;
+
+                        if b_fg != "auto" {
+                            if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_fg) {
+                                t.color = col;
+                            }
+                        }
+                        if b_bg != "auto" {
+                            if b_bg == "none" || b_bg == "sem" {
+                                t.bg_tarja = None;
+                            } else if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_bg) {
+                                t.bg_tarja = Some(col);
+                            }
+                        }
+                        if let Some(finish) = navalha_core::TarjaBorderFinish::parse(&b_bfinish) {
+                            t.border_finish = finish;
+                        }
+                        t.border_width = b_bwidth;
+                        if b_bcol != "auto" {
+                            if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_bcol) {
+                                t.border_color = Some(col);
+                            }
+                        }
+                        if let Some(ef) = navalha_core::TarjaEffect::parse(&b_eff) {
+                            t.tarja_effect = ef;
+                        }
+                    }
+                }
+
+                // Aplica overrides caso o usuário tenha ajustado os controles finos
+                if adv {
+                    g.threshold = (th_slider as f32) / 100.0;
+                    pr.unsharp_strength = (un_slider as f32) / 10.0;
+                    let sy = (st_slider as f32) / 10.0;
+
+                    for t in comp.foreground_texts.iter_mut() {
+                        t.stretch_y = sy;
+                        t.font_size = b_sz as f32;
+                    }
+
+                    if d_override != "auto" {
+                        if let Some(d) = DitherAlgorithm::parse(&d_override) {
+                            dt = d;
+                        }
+                    }
+
+                    if p_override != "auto" {
+                        if let Some(p) = Palette::find_preset(&p_override) {
+                            pal = p;
+                        }
+                    }
+
+                    if let Some(s) = ScaleFactor::parse(&sc_sel) {
+                        sc = s;
+                    }
+                }
+
+                if b_sem_faixa {
+                    comp.foreground_texts.clear();
+                }
+
+                if checker.get() != my_seq {
+                    return;
+                }
+
+                let is_cancelled = {
+                    let chk = checker.clone();
+                    move || chk.get() != my_seq
+                };
+
+                let processed_opt = {
+                    let mut cache = task_cache.borrow_mut();
+                    cache.get_or_process_cancellable(&raw, &g, &pr, dt, &pal, sc, &is_cancelled)
+                };
+
+                let processed = match processed_opt {
+                    Some(p) => p,
+                    None => return, // Processamento cancelado ou tornado obsoleto por nova interação
+                };
+
+                if checker.get() != my_seq {
+                    return;
+                }
+
+                let poster_opt = navalha_core::render_poster_cancellable(&comp, Some(&processed), &is_cancelled);
+                let poster = match poster_opt {
+                    Some(p) => p,
+                    None => return,
+                };
+
+                if checker.get() != my_seq {
+                    return;
+                }
+
+                // Converte pôster para data URI PNG
+                let mut png_bytes = Vec::new();
+                let _ = poster.write_to(&mut Cursor::new(&mut png_bytes), ImageFormat::Png);
+                let png_b64 = BASE64.encode(&png_bytes);
+                let png_data_uri = format!("data:image/png;base64,{png_b64}");
+
+                // Gera SVG
+                let svg_string = generate_poster_svg(&comp, Some(&png_b64));
+
+                // Atualiza os sinais se nenhuma outra alteração ocorreu no meio do caminho
+                if checker.get() == my_seq {
+                    rendered_png_uri.set(png_data_uri);
+                    rendered_svg.set(svg_string);
+                    is_processing.set(false);
+                }
+            });
+        });
+    }
+
+    let dither_str = dither_override();
+    let palette_str = palette_override();
+    let dither_label = if dither_str == "auto" { "atkinson" } else { &dither_str };
+    let palette_label = if palette_str == "auto" { "classic-punk" } else { &palette_str };
+
+    // Gera espelho da sintaxe CLI em tempo real
+    let dano_flag = if active_damages().is_empty() {
+        String::new()
+    } else {
+        let specs: Vec<String> = active_damages().iter().map(|d_str| {
+            if let Some(&(px100, py100, sc100)) = damage_params().get(d_str.as_str()) {
+                let default_elem = DamageEffect::parse(d_str).map(|k| DamageElement::default_for(k));
+                let is_default = default_elem.map(|def| {
+                    let dpx = (def.pos_x * 100.0).round() as u32;
+                    let dpy = (def.pos_y * 100.0).round() as u32;
+                    px100 == dpx && py100 == dpy && sc100 == 100
+                }).unwrap_or(true);
+                if is_default {
+                    d_str.clone()
+                } else {
+                    format!("{}:{:.2}:{:.2}:{:.2}", d_str,
+                        (px100 as f32) / 100.0,
+                        (py100 as f32) / 100.0,
+                        (sc100 as f32) / 100.0)
+                }
+            } else {
+                d_str.clone()
+            }
+        }).collect();
+        format!(" --dano {}", specs.join(","))
+    };
+
+    let sticker_flag = if active_stickers().is_empty() {
+        String::new()
+    } else {
+        let sticker_auto_positions: &[(f32, f32, i16)] = &[
+            (0.84, 0.16, -10), (0.16, 0.82, 12), (0.16, 0.18, -6),
+            (0.84, 0.78, 8), (0.85, 0.48, -12), (0.15, 0.48, 14),
+        ];
+        let s_borders_map = sticker_borders();
+        let specs: Vec<String> = active_stickers().iter().enumerate().map(|(idx, s_str)| {
+            let (b_style, b_width) = s_borders_map.get(s_str.as_str()).cloned().unwrap_or_else(|| (String::from("diecut"), 4u32));
+            let has_custom_border = b_style != "diecut" || b_width != 4;
+            if let Some(&(px100, py100, sz, rot)) = sticker_params().get(s_str.as_str()) {
+                let (apx, apy, arot) = sticker_auto_positions[idx % sticker_auto_positions.len()];
+                let is_default = px100 == (apx * 100.0).round() as u32
+                    && py100 == (apy * 100.0).round() as u32
+                    && sz == 100 && rot == arot as i32;
+                if is_default && !has_custom_border {
+                    s_str.clone()
+                } else if has_custom_border {
+                    format!("{}:{:.2}:{:.2}:{}:{}:{}:{}", s_str,
+                        (px100 as f32) / 100.0,
+                        (py100 as f32) / 100.0,
+                        sz, rot, b_style, b_width)
+                } else {
+                    format!("{}:{:.2}:{:.2}:{}:{}", s_str,
+                        (px100 as f32) / 100.0,
+                        (py100 as f32) / 100.0,
+                        sz, rot)
+                }
+            } else if has_custom_border {
+                let (apx, apy, arot) = sticker_auto_positions[idx % sticker_auto_positions.len()];
+                format!("{}:{:.2}:{:.2}:100:{}:{}:{}", s_str, apx, apy, arot, b_style, b_width)
+            } else {
+                s_str.clone()
+            }
+        }).collect();
+        let filter_opt = if filter_stickers() { " --filtrar-stickers" } else { "" };
+        format!(" --sticker {}{}", specs.join(","), filter_opt)
+    };
+
+    let texto_extra_flag = extra_texts().iter().map(|(txt, px, py, tam, incl, acab)| {
+        format!(" --texto-extra \"{}:{:.2}:{:.2}:{}:{}:{}\"",
+            txt,
+            (*px as f32) / 100.0,
+            (*py as f32) / 100.0,
+            tam,
+            incl,
+            acab
+        )
+    }).collect::<String>();
+
+    let rotacao_flag = if rotation_deg() > 0 {
+        format!(" --rotacao {}", rotation_deg())
+    } else {
+        String::new()
+    };
+
+    let zoom_flag = if image_zoom() != 100 {
+        format!(" --zoom {:.2}", (image_zoom() as f32) / 100.0)
+    } else {
+        String::new()
+    };
+
+    let offset_x = ((image_pos_x() as i32 - 50) * 800) / 100;
+    let offset_y = ((image_pos_y() as i32 - 50) * 1100) / 100;
+    let offset_flag = if offset_x != 0 || offset_y != 0 {
+        format!(" --offset-x {} --offset-y {}", offset_x, offset_y)
+    } else {
+        String::new()
+    };
+
+    let frase_superior_flag = if !phrase_top().trim().is_empty() {
+        format!(" --frase-superior \"{}\"", phrase_top())
+    } else {
+        String::new()
+    };
+
+    let texto_topo_flag = if !phrase_top().trim().is_empty() {
+        format!(" --texto-topo \"{}\"", phrase_top().to_uppercase())
+    } else {
+        String::new()
+    };
+
+    let banner_style_flags = {
+        let mut flags = String::new();
+        if banner_pos_x() != 50 {
+            flags.push_str(&format!(" --banner-x {:.2}", (banner_pos_x() as f32) / 100.0));
+        }
+        if banner_pos_y() != 85 {
+            flags.push_str(&format!(" --banner-y {:.2}", (banner_pos_y() as f32) / 100.0));
+        }
+        if banner_rotation() != 0 {
+            flags.push_str(&format!(" --banner-rot {}", banner_rotation()));
+        }
+        if banner_fg_color() != "auto" {
+            flags.push_str(&format!(" --banner-fg \"{}\"", banner_fg_color()));
+        }
+        if banner_bg_color() != "auto" {
+            flags.push_str(&format!(" --banner-bg \"{}\"", banner_bg_color()));
+        }
+        if banner_border_finish() != "nenhuma" {
+            flags.push_str(&format!(" --banner-borda \"{}\"", banner_border_finish()));
+            if banner_border_width() != 3 {
+                flags.push_str(&format!(" --banner-borda-largura {}", banner_border_width()));
+            }
+        }
+        if banner_effect() != "solida" {
+            flags.push_str(&format!(" --banner-efeito \"{}\"", banner_effect()));
+        }
+        flags
+    };
+
+    let sem_faixa_flag = if banner_sem_faixa() { " --sem-faixa" } else { "" };
+    let recorte_flags = if !recorte_adapt_preset() {
+        let mut rf = String::new();
+        if !recorte_ativo() {
+            rf.push_str(" --sem-recorte");
+        } else {
+            rf.push_str(&format!(" --recorte-threshold {:.2}", (recorte_threshold() as f32) / 100.0));
+            if recorte_inverter() {
+                rf.push_str(" --recorte-inverter");
+            }
+        }
+        rf
+    } else {
+        String::new()
+    };
+
+    let cli_cmd = if !show_advanced() {
+        format!(
+            "navalha poster foto.jpg --frase \"{}\"{}{}{}{}{}{}{}{}{}{}{} -o poster.png",
+            phrase(),
+            frase_superior_flag,
+            sem_faixa_flag,
+            recorte_flags,
+            banner_style_flags,
+            aesthetic_id(),
+            rotacao_flag,
+            zoom_flag,
+            offset_flag,
+            dano_flag,
+            sticker_flag,
+            texto_extra_flag
+        )
+    } else {
+        format!(
+            "navalha compor foto.jpg --recorte --recorte-threshold {:.2} --dither {} --paleta {} --escala {}{}{}{}{} --tarja-baixo \"{}\" --distorcao-vertical {:.1}{}{}{} -o poster.png",
+            (threshold_slider() as f32) / 100.0,
+            dither_label,
+            palette_label,
+            scale_select(),
+            rotacao_flag,
+            zoom_flag,
+            offset_flag,
+            texto_topo_flag,
+            phrase().to_uppercase(),
+            (stretch_y_slider() as f32) / 10.0,
+            dano_flag,
+            sticker_flag,
+            texto_extra_flag
+        )
+    };
+
+    // Callback para upload de imagem
+    let on_file_upload = move |_evt: Event<FormData>| {
+        async move {
+            let window = web_sys::window().unwrap();
+            let document = window.document().unwrap();
+            if let Some(input) = document.get_element_by_id("image-uploader") {
+                let input_el: HtmlInputElement = input.unchecked_into();
+                if let Some(files) = input_el.files() {
+                    if let Some(file) = files.get(0) {
+                        let reader = web_sys::FileReader::new().unwrap();
+                        let r_clone = reader.clone();
+                        let mut raw_image_setter = raw_image;
+
+                        let onload = Closure::wrap(Box::new(move |_: web_sys::Event| {
+                            if let Ok(result) = r_clone.result() {
+                                let array = js_sys::Uint8Array::new(&result);
+                                let bytes = array.to_vec();
+                                if let Ok(img_reader) = ImageReader::new(Cursor::new(bytes)).with_guessed_format() {
+                                    if let Ok(decoded) = img_reader.decode() {
+                                        raw_image_setter.set(decoded.to_rgba8());
+                                    }
+                                }
+                            }
+                        }) as Box<dyn FnMut(_)>);
+
+                        reader.set_onload(Some(onload.as_ref().unchecked_ref()));
+                        let _ = reader.read_as_array_buffer(&file);
+                        onload.forget();
+                    }
+                }
+            }
+        }
+    };
+
+    let on_custom_sticker_upload = move |_evt: Event<FormData>| {
+        async move {
+            let window = web_sys::window().unwrap();
+            let document = window.document().unwrap();
+            if let Some(input) = document.get_element_by_id("custom-sticker-uploader") {
+                let input_el: HtmlInputElement = input.unchecked_into();
+                if let Some(files) = input_el.files() {
+                    if let Some(file) = files.get(0) {
+                        let reader = web_sys::FileReader::new().unwrap();
+                        let r_clone = reader.clone();
+                        let mut custom_stk_setter = custom_sticker_image;
+                        let mut active_stk_setter = active_stickers;
+                        let mut sel_stk_setter = selected_sticker;
+
+                        let onload = Closure::wrap(Box::new(move |_: web_sys::Event| {
+                            if let Ok(result) = r_clone.result() {
+                                let array = js_sys::Uint8Array::new(&result);
+                                let bytes = array.to_vec();
+                                if let Ok(img_reader) = ImageReader::new(Cursor::new(bytes)).with_guessed_format() {
+                                    if let Ok(decoded) = img_reader.decode() {
+                                        let arc_img = std::sync::Arc::new(decoded.to_rgba8());
+                                        custom_stk_setter.set(Some(arc_img));
+                                        let mut list = active_stk_setter();
+                                        if !list.contains(&"custom".to_string()) {
+                                            list.push("custom".to_string());
+                                        }
+                                        active_stk_setter.set(list);
+                                        sel_stk_setter.set(Some("custom".to_string()));
+                                    }
+                                }
+                            }
+                        }) as Box<dyn FnMut(_)>);
+
+                        reader.set_onload(Some(onload.as_ref().unchecked_ref()));
+                        let _ = reader.read_as_array_buffer(&file);
+                        onload.forget();
+                    }
+                }
+            }
+        }
+    };
+
+    // Callbacks de download PNG
+    let download_png = move |_| {
+        let uri = rendered_png_uri();
+        if !uri.is_empty() {
+            trigger_download(&uri, "navalha_poster.png");
+        }
+    };
+    let download_png_dock = move |_| {
+        let uri = rendered_png_uri();
+        if !uri.is_empty() {
+            trigger_download(&uri, "navalha_poster.png");
+        }
+    };
+    let download_png_preview = move |_| {
+        let uri = rendered_png_uri();
+        if !uri.is_empty() {
+            trigger_download(&uri, "navalha_poster.png");
+        }
+    };
+
+    // Callback de download SVG
+    let download_svg = move |_| {
+        let svg_raw = rendered_svg();
+        if !svg_raw.is_empty() {
+            let encoded = format!("data:image/svg+xml;utf8,{}", js_sys::encode_uri_component(&svg_raw));
+            trigger_download(&encoded, "navalha_poster.svg");
+        }
+    };
+
+    // Strings de display formatadas
+    let unsharp_display = format!("{:.1}x", unsharp_slider() as f32 / 10.0);
+    let stretch_y_display = format!("{:.1}x", stretch_y_slider() as f32 / 10.0);
+    let image_zoom_display = format!("{:.2}x ({}%)", (image_zoom() as f32) / 100.0, image_zoom());
+
+    let preset_summary = match aesthetic_id().as_str() {
+        "punk-riot"        => "ATKINSON // 720PX // CLÁSSICA PUNK (PRETO/BRANCO/VERMELHO)",
+        "navalha-sata"     => "ATKINSON // 720PX // LINÓLEO & OURO QUEIMADO",
+        "xerox-podre"      => "BAYER 8x8 // 640PX // XEROX & PAPEL OXIDADO",
+        "viagem-solitaria" => "FLOYD-STEINBERG // 640PX // PAPEL KRAFT & OLIVETTI",
+        "lapa-noturna"     => "FLOYD-STEINBERG // 720PX // DUOTONE MAGENTA & CIANO",
+        "teatro-operario"  => "BAYER 4x4 // 720PX // CONSTRUTIVISMO & CARMESIM",
+        "risografia"       => "HALFTONE 45° // 720PX // SEPARAÇÃO MECÂNICA RISO",
+        "fanzine-digital"  => "BAYER 8x8 // 640PX // CYBER-BBS ANOS 90 AZUL/AMARELO",
+        "asfalto-alerta"   => "ATKINSON // 720PX // PRETO PICHE & AMARELO PERIGO",
+        "vga256"           => "BAYER 4x4 // 320PX 13H // PALETA INDEXADA DOS",
+        "cga"              => "BAYER 4x4 // 320PX 1981 // 4 CORES MC6845",
+        "ascii-art"        => "RASTER ASCII REAL // ~82 COLS // FÓSFORO VERDE CRT",
+        "tabloide-popular" => "FLOYD-STEINBERG // 720PX // ROTATIVA POPULAR NP",
+        "brutalismo"       => "BINARIZAÇÃO GLOBAL // 720PX // CONCRETO & TARJAS MACIÇAS",
+        "trash-polka"      => "FLOYD-STEINBERG // 720PX // GRAYSCALE, CARMIM & SPLATTER",
+        "atari-gaming"     => "TIA STELLA NTSC // 160x192 // 128 CORES & SCANLINES",
+        "mimeografo"       => "BAYER 4x4 // 640PX // VIOLETA ANILINA & SANGRAMENTO",
+        "xilogravura"      => "SAUVOLA 15x15 // 720PX // TALHE EM MADEIRA & KRAFT",
+        "glitch-crt"       => "SYNC JITTER // 640PX // SPLIT CROMÁTICO & V-HOLD",
+        _                  => "MOTOR ANTI-DESIGN // DETERMINÍSTICO // 800x1100",
+    };
+
+    // Callback para cópia do comando CLI
+    let cmd_to_copy = cli_cmd.clone();
+    let copy_cmd = move |_| {
+        let window = web_sys::window().unwrap();
+        let nav = window.navigator();
+        let clipboard = nav.clipboard();
+        let _ = clipboard.write_text(&cmd_to_copy);
+        copy_status.set(String::from("✓ COPIADO!"));
+    };
+
+    rsx! {
+        div { class: "navalha-app",
+            // Barra de cabeçalho brutalista
+            header { class: "navalha-header",
+                div { class: "logo-box",
+                    span { class: "logo-icon", "⚡🗡️" }
+                    h1 { class: "logo-title", "NAVALHA" }
+                    span { class: "logo-badge", "v0.1.0 • RUST 2024" }
+                }
+                div { class: "header-manifesto",
+                    "ANTI-DESIGN DETERMINÍSTICO // ZERO IA GENERATIVA // PRIVACIDADE LOCAL 100%"
+                }
+                nav { class: "header-nav",
+                    a {
+                        href: "/doc",
+                        class: "nav-link-doc",
+                        title: "Manifesto Visual, história dos presets e documentação",
+                        span { class: "nav-doc-desktop", "📖 DOCUMENTAÇÃO (/doc) →" }
+                        span { class: "nav-doc-mobile", "📖 DOCS" }
+                    }
+                }
+            }
+
+            // Alternador de visão mobile (< 900px)
+            div { class: "mobile-view-toggle",
+                button {
+                    class: if mobile_view() == "controls" { "mobile-toggle-btn active" } else { "mobile-toggle-btn" },
+                    onclick: move |_| mobile_view.set("controls".into()),
+                    "⚡ CONTROLES"
+                }
+                button {
+                    class: if mobile_view() == "preview" { "mobile-toggle-btn active" } else { "mobile-toggle-btn" },
+                    onclick: move |_| mobile_view.set("preview".into()),
+                    "👁️ VER CARTAZ"
+                }
+            }
+
+            // Área de trabalho dividida
+            main { class: "navalha-workspace",
+                // Painel de controles à esquerda
+                section {
+                    class: if mobile_view() == "preview" { "panel-controls mobile-hidden" } else { "panel-controls" },
+
+                    // Ações de Download e Exportação fixas no topo
+                    div { class: "export-box",
+                        button {
+                            class: "btn-download-primary",
+                            onclick: download_png,
+                            "💾 BAIXAR PÔSTER (PNG)"
+                        }
+                        button {
+                            class: "btn-download-secondary",
+                            onclick: download_svg,
+                            "📐 EXPORTAR VETOR (SVG)"
+                        }
+                    }
+
+                    // Abas de controle tátil
+                    div { class: "controls-tab-bar",
+                        button {
+                            class: if active_tab() == "poster" { "tab-btn active" } else { "tab-btn" },
+                            onclick: move |_| active_tab.set("poster".into()),
+                            "⚡ PÔSTER"
+                        }
+                        button {
+                            class: if active_tab() == "intervencao" { "tab-btn active" } else { "tab-btn" },
+                            onclick: move |_| active_tab.set("intervencao".into()),
+                            "🎨 INTERVENÇÃO"
+                        }
+                        button {
+                            class: if active_tab() == "ajustes" { "tab-btn active" } else { "tab-btn" },
+                            onclick: move |_| active_tab.set("ajustes".into()),
+                            "⚙️ AJUSTES"
+                        }
+                    }
+
+                    // Conteúdo dinâmico da aba ativa
+                    div { class: "controls-tab-body",
+                        if active_tab() == "poster" {
+                            div { class: "control-box",
+                                label { class: "section-tag", "1. CARREGAR FOTO & EDIÇÃO DA CHAPA" }
+                                input {
+                                    r#type: "file",
+                                    id: "image-uploader",
+                                    accept: "image/*",
+                                    class: "file-input-punk",
+                                    onchange: on_file_upload,
+                                }
+                                div { class: "img-edit-tools-row",
+                                    button {
+                                        class: "btn-edit-action",
+                                        onclick: move |_| {
+                                            let curr = rotation_deg();
+                                            rotation_deg.set((curr + 90) % 360);
+                                        },
+                                        "↺ GIRAR 90° ({rotation_deg}°)"
+                                    }
+                                    button {
+                                        class: if auto_threshold() { "btn-edit-action active" } else { "btn-edit-action" },
+                                        onclick: move |_| {
+                                            let curr = auto_threshold();
+                                            auto_threshold.set(!curr);
+                                        },
+                                        if auto_threshold() { "✓ AUTO-THRESHOLD (OTSU)" } else { "🤖 AUTO-THRESHOLD (OTSU)" }
+                                    }
+                                }
+
+                                // Bloco de Recorte de Silhueta / Guilhotina
+                                div { class: "zoom-control-box", style: "margin-top: 10px;",
+                                    div { class: "zoom-header-row",
+                                        span { class: "zoom-title", "✂️ RECORTE DE SILHUETA (GUILHOTINA)" }
+                                        button {
+                                            class: if recorte_adapt_preset() { "btn-zoom-reset active" } else { "btn-zoom-reset" },
+                                            onclick: move |_| {
+                                                recorte_adapt_preset.set(true);
+                                            },
+                                            "↺ RECORTE DO PRESET"
+                                        }
+                                    }
+                                    div { style: "display: flex; align-items: center; justify-content: space-between; margin-top: 8px;",
+                                        div { style: "display: flex; align-items: center; gap: 6px;",
+                                            input {
+                                                r#type: "checkbox",
+                                                id: "recorte-ativo-cb",
+                                                checked: "{recorte_ativo}",
+                                                onchange: move |e| {
+                                                    recorte_adapt_preset.set(false);
+                                                    recorte_ativo.set(e.checked());
+                                                },
+                                            }
+                                            label { r#for: "recorte-ativo-cb", style: "font-size: 0.75rem; color: #fff; cursor: pointer;", "Ativar Guilhotina (Recorte)" }
+                                        }
+                                        div { style: "display: flex; align-items: center; gap: 6px;",
+                                            input {
+                                                r#type: "checkbox",
+                                                id: "recorte-inverter-cb",
+                                                checked: "{recorte_inverter}",
+                                                onchange: move |e| {
+                                                    recorte_adapt_preset.set(false);
+                                                    recorte_inverter.set(e.checked());
+                                                },
+                                            }
+                                            label { r#for: "recorte-inverter-cb", style: "font-size: 0.75rem; color: #aaa; cursor: pointer;", "Inverter Silhueta" }
+                                        }
+                                    }
+                                    div { style: "display: flex; align-items: center; gap: 8px; margin-top: 8px;",
+                                        span { style: "font-size: 0.72rem; min-width: 95px; opacity: 0.8;", "LIMIAR CORTE:" }
+                                        input {
+                                            r#type: "range",
+                                            min: "10",
+                                            max: "98",
+                                            step: "1",
+                                            value: "{recorte_threshold}",
+                                            class: "slider-punk-zoom",
+                                            style: "flex: 1;",
+                                            oninput: move |e| {
+                                                if let Ok(v) = e.value().parse::<u32>() {
+                                                    recorte_adapt_preset.set(false);
+                                                    recorte_threshold.set(v);
+                                                }
+                                            }
+                                        }
+                                        span { style: "font-size: 0.75rem; min-width: 40px; text-align: right; font-weight: bold;", "{recorte_threshold}%" }
+                                    }
+                                }
+
+                                // Bloco de Zoom Granular da Chapa
+                                div { class: "zoom-control-box",
+                                    div { class: "zoom-header-row",
+                                        span { class: "zoom-title", "🔍 ZOOM DA FOTO: {image_zoom_display}" }
+                                        button {
+                                            class: "btn-zoom-reset",
+                                            onclick: move |_| image_zoom.set(100),
+                                            "1.0x (RESET)"
+                                        }
+                                    }
+                                    div { class: "zoom-slider-row",
+                                        button {
+                                            class: "btn-zoom-step",
+                                            onclick: move |_| {
+                                                let curr = image_zoom();
+                                                if curr > 25 { image_zoom.set(curr.saturating_sub(10)); }
+                                            },
+                                            "−"
+                                        }
+                                        input {
+                                            r#type: "range",
+                                            min: "25",
+                                            max: "300",
+                                            step: "5",
+                                            value: "{image_zoom}",
+                                            class: "slider-punk-zoom",
+                                            oninput: move |e| {
+                                                if let Ok(v) = e.value().parse::<u32>() { image_zoom.set(v); }
+                                            }
+                                        }
+                                        button {
+                                            class: "btn-zoom-step",
+                                            onclick: move |_| {
+                                                let curr = image_zoom();
+                                                if curr < 300 { image_zoom.set(curr + 10); }
+                                            },
+                                            "+"
+                                        }
+                                    }
+                                    div { class: "zoom-presets-row",
+                                        button {
+                                            class: if image_zoom() == 70 { "btn-zoom-quick active" } else { "btn-zoom-quick" },
+                                            onclick: move |_| image_zoom.set(70),
+                                            "AFASTAR (0.7x)"
+                                        }
+                                        button {
+                                            class: if image_zoom() == 100 { "btn-zoom-quick active" } else { "btn-zoom-quick" },
+                                            onclick: move |_| image_zoom.set(100),
+                                            "PADRÃO (1.0x)"
+                                        }
+                                        button {
+                                            class: if image_zoom() == 150 { "btn-zoom-quick active" } else { "btn-zoom-quick" },
+                                            onclick: move |_| image_zoom.set(150),
+                                            "APROXIMAR (1.5x)"
+                                        }
+                                    }
+                                }
+
+                                // Bloco de Posição da Foto no Canvas
+                                div { class: "zoom-control-box", style: "margin-top: 10px;",
+                                    div { class: "zoom-header-row",
+                                        span { class: "zoom-title", "📐 POSIÇÃO DA FOTO (X: {image_pos_x}%, Y: {image_pos_y}%)" }
+                                        button {
+                                            class: "btn-zoom-reset",
+                                            onclick: move |_| {
+                                                image_pos_x.set(50);
+                                                image_pos_y.set(50);
+                                            },
+                                            "↺ CENTRALIZAR"
+                                        }
+                                    }
+                                    div { style: "display: flex; flex-direction: column; gap: 8px; margin-top: 8px;",
+                                        div { style: "display: flex; align-items: center; gap: 8px;",
+                                            span { style: "font-size: 0.75rem; min-width: 55px; opacity: 0.8;", "EIXO X:" }
+                                            input {
+                                                r#type: "range",
+                                                min: "0",
+                                                max: "100",
+                                                step: "1",
+                                                value: "{image_pos_x}",
+                                                class: "slider-punk-zoom",
+                                                style: "flex: 1;",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() { image_pos_x.set(v); }
+                                                }
+                                            }
+                                            span { style: "font-size: 0.75rem; min-width: 40px; text-align: right; font-weight: bold;", "{image_pos_x}%" }
+                                        }
+                                        div { style: "display: flex; align-items: center; gap: 8px;",
+                                            span { style: "font-size: 0.75rem; min-width: 55px; opacity: 0.8;", "EIXO Y:" }
+                                            input {
+                                                r#type: "range",
+                                                min: "0",
+                                                max: "100",
+                                                step: "1",
+                                                value: "{image_pos_y}",
+                                                class: "slider-punk-zoom",
+                                                style: "flex: 1;",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() { image_pos_y.set(v); }
+                                                }
+                                            }
+                                            span { style: "font-size: 0.75rem; min-width: 40px; text-align: right; font-weight: bold;", "{image_pos_y}%" }
+                                        }
+                                    }
+                                }
+
+                                span { class: "help-text", "Suporta PNG com alfa, JPEG e WebP." }
+                            }
+
+                            div { class: "control-box",
+                                label { class: "section-tag", "2. FAIXAS DE TEXTO" }
+                                div { style: "display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(0, 0, 0, 0.4); border: 1px dashed #ff0033; margin-bottom: 10px;",
+                                    div { style: "display: flex; align-items: center; gap: 8px;",
+                                        input {
+                                            r#type: "checkbox",
+                                            id: "banner-sem-faixa-cb",
+                                            checked: "{banner_sem_faixa}",
+                                            onchange: move |e| banner_sem_faixa.set(e.checked()),
+                                        }
+                                        label { r#for: "banner-sem-faixa-cb", style: "font-size: 0.75rem; color: #ff3366; font-weight: bold; cursor: pointer; text-transform: uppercase;", "🚫 Sem Faixa (Remover Tarjas do Pôster)" }
+                                    }
+                                    if banner_sem_faixa() {
+                                        span { style: "font-size: 0.68rem; color: #ff9999; font-style: italic;", "[ FAIXAS DESATIVADAS ]" }
+                                    }
+                                }
+                                div { style: "display: flex; flex-direction: column; gap: 10px;",
+                                    div {
+                                        label { style: "font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; font-weight: bold;", "⬆️ Faixa Superior (Opcional - Suporta Multilinha)" }
+                                        textarea {
+                                            class: "text-input-punk",
+                                            rows: "2",
+                                            style: "resize: vertical; font-family: inherit;",
+                                            value: "{phrase_top}",
+                                            placeholder: "DIGITE A MANCHETE SUPERIOR (SUPORTA QUEBRA DE LINHA)...",
+                                            oninput: move |evt| phrase_top.set(evt.value()),
+                                        }
+                                    }
+                                    div {
+                                        label { style: "font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; font-weight: bold;", "⬇️ Faixa Inferior (Suporta Multilinha)" }
+                                        textarea {
+                                            class: "text-input-punk",
+                                            rows: "2",
+                                            style: "resize: vertical; font-family: inherit;",
+                                            value: "{phrase}",
+                                            placeholder: "DIGITE A FRASE PRINCIPAL (SUPORTA QUEBRA DE LINHA)...",
+                                            oninput: move |evt| phrase.set(evt.value()),
+                                        }
+                                    }
+
+                                    div { style: "display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: rgba(255, 0, 51, 0.1); border: 1px dashed #ff0033;",
+                                        input {
+                                            r#type: "checkbox",
+                                            id: "banner-adapt-preset-cb",
+                                            checked: "{banner_adapt_preset}",
+                                            onchange: move |e| banner_adapt_preset.set(e.checked()),
+                                        }
+                                        label { r#for: "banner-adapt-preset-cb", style: "font-size: 0.72rem; color: #ff3366; font-weight: bold; cursor: pointer; text-transform: uppercase;", "⚡ Modo Adequado ao Preset Ativo (Sincronizar Cores, Fontes e Bordas)" }
+                                    }
+
+                                    div { style: "display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px;",
+                                        div {
+                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Família Tipográfica" }
+                                            select {
+                                                class: "select-preset-punk",
+                                                value: "{banner_font_family}",
+                                                onchange: move |e| banner_font_family.set(e.value()),
+                                                option { value: "impact", "IMPACT // Bebas" }
+                                                option { value: "monospace", "MONO // Terminal" }
+                                                option { value: "serif", "SERIF // Jornal" }
+                                                option { value: "sans", "SANS // Moderna" }
+                                            }
+                                        }
+                                        div {
+                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Tamanho ({banner_font_size}px)" }
+                                            input {
+                                                r#type: "range", min: "20", max: "96",
+                                                value: "{banner_font_size}",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() { banner_font_size.set(v); }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    div { style: "margin-top: 4px; display: flex; align-items: center; gap: 6px;",
+                                        input {
+                                            r#type: "checkbox",
+                                            id: "banner-auto-fit-cb",
+                                            checked: "{banner_auto_fit}",
+                                            onchange: move |e| banner_auto_fit.set(e.checked()),
+                                        }
+                                        label { r#for: "banner-auto-fit-cb", style: "font-size: 0.72rem; color: #ccc; cursor: pointer;", "Reduzir fonte automaticamente se exceder a faixa (auto-fit)" }
+                                    }
+
+                                    div { style: "display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 6px;",
+                                        div {
+                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Posição X ({banner_pos_x}%)" }
+                                            input {
+                                                r#type: "range", min: "0", max: "100",
+                                                value: "{banner_pos_x}",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() { banner_pos_x.set(v); }
+                                                }
+                                            }
+                                        }
+                                        div {
+                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Posição Y ({banner_pos_y}%)" }
+                                            input {
+                                                r#type: "range", min: "0", max: "100",
+                                                value: "{banner_pos_y}",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() { banner_pos_y.set(v); }
+                                                }
+                                            }
+                                        }
+                                        div {
+                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Inclinação ({banner_rotation}°)" }
+                                            input {
+                                                r#type: "range", min: "-45", max: "45",
+                                                value: "{banner_rotation}",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<i16>() { banner_rotation.set(v); }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    div { style: "display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 6px;",
+                                        div {
+                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Cor do Texto" }
+                                            select {
+                                                class: "select-preset-punk",
+                                                value: "{banner_fg_color}",
+                                                onchange: move |e| banner_fg_color.set(e.value()),
+                                                option { value: "auto", "AUTO // Preset" }
+                                                option { value: "white", "BRANCO // #FFFFFF" }
+                                                option { value: "black", "PRETO // #000000" }
+                                                option { value: "yellow", "AMARELO // #FFEE00" }
+                                                option { value: "red", "VERMELHO // #FF0033" }
+                                                option { value: "cyan", "CIANO // #00FFFF" }
+                                                option { value: "green", "VERDE // #00FF66" }
+                                            }
+                                        }
+                                        div {
+                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Fundo da Tarja" }
+                                            select {
+                                                class: "select-preset-punk",
+                                                value: "{banner_bg_color}",
+                                                onchange: move |e| banner_bg_color.set(e.value()),
+                                                option { value: "auto", "AUTO // Preset" }
+                                                option { value: "black", "PRETO // #000000" }
+                                                option { value: "white", "BRANCO // #FFFFFF" }
+                                                option { value: "red", "VERMELHO // #FF0033" }
+                                                option { value: "yellow", "AMARELO // #FFEE00" }
+                                                option { value: "none", "SEM FUNDO // Transparente" }
+                                            }
+                                        }
+                                        div {
+                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Acabamento" }
+                                            select {
+                                                class: "select-preset-punk",
+                                                value: "{banner_effect}",
+                                                onchange: move |e| banner_effect.set(e.value()),
+                                                option { value: "solida", "SÓLIDA" }
+                                                option { value: "xerox", "XEROX // Toner" }
+                                            }
+                                        }
+                                    }
+
+                                    div { style: "display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;",
+                                        div {
+                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Estilo de Borda" }
+                                            select {
+                                                class: "select-preset-punk",
+                                                value: "{banner_border_finish}",
+                                                onchange: move |e| banner_border_finish.set(e.value()),
+                                                option { value: "nenhuma", "NENHUMA" }
+                                                option { value: "solida", "SÓLIDA" }
+                                                option { value: "tracejada", "TRACEJADA" }
+                                                option { value: "picote", "PICOTE // Serrilhado" }
+                                                option { value: "durex", "FITA DUREX // Adesiva" }
+                                            }
+                                        }
+                                        div {
+                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Espessura Borda ({banner_border_width}px)" }
+                                            input {
+                                                r#type: "range", min: "1", max: "12",
+                                                value: "{banner_border_width}",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() { banner_border_width.set(v); }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            div { class: "control-box",
+                                label { class: "section-tag", "3. ESTÉTICA ANTI-DESIGN" }
+                                select {
+                                    class: "select-preset-punk",
+                                    value: "{aesthetic_id}",
+                                    onchange: move |e| aesthetic_id.set(e.value()),
+                                    option { value: "punk-riot",        "01. PUNK RIOT // Claudia Wonder" }
+                                    option { value: "navalha-sata",     "02. NAVALHA SATÃ // Madame Satã" }
+                                    option { value: "xerox-podre",      "03. XEROX PODRE // Indianarae Siqueira" }
+                                    option { value: "viagem-solitaria", "04. VIAGEM SOLITÁRIA // João W. Nery" }
+                                    option { value: "lapa-noturna",     "05. LAPA NOTURNA // Linn da Quebrada" }
+                                    option { value: "teatro-operario",  "06. TEATRO OPERÁRIO // Leo Moreira Sá" }
+                                    option { value: "risografia",       "07. RISOGRAFIA // Erika Hilton" }
+                                    option { value: "fanzine-digital",  "08. FANZINE DIGITAL // Amara Moira" }
+                                    option { value: "asfalto-alerta",   "09. ASFALTO & OURO // Kátia Tapety" }
+                                    option { value: "vga256",           "10. VGA 256 (13H) // Márcia Pantera" }
+                                    option { value: "cga",              "11. CGA (1981) // Neon Cunha" }
+                                    option { value: "old-mac-pop-art",  "12. OLD MAC POP ART // Rogéria" }
+                                    option { value: "ascii-art",        "13. ASCII ART (1971) // Laerte Coutinho" }
+                                    option { value: "tabloide-popular", "14. TABLÓIDE POPULAR // Luana Muniz" }
+                                    option { value: "brutalismo",       "15. BRUTALISMO // Drica D'arc Meirelles" }
+                                    option { value: "trash-polka",      "16. TRASH POLKA // Renata Carvalho" }
+                                    option { value: "atari-gaming",     "17. ATARI GAMING // Jovanna Baby" }
+                                    option { value: "mimeografo",       "18. MIMEÓGRAFO // Keila Simpson" }
+                                    option { value: "xilogravura",      "19. XILOGRAVURA // Xica Manicongo" }
+                                    option { value: "glitch-crt",       "20. GLITCH CRT // Robeyoncé Lima" }
+                                }
+                                div { class: "preset-badge-summary",
+                                    span { class: "preset-summary-tag", "⚡ {preset_summary}" }
+                                }
+                            }
+                        } else if active_tab() == "intervencao" {
+                            div { class: "control-box",
+                                label { class: "section-tag", "4. MARCAS, DANOS & INTERVENÇÃO FÍSICA" }
+                                div { class: "damage-selector-grid",
+                                    {DamageEffect::all().iter().map(|dmg| {
+                                        let dmg_id = dmg.as_str().to_string();
+                                        let is_active = active_damages().contains(&dmg_id);
+                                        let d_id = dmg_id.clone();
+                                        rsx! {
+                                            button {
+                                                key: "{dmg_id}",
+                                                class: if is_active { "btn-damage active" } else { "btn-damage" },
+                                                onclick: move |_| {
+                                                    let mut list = active_damages();
+                                                    if list.contains(&d_id) {
+                                                        list.retain(|x| x != &d_id);
+                                                        // Remove seleção se era o item sendo editado
+                                                        if selected_damage() == Some(d_id.clone()) {
+                                                            selected_damage.set(None);
+                                                        }
+                                                    } else {
+                                                        list.push(d_id.clone());
+                                                        selected_damage.set(Some(d_id.clone()));
+                                                    }
+                                                    active_damages.set(list);
+                                                },
+                                                "{dmg.display_name()}"
+                                            }
+                                        }
+                                    })}
+                                }
+
+                                // Subpainel de ajuste do dano selecionado
+                                if !active_damages().is_empty() {
+                                    div { class: "item-ajuste-panel",
+                                        // Chips de seleção do dano a editar
+                                        div { class: "item-ajuste-chips",
+                                            {active_damages().into_iter().map(|d_str| {
+                                                let d_str2 = d_str.clone();
+                                                let is_selected = selected_damage() == Some(d_str.clone());
+                                                rsx! {
+                                                    button {
+                                                        key: "{d_str}",
+                                                        class: if is_selected { "chip-ajuste active" } else { "chip-ajuste" },
+                                                        onclick: move |_| selected_damage.set(Some(d_str2.clone())),
+                                                        "{d_str}"
+                                                    }
+                                                }
+                                            })}
+                                        }
+
+                                        // Sliders para o dano selecionado
+                                        if let Some(dmg_sel) = selected_damage() {
+                                            {
+                                                let params = damage_params().get(&dmg_sel).copied()
+                                                    .unwrap_or_else(|| {
+                                                        let def = DamageEffect::parse(&dmg_sel)
+                                                            .map(DamageElement::default_for)
+                                                            .unwrap_or_else(|| DamageElement::new(DamageEffect::Tiro, 0.5, 0.5, 1.0));
+                                                        ((def.pos_x * 100.0).round() as u32,
+                                                         (def.pos_y * 100.0).round() as u32,
+                                                         100u32)
+                                                    });
+                                                let (px100, py100, sc100) = params;
+                                                let dmg_sel2 = dmg_sel.clone();
+                                                let dmg_sel3 = dmg_sel.clone();
+                                                let dmg_sel4 = dmg_sel.clone();
+                                                let dmg_sel5 = dmg_sel.clone();
+                                                rsx! {
+                                                    div { class: "item-ajuste-sliders",
+                                                        div { class: "slider-group",
+                                                            label { "POSIÇÃO X: {px100}%" }
+                                                            input {
+                                                                r#type: "range", min: "0", max: "100",
+                                                                value: "{px100}",
+                                                                oninput: move |e| {
+                                                                    if let Ok(v) = e.value().parse::<u32>() {
+                                                                        let mut map = damage_params();
+                                                                        let entry = map.entry(dmg_sel2.clone()).or_insert((50, 50, 100));
+                                                                        entry.0 = v;
+                                                                        damage_params.set(map);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        div { class: "slider-group",
+                                                            label { "POSIÇÃO Y: {py100}%" }
+                                                            input {
+                                                                r#type: "range", min: "0", max: "100",
+                                                                value: "{py100}",
+                                                                oninput: move |e| {
+                                                                    if let Ok(v) = e.value().parse::<u32>() {
+                                                                        let mut map = damage_params();
+                                                                        let entry = map.entry(dmg_sel3.clone()).or_insert((50, 50, 100));
+                                                                        entry.1 = v;
+                                                                        damage_params.set(map);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        div { class: "slider-group",
+                                                            label { "ESCALA: {sc100}% ({sc100 as f32 / 100.0:.1}x)" }
+                                                            input {
+                                                                r#type: "range", min: "25", max: "400",
+                                                                value: "{sc100}",
+                                                                oninput: move |e| {
+                                                                    if let Ok(v) = e.value().parse::<u32>() {
+                                                                        let mut map = damage_params();
+                                                                        let entry = map.entry(dmg_sel4.clone()).or_insert((50, 50, 100));
+                                                                        entry.2 = v;
+                                                                        damage_params.set(map);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        button {
+                                                            class: "btn-edit-action",
+                                                            style: "margin-top:4px;",
+                                                            onclick: move |_| {
+                                                                let mut map = damage_params();
+                                                                map.remove(&dmg_sel5);
+                                                                damage_params.set(map);
+                                                            },
+                                                            "↺ RESETAR POSIÇÃO"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            div { class: "control-box",
+                                label { class: "section-tag", "5. STICKERS & ADESIVOS PUNK" }
+                                div { class: "damage-selector-grid",
+                                    {StickerKind::all().iter().map(|stk| {
+                                        let stk_id = stk.as_str().to_string();
+                                        let is_active = active_stickers().contains(&stk_id);
+                                        let s_id = stk_id.clone();
+                                        rsx! {
+                                            button {
+                                                key: "{stk_id}",
+                                                class: if is_active { "btn-damage active" } else { "btn-damage" },
+                                                onclick: move |_| {
+                                                    let mut list = active_stickers();
+                                                    if list.contains(&s_id) {
+                                                        list.retain(|x| x != &s_id);
+                                                        if selected_sticker() == Some(s_id.clone()) {
+                                                            selected_sticker.set(None);
+                                                        }
+                                                    } else {
+                                                        list.push(s_id.clone());
+                                                        selected_sticker.set(Some(s_id.clone()));
+                                                    }
+                                                    active_stickers.set(list);
+                                                },
+                                                "{stk.display_name()}"
+                                            }
+                                        }
+                                    })}
+                                }
+                                div { style: "margin-top: 8px;",
+                                    input {
+                                        id: "custom-sticker-uploader",
+                                        r#type: "file",
+                                        accept: "image/*",
+                                        style: "display: none;",
+                                        onchange: on_custom_sticker_upload,
+                                    }
+                                    button {
+                                        class: if custom_sticker_image().is_some() { "btn-edit-action active" } else { "btn-edit-action" },
+                                        style: "width: 100%; border: 1px dashed var(--accent-red, #ff0033);",
+                                        onclick: move |_| {
+                                            let window = web_sys::window().unwrap();
+                                            let document = window.document().unwrap();
+                                            if let Some(input) = document.get_element_by_id("custom-sticker-uploader") {
+                                                let input_el: HtmlInputElement = input.unchecked_into();
+                                                input_el.click();
+                                            }
+                                        },
+                                        if custom_sticker_image().is_some() { "📎 SUBSTITUIR RECORTE PRÓPRIO" } else { "📎 CARREGAR RECORTE / STICKER PRÓPRIO" }
+                                    }
+                                }
+                                div { style: "margin-top: 8px;",
+                                    button {
+                                        class: if filter_stickers() { "btn-edit-action active" } else { "btn-edit-action" },
+                                        style: "width: 100%;",
+                                        onclick: move |_| {
+                                            let curr = filter_stickers();
+                                            filter_stickers.set(!curr);
+                                        },
+                                        if filter_stickers() { "🎨 PALETA ATIVA NOS STICKERS" } else { "🌈 CORES ORIGINAIS DOS STICKERS" }
+                                    }
+                                }
+
+                                // Subpainel de ajuste do sticker selecionado
+                                if !active_stickers().is_empty() {
+                                    div { class: "item-ajuste-panel",
+                                        div { class: "item-ajuste-chips",
+                                            {active_stickers().into_iter().map(|s_str| {
+                                                let s_str2 = s_str.clone();
+                                                let is_selected = selected_sticker() == Some(s_str.clone());
+                                                rsx! {
+                                                    button {
+                                                        key: "{s_str}",
+                                                        class: if is_selected { "chip-ajuste active" } else { "chip-ajuste" },
+                                                        onclick: move |_| selected_sticker.set(Some(s_str2.clone())),
+                                                        "{s_str}"
+                                                    }
+                                                }
+                                            })}
+                                        }
+
+                                        if let Some(stk_sel) = selected_sticker() {
+                                            {
+                                                let (px100, py100, sz, rot) = sticker_params().get(&stk_sel).copied()
+                                                    .unwrap_or((50u32, 50u32, 100u32, 0i32));
+                                                let (b_style, b_width) = sticker_borders().get(&stk_sel).cloned()
+                                                    .unwrap_or_else(|| (String::from("diecut"), 4u32));
+                                                let ss2 = stk_sel.clone();
+                                                let ss3 = stk_sel.clone();
+                                                let ss4 = stk_sel.clone();
+                                                let ss5 = stk_sel.clone();
+                                                let ss6 = stk_sel.clone();
+                                                let ss7 = stk_sel.clone();
+                                                let ss8 = stk_sel.clone();
+                                                let ss9 = stk_sel.clone();
+                                                rsx! {
+                                                    div { class: "item-ajuste-sliders",
+                                                        div { class: "slider-group",
+                                                            label { "POSIÇÃO X: {px100}%" }
+                                                            input {
+                                                                r#type: "range", min: "0", max: "100",
+                                                                value: "{px100}",
+                                                                oninput: move |e| {
+                                                                    if let Ok(v) = e.value().parse::<u32>() {
+                                                                        let mut map = sticker_params();
+                                                                        let entry = map.entry(ss2.clone()).or_insert((50,50,100,0));
+                                                                        entry.0 = v;
+                                                                        sticker_params.set(map);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        div { class: "slider-group",
+                                                            label { "POSIÇÃO Y: {py100}%" }
+                                                            input {
+                                                                r#type: "range", min: "0", max: "100",
+                                                                value: "{py100}",
+                                                                oninput: move |e| {
+                                                                    if let Ok(v) = e.value().parse::<u32>() {
+                                                                        let mut map = sticker_params();
+                                                                        let entry = map.entry(ss3.clone()).or_insert((50,50,100,0));
+                                                                        entry.1 = v;
+                                                                        sticker_params.set(map);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        div { class: "slider-group",
+                                                            label { "TAMANHO: {sz}px" }
+                                                            input {
+                                                                r#type: "range", min: "40", max: "240",
+                                                                value: "{sz}",
+                                                                oninput: move |e| {
+                                                                    if let Ok(v) = e.value().parse::<u32>() {
+                                                                        let mut map = sticker_params();
+                                                                        let entry = map.entry(ss4.clone()).or_insert((50,50,100,0));
+                                                                        entry.2 = v;
+                                                                        sticker_params.set(map);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        div { class: "slider-group",
+                                                            label { "ROTAÇÃO: {rot}°" }
+                                                            input {
+                                                                r#type: "range", min: "-180", max: "180",
+                                                                value: "{rot}",
+                                                                oninput: move |e| {
+                                                                    if let Ok(v) = e.value().parse::<i32>() {
+                                                                        let mut map = sticker_params();
+                                                                        let entry = map.entry(ss5.clone()).or_insert((50,50,100,0));
+                                                                        entry.3 = v;
+                                                                        sticker_params.set(map);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        div { class: "slider-group",
+                                                            label { "BORDA / RECORTE:" }
+                                                            select {
+                                                                class: "form-control",
+                                                                value: "{b_style}",
+                                                                onchange: move |e| {
+                                                                    let mut map = sticker_borders();
+                                                                    let entry = map.entry(ss7.clone()).or_insert((String::from("diecut"), 4));
+                                                                    entry.0 = e.value();
+                                                                    sticker_borders.set(map);
+                                                                },
+                                                                option { value: "diecut", "DIECUT BRANCO (ADESIVO)" }
+                                                                option { value: "picote", "PICOTE PERFURADO" }
+                                                                option { value: "serrilhada", "SERRILHADA" }
+                                                                option { value: "preta", "LINHA PRETA" }
+                                                                option { value: "nenhuma", "SEM BORDA" }
+                                                            }
+                                                        }
+                                                        if b_style != "nenhuma" {
+                                                            div { class: "slider-group",
+                                                                label { "LARGURA DA BORDA: {b_width}px" }
+                                                                input {
+                                                                    r#type: "range", min: "1", max: "16",
+                                                                    value: "{b_width}",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() {
+                                                                            let mut map = sticker_borders();
+                                                                            let entry = map.entry(ss8.clone()).or_insert((String::from("diecut"), 4));
+                                                                            entry.1 = v;
+                                                                            sticker_borders.set(map);
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        button {
+                                                            class: "btn-edit-action",
+                                                            style: "margin-top:4px;",
+                                                            onclick: move |_| {
+                                                                let mut map = sticker_params();
+                                                                map.remove(&ss6);
+                                                                sticker_params.set(map);
+                                                                let mut bmap = sticker_borders();
+                                                                bmap.remove(&ss9);
+                                                                sticker_borders.set(bmap);
+                                                            },
+                                                            "↺ RESETAR AJUSTES"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            div { class: "control-box",
+                                label { class: "section-tag", "6. CAIXAS DE TEXTO EXTRA" }
+                                div { class: "texto-extra-form",
+                                    textarea {
+                                        class: "text-input-punk",
+                                        rows: "2",
+                                        style: "resize: vertical; font-family: inherit;",
+                                        value: "{form_texto}",
+                                        placeholder: "TEXTO DA CAIXA (SUPORTA QUEBRA DE LINHA)...",
+                                        oninput: move |e| form_texto.set(e.value()),
+                                    }
+
+                                    div { class: "texto-extra-sliders",
+                                        div { class: "slider-group",
+                                            label { "POSIÇÃO X: {form_pos_x}%" }
+                                            input {
+                                                r#type: "range", min: "0", max: "100",
+                                                value: "{form_pos_x}",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() { form_pos_x.set(v); }
+                                                }
+                                            }
+                                        }
+                                        div { class: "slider-group",
+                                            label { "POSIÇÃO Y: {form_pos_y}%" }
+                                            input {
+                                                r#type: "range", min: "0", max: "100",
+                                                value: "{form_pos_y}",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() { form_pos_y.set(v); }
+                                                }
+                                            }
+                                        }
+                                        div { class: "slider-group",
+                                            label { "TAMANHO: {form_tamanho}px" }
+                                            input {
+                                                r#type: "range", min: "20", max: "120",
+                                                value: "{form_tamanho}",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() { form_tamanho.set(v); }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    div { class: "texto-extra-controls",
+                                        div { class: "select-group",
+                                            label { "INCLINAÇÃO" }
+                                            select {
+                                                value: "{form_incl}",
+                                                onchange: move |e| {
+                                                    if let Ok(v) = e.value().parse::<i32>() { form_incl.set(v); }
+                                                },
+                                                option { value: "0",   "0° (Reto)" }
+                                                option { value: "-5",  "-5° (Leve esquerda)" }
+                                                option { value: "5",   "+5° (Leve direita)" }
+                                                option { value: "-10", "-10° (Inclinado)" }
+                                                option { value: "10",  "+10° (Inclinado)" }
+                                                option { value: "-15", "-15° (Agressivo)" }
+                                                option { value: "15",  "+15° (Agressivo)" }
+                                            }
+                                        }
+                                        div { class: "select-group",
+                                            label { "ACABAMENTO" }
+                                            select {
+                                                value: "{form_acabamento}",
+                                                onchange: move |e| form_acabamento.set(e.value()),
+                                                option { value: "tarja",      "TARJA (clássico punk)" }
+                                                option { value: "xerox",      "XEROX (falhas de toner e riscos)" }
+                                                option { value: "tape",       "TAPE (fita adesiva cinza)" }
+                                                option { value: "serrilhado", "SERRILHADO (neon amarelo)" }
+                                                option { value: "rasgo",      "RASGO (texto nu vermelho)" }
+                                            }
+                                        }
+                                    }
+
+                                    div { style: "display: flex; gap: 8px; margin-top: 8px;",
+                                        button {
+                                            class: "btn-gilete",
+                                            style: "flex: 1; font-size: 0.85rem;",
+                                            onclick: move |_| {
+                                                let txt = form_texto().trim().to_string();
+                                                if txt.is_empty() { return; }
+                                                let mut lista = extra_texts();
+                                                let entry = (
+                                                    txt.clone(),
+                                                    form_pos_x(),
+                                                    form_pos_y(),
+                                                    form_tamanho(),
+                                                    form_incl(),
+                                                    form_acabamento(),
+                                                );
+                                                if let Some(idx) = form_editando() {
+                                                    if idx < lista.len() { lista[idx] = entry; }
+                                                } else {
+                                                    lista.push(entry);
+                                                }
+                                                extra_texts.set(lista);
+                                                form_texto.set(String::new());
+                                                form_pos_x.set(50);
+                                                form_pos_y.set(50);
+                                                form_tamanho.set(48);
+                                                form_incl.set(0);
+                                                form_acabamento.set(String::from("tarja"));
+                                                form_editando.set(None);
+                                            },
+                                            if form_editando().is_some() { "✓ SALVAR EDIÇÃO" } else { "+ INSERIR CAIXA DE TEXTO" }
+                                        }
+                                        if form_editando().is_some() || !form_texto().trim().is_empty() {
+                                            button {
+                                                class: "btn-edit-action",
+                                                style: "font-size: 0.85rem; padding: 0 12px; background: rgba(255, 0, 51, 0.15); border-color: #ff0033;",
+                                                onclick: move |_| {
+                                                    form_texto.set(String::new());
+                                                    form_pos_x.set(50);
+                                                    form_pos_y.set(50);
+                                                    form_tamanho.set(48);
+                                                    form_incl.set(0);
+                                                    form_acabamento.set(String::from("tarja"));
+                                                    form_editando.set(None);
+                                                },
+                                                "✕ LIMPAR"
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if !extra_texts().is_empty() {
+                                    div { class: "texto-extra-lista",
+                                        {let textos_lista = extra_texts();
+                                        textos_lista.into_iter().enumerate().map(|(idx, (txt, px, py, tam, incl, acab))| {
+                                            let label = format!("[{}] {} — {}% × {}% / {}px / {}° / {}",
+                                                idx + 1, &txt, px, py, tam, incl, &acab);
+                                            let txt_c  = txt.clone();
+                                            let acab_c = acab.clone();
+                                            rsx! {
+                                                div { key: "{idx}", class: "texto-extra-item",
+                                                    span { class: "texto-extra-label", "{label}" }
+                                                    div { class: "texto-extra-actions",
+                                                        button {
+                                                            class: "btn-edit-action",
+                                                            onclick: move |_| {
+                                                                form_texto.set(txt_c.clone());
+                                                                form_pos_x.set(px);
+                                                                form_pos_y.set(py);
+                                                                form_tamanho.set(tam);
+                                                                form_incl.set(incl);
+                                                                form_acabamento.set(acab_c.clone());
+                                                                form_editando.set(Some(idx));
+                                                            },
+                                                            "✏️ EDITAR"
+                                                        }
+                                                        button {
+                                                            class: "btn-edit-action",
+                                                            style: "color: #ff0033;",
+                                                            onclick: move |_| {
+                                                                let mut lista = extra_texts();
+                                                                if idx < lista.len() { lista.remove(idx); }
+                                                                extra_texts.set(lista);
+                                                                if form_editando() == Some(idx) {
+                                                                    form_editando.set(None);
+                                                                }
+                                                            },
+                                                            "✕ REMOVER"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        })}
+                                    }
+                                }
+                            }
+                        } else {
+                            // Aba de Ajustes Finos
+                            div { class: "advanced-panel",
+                                button {
+                                    class: if show_advanced() { "btn-edit-action active" } else { "btn-edit-action" },
+                                    style: "width: 100%; margin-bottom: 8px;",
+                                    onclick: move |_| {
+                                        let curr = show_advanced();
+                                        show_advanced.set(!curr);
+                                    },
+                                    if show_advanced() { "✓ AJUSTES DA PRENSA ATIVOS (SOBREPÕE O PRESET)" } else { "⚙️ ATIVAR CONTROLES MANUAIS DA PRENSA" }
+                                }
+
+                                div { class: "slider-group",
+                                    label { "CORTE GUILHOTINA: {threshold_slider}%" }
+                                    input {
+                                        r#type: "range",
+                                        min: "30",
+                                        max: "99",
+                                        value: "{threshold_slider}",
+                                        oninput: move |e| {
+                                            if let Ok(v) = e.value().parse::<u32>() {
+                                                threshold_slider.set(v);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                div { class: "slider-group",
+                                    label { "NITIDEZ UNSHARP: {unsharp_display}" }
+                                    input {
+                                        r#type: "range",
+                                        min: "0",
+                                        max: "50",
+                                        value: "{unsharp_slider}",
+                                        oninput: move |e| {
+                                            if let Ok(v) = e.value().parse::<u32>() {
+                                                unsharp_slider.set(v);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                div { class: "slider-group",
+                                    label { "DISTORÇÃO TIPOGRAFIA: {stretch_y_display}" }
+                                    input {
+                                        r#type: "range",
+                                        min: "10",
+                                        max: "30",
+                                        value: "{stretch_y_slider}",
+                                        oninput: move |e| {
+                                            if let Ok(v) = e.value().parse::<u32>() {
+                                                stretch_y_slider.set(v);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                div { class: "select-group",
+                                    label { "ALGORITMO DE DITHER" }
+                                    select {
+                                        value: "{dither_override}",
+                                        onchange: move |e| dither_override.set(e.value()),
+                                        option { value: "auto", "Automático do Preset" }
+                                        option { value: "atkinson", "Atkinson (75% Dispersão)" }
+                                        option { value: "floyd-steinberg", "Floyd-Steinberg (Serpentina)" }
+                                        option { value: "bayer8x8", "Bayer 8x8 (Digital Retrô)" }
+                                        option { value: "bayer4x4", "Bayer 4x4" }
+                                        option { value: "halftone", "Halftone Analógico 45°" }
+                                    }
+                                }
+
+                                div { class: "select-group",
+                                    label { "PALETA CROMÁTICA" }
+                                    select {
+                                        value: "{palette_override}",
+                                        onchange: move |e| palette_override.set(e.value()),
+                                        option { value: "auto", "Automático do Preset" }
+                                        option { value: "classic-punk", "Navalha Clássica (#000, #FFF, #FF0033)" }
+                                        option { value: "lapa-noturna", "Lapa Noturna (#0B0B0E, #FF007F, #00F0FF)" }
+                                        option { value: "xerox-podre", "Xerox Podre (#1C1917, #F5F2EB)" }
+                                        option { value: "risografia", "Risografia Crua (#0038A8, #FF48B0, #FFF200)" }
+                                        option { value: "asfalto", "Asfalto & Ouro (#111111, #FFCC00)" }
+                                        option { value: "vga256", "VGA 256 / Modo 13h (256 cores)" }
+                                    }
+                                }
+
+                                div { class: "select-group",
+                                    label { "AMPLIAÇÃO NEAREST-NEIGHBOR" }
+                                    select {
+                                        value: "{scale_select}",
+                                        onchange: move |e| scale_select.set(e.value()),
+                                        option { value: "1x", "1x (Resolução Nativa de Grão)" }
+                                        option { value: "2x", "2x (Padrão Nítido)" }
+                                        option { value: "3x", "3x (Super Tátil)" }
+                                        option { value: "4x", "4x (Poster Gigante)" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Área do Canvas à direita
+                section {
+                    class: if mobile_view() == "controls" { "panel-preview mobile-hidden" } else { "panel-preview" },
+
+                    // Ações de preview no mobile
+                    div { class: "mobile-preview-actions",
+                        button {
+                            class: "btn-edit-action",
+                            onclick: move |_| mobile_view.set("controls".into()),
+                            "⚡ VOLTAR AOS CONTROLES"
+                        }
+                        button {
+                            class: "btn-download-sm",
+                            onclick: download_png_preview,
+                            "💾 BAIXAR PÔSTER (PNG)"
+                        }
+                    }
+
+                    div { class: "canvas-wrapper",
+                        if is_processing() {
+                            div {
+                                class: "processing-indicator",
+                                "[ RENDERIZANDO... ]"
+                            }
+                        }
+                        if rendered_png_uri().is_empty() {
+                            div {
+                                style: "color: #ff0033; font-family: monospace; font-size: 0.9rem; padding: 40px; text-align: center;",
+                                "[ INICIANDO MOTOR... ]"
+                            }
+                        } else {
+                            img {
+                                class: if is_processing() { "poster-display dim" } else { "poster-display" },
+                                src: "{rendered_png_uri}",
+                                alt: "Pôster Navalha gerado em tempo real",
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Doca flutuante inferior no mobile
+            div { class: "mobile-bottom-dock",
+                if mobile_view() == "controls" {
+                    button {
+                        class: "dock-btn secondary",
+                        onclick: move |_| mobile_view.set("preview".into()),
+                        "👁️ VER CARTAZ"
+                    }
+                } else {
+                    button {
+                        class: "dock-btn secondary",
+                        onclick: move |_| mobile_view.set("controls".into()),
+                        "⚡ EDITAR PÔSTER"
+                    }
+                }
+                button {
+                    class: "dock-btn primary",
+                    onclick: download_png_dock,
+                    "💾 BAIXAR PÔSTER (PNG)"
+                }
+            }
+
+            // Rodapé com linha de comando em tempo real
+            footer { class: "navalha-footer",
+                div { class: "cli-mirror-box",
+                    span { class: "cli-prompt", "$" }
+                    code { class: "cli-code", "{cli_cmd}" }
+                    button {
+                        class: "btn-copy-cli",
+                        onclick: copy_cmd,
+                        "{copy_status}"
+                    }
+                }
+            }
+        }
+    }
+}

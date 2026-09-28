@@ -1,0 +1,114 @@
+name: CI, Build & Distribution
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["main"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: write
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 1 — Rust Workspace: Tests & Binaries
+  # ─────────────────────────────────────────────────────────────────────────────
+  test-and-build:
+    name: "Rust Workspace — Tests, CLI & Wasm"
+    runs-on: ubuntu-latest
+    container:
+      image: codeberg.org/lumenpink/gost-ci-wasm:latest
+    steps:
+      - name: "Checkout repository"
+        uses: https://github.com/actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Cargo Check Workspace"
+        run: cargo check --workspace
+
+      - name: "Run Workspace Unit Tests"
+        run: cargo test --workspace
+
+      - name: "Compile Native CLI (navalha)"
+        run: |
+          cargo build --release -p navalha-cli
+          mkdir -p dist/bin
+          cp target/release/navalha dist/bin/navalha-linux-x86_64
+          chmod +x dist/bin/navalha-linux-x86_64
+
+      - name: "Build Dioxus WebAssembly Bundle (navalha-web)"
+        run: |
+          cd crates/navalha-web
+          wasm-pack build --target web --out-dir ../../dist/web/pkg
+          cp -r assets ../../dist/web/ || true
+          cp index.html ../../dist/web/
+
+      - name: "Upload Artifacts"
+        uses: https://github.com/actions/upload-artifact@v4
+        with:
+          name: navalha-dist
+          path: dist/
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 2 — Deploy WebApp & Documentation (navalha.2lp.in)
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy-site:
+    name: "Deploy Site & WebApp (navalha.2lp.in)"
+    runs-on: ubuntu-latest
+    container:
+      image: codeberg.org/lumenpink/gost-ci-deploy:latest
+    needs: [test-and-build]
+    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push'
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: "Checkout repository"
+        uses: https://github.com/actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Deploy to Cloudflare Workers"
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::Cloudflare credentials (CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID) not configured in secrets. Skipping Cloudflare deployment."
+          else
+            echo "Publishing WebApp and docs to navalha.2lp.in via Cloudflare Workers..."
+            wrangler deploy || echo "::warning::Cloudflare deployment failed, proceeding to Codeberg Pages fallback."
+          fi
+
+      - name: "Deploy to Codeberg Pages (Redundancy Fallback)"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "actions-user"
+          git config user.email "actions@codeberg.org"
+
+          WORKTREE_DIR=$(mktemp -d)
+          if git ls-remote --exit-code --heads origin pages >/dev/null 2>&1; then
+            git fetch origin pages:pages
+            git worktree add "$WORKTREE_DIR" pages
+          else
+            git worktree add --orphan -b pages "$WORKTREE_DIR"
+          fi
+
+          rm -rf "${WORKTREE_DIR:?}"/*
+          cp -r site/* "$WORKTREE_DIR/"
+
+          cd "$WORKTREE_DIR"
+          rm -f CNAME
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to deploy to Codeberg Pages."
+          else
+            git commit -m "docs(site): deploy site to Codeberg Pages [skip ci]"
+            git push origin pages
+            echo "Successfully deployed site to Codeberg Pages."
+          fi
+

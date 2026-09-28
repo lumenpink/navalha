@@ -1,0 +1,16 @@
+[package]
+name = "navalha-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "navalha"
+path = "src/main.rs"
+
+[dependencies]
+navalha-core = { workspace = true }
+clap = { workspace = true }
+image = { workspace = true }
