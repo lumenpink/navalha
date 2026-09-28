@@ -81,6 +81,21 @@ jobs:
           fi
 
       - name: "Deploy to Codeberg Pages (Fallback)"
-        uses: https://codeberg.org/actions/pages@v1
-        with:
-          path: site
+        continue-on-error: true
+        run: |
+          git config user.name "actions[bot]"
+          git config user.email "actions@codeberg.org"
+          git fetch origin pages:pages 2>/dev/null || true
+          if ! git rev-parse --verify pages >/dev/null 2>&1; then
+            EMPTY_TREE=$(git hash-object -t tree /dev/null)
+            FIRST_COMMIT=$(git commit-tree "$EMPTY_TREE" -m "Initialize pages branch")
+            git branch pages "$FIRST_COMMIT"
+          fi
+          WORKTREE_DIR=$(mktemp -d)
+          git worktree add "$WORKTREE_DIR" pages
+          rm -rf "${WORKTREE_DIR:?}"/*
+          cp -r site/* "$WORKTREE_DIR/"
+          cd "$WORKTREE_DIR"
+          git add -A
+          git commit -m "docs(site): deploy site to Codeberg Pages [skip ci]" || echo "No changes to deploy"
+          git push origin pages || true
