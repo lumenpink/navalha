@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAVALHA — Manifesto & Documentação Histórica dos Presets</title>
+    <meta name="description" content="Histórico, filosofia e justificativa técnica de cada preset anti-design do Navalha.">
+    <link rel="stylesheet" href="../assets/style.css">
+    <style>
+        html, body {
+            height: auto !important;
+            min-height: 100% !important;
+            max-height: none !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+        .doc-container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 20px 80px 20px;
+        }
+        .doc-hero {
+            background-color: #141416;
+            border-left: 6px solid #ff0033;
+            padding: 28px;
+            margin-bottom: 40px;
+            box-shadow: 6px 6px 0px #000;
+        }
+        .doc-title {
+            font-size: 36px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+        .doc-subtitle {
+            font-size: 16px;
+            color: #00f0ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            line-height: 1.6;
+        }
+        .doc-section {
+            margin-bottom: 50px;
+            background-color: #0f0f12;
+            border: 2px solid #222226;
+            padding: 32px;
+        }
+        .doc-section h2 {
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #e2f835;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .doc-section h3 {
+            font-size: 20px;
+            font-weight: 800;
+            color: #ff0033;
+            margin: 24px 0 10px 0;
+            letter-spacing: 1px;
+        }
+        .doc-section p {
+            font-size: 16px;
+            line-height: 1.85;
+            color: #dcdad5;
+            margin-bottom: 16px;
+        }
+        .doc-section ul, .doc-section ol {
+            font-size: 16px;
+            line-height: 1.85;
+            color: #dcdad5;
+            margin-bottom: 18px;
+            padding-left: 26px;
+        }
+        .doc-section li {
+            margin-bottom: 10px;
+        }
+        code {
+            font-size: 14px;
+            background-color: #000;
+            padding: 3px 6px;
+            border: 1px solid #333;
+            color: #00f0ff;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .preset-card {
+            background-color: #16161a;
+            border: 2px solid #333;
+            padding: 24px;
+            margin-bottom: 28px;
+            box-shadow: 4px 4px 0px #000;
+        }
+        .preset-card.highlight {
+            border-color: #00f0ff;
+        }
+        .preset-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+            border-bottom: 1px solid #2a2a30;
+            padding-bottom: 10px;
+        }
+        .preset-header strong {
+            font-size: 18px;
+            letter-spacing: 1px;
+        }
+        .preset-badge {
+            background-color: #ff0033;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 900;
+            padding: 4px 10px;
+            letter-spacing: 1px;
+        }
+        .palette-preview {
+            display: flex;
+            gap: 6px;
+            margin: 12px 0 16px 0;
+        }
+        .palette-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid #444;
+        }
+        .btn-back {
+            display: inline-block;
+            background-color: #e2f835;
+            color: #000;
+            font-weight: 900;
+            text-decoration: none;
+            padding: 12px 22px;
+            font-size: 14px;
+            letter-spacing: 1.5px;
+            box-shadow: 4px 4px 0px #ff0033;
+            margin-bottom: 30px;
+        }
+        .btn-back:hover {
+            background-color: #ff0033;
+            color: #fff;
+            box-shadow: 4px 4px 0px #e2f835;
+        }
+        .tech-specs {
+            background-color: #0a0a0c;
+            border: 1px dashed #444;
+            padding: 14px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #aaa;
+            margin-top: 12px;
+        }
+        .tech-specs strong {
+            color: #00f0ff;
+        }
+        
+        .asset-attribution {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #aaa;
+            font-family: 'Courier New', Courier, monospace;
+            background: #0d0d10;
+            border-left: 3px solid #00f0ff;
+            padding: 6px 10px;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: left;
+            line-height: 1.6;
+        }
+        .asset-attribution a {
+            color: #00f0ff;
+            text-decoration: underline;
+        }
+        .asset-attribution strong {
+            color: #e2f835;
+        }
+        .preset-poster-preview {
+            margin: 20px 0;
+            background: #000;
+            border: 2px solid #333;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 4px 4px 0px #000;
+        }
+        .preset-poster-img {
+            max-width: 100%;
+            height: auto;
+            max-height: 520px;
+            object-fit: contain;
+            border: 1px solid #222;
+            display: block;
+        }
+        .preset-poster-caption {
+            margin-top: 12px;
+            font-size: 14px;
+            color: #00f0ff;
+            text-align: center;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        .preset-poster-caption strong {
+            color: #e2f835;
+        }
+        .preset-poster-caption em {
+            color: #ff007f;
+            font-style: normal;
+            font-weight: 700;
+        }
+        .cli-example-box {
+            margin-top: 14px;
+            width: 100%;
+            background-color: #08080a;
+            border: 1px solid #282830;
+            border-left: 3px solid #e2f835;
+            padding: 10px 14px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            box-shadow: 2px 2px 0px #000;
+        }
+        .cli-example-label {
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: #888899;
+            text-transform: uppercase;
+        }
+        .cli-example-code {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            color: #00f0ff;
+            word-break: break-all;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            background: transparent;
+            padding: 0;
+            border: none;
+        }
+        .cli-example-code .cli-cmd {
+            color: #e2f835;
+            font-weight: 700;
+        }
+        .cli-example-code .cli-arg {
+            color: #ffffff;
+        }
+        .cli-example-code .cli-val {
+            color: #00f0ff;
+        }
+        .cli-example-code .cli-prompt {
+            color: #ff0033;
+            font-weight: 900;
+            margin-right: 6px;
+        }
+        .tribute-bio {
+            background-color: #121216;
+            border-left: 4px solid #ff007f;
+            padding: 16px 20px;
+            margin: 16px 0 18px 0;
+            font-size: 15px;
+            line-height: 1.85;
+            color: #e5e5e0;
+            border-top: 1px solid #222226;
+            border-bottom: 1px solid #222226;
+            border-right: 1px solid #222226;
+        }
+        .tribute-bio strong {
+            color: #00f0ff;
+            display: block;
+            margin-bottom: 6px;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Estilos do Índice Navegável (TOC) */
+        .doc-toc-box {
+            background-color: #121216;
+            border: 2px solid #e2f835;
+            padding: 24px;
+            margin-bottom: 40px;
+            box-shadow: 6px 6px 0px #000;
+        }
+        .doc-toc-title {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #e2f835;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #2a2a32;
+            padding-bottom: 8px;
+        }
+        .doc-toc-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .doc-toc-item {
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .doc-toc-link {
+            color: #ffffff;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.15s ease, transform 0.15s ease;
+        }
+        .doc-toc-link:hover {
+            color: #00f0ff;
+            transform: translateX(4px);
+        }
+        .doc-toc-link strong {
+            color: #e2f835;
+        }
+        .doc-toc-sublist {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 6px;
+            margin: 8px 0 12px 18px;
+            list-style: none;
+            padding: 0;
+        }
+        .doc-toc-sublink {
+            font-size: 12px;
+            color: #aaa;
+            text-decoration: none;
+            padding: 4px 8px;
+            background: #18181f;
+            border-left: 2px solid #444;
+            display: block;
+            transition: all 0.15s ease;
+        }
+        .doc-toc-sublink:hover {
+            color: #fff;
+            background: #22222c;
+            border-left-color: #ff0033;
+        }
+
+        @media (max-width: 768px) {
+            .doc-container {
+                padding: 20px 14px 60px 14px;
+            }
+            .doc-hero {
+                padding: 18px;
+                margin-bottom: 24px;
+            }
+            .doc-title {
+                font-size: 28px;
+                letter-spacing: 1px;
+            }
+            .doc-subtitle {
+                font-size: 14px;
+            }
+            .doc-section {
+                padding: 18px;
+                margin-bottom: 24px;
+            }
+            .doc-section h2 {
+                font-size: 21px;
+            }
+            .doc-section h3 {
+                font-size: 18px;
+            }
+            .doc-section p, .doc-section ul, .doc-section ol {
+                font-size: 15px;
+                line-height: 1.75;
+            }
+            .preset-card {
+                padding: 16px;
+            }
+            .preset-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+            .preset-header strong {
+                font-size: 16px;
+            }
+            .preset-palette-preview {
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            .palette-chip {
+                font-size: 11px;
+                padding: 3px 8px;
+            }
+            .preset-badge {
+                font-size: 11px;
+                padding: 3px 8px;
+            }
+            .tech-specs {
+                font-size: 12px;
+                line-height: 1.6;
+                word-break: break-word;
+            }
+            .btn-back {
+                font-size: 13px;
+                padding: 10px 18px;
+            }
+        }
+    </style>
+</head>
+<body class="doc-page">
+    <header class="navalha-header">
+        <div class="logo-box">
+            <span class="logo-icon">⚡🗡️</span>
+            <a href="/" style="text-decoration: none;"><h1 class="logo-title">NAVALHA</h1></a>
+            <span class="logo-badge">DOCUMENTAÇÃO /doc</span>
+        </div>
+        <div class="header-nav">
+            <a href="/" class="nav-link-doc">← VOLTAR AO APP DE CRIAÇÃO</a>
+        </div>
+    </header>
+
+    <div class="doc-container">
+        <a href="/" class="btn-back">← ABRIR O APLICATIVO WEB</a>
+
+        <section class="doc-hero">
+            <h1 class="doc-title">O MANIFESTO NAVALHA</h1>
+            <p class="doc-subtitle">
+                Por que criamos um motor gráfico determinístico anti-design em Rust e WebAssembly, rejeitando a inteligência artificial generativa e a pasteurização do design corporativo.
+            </p>
+        </section>
+
+        <!-- Painel de Índice Geral Navegável (TOC) -->
+        <nav class="doc-toc-box" aria-label="Índice Geral de Navegação">
+            <div class="doc-toc-title">
+                <span>📑</span> ÍNDICE GERAL DE NAVEGAÇÃO
+            </div>
+            <ul class="doc-toc-list">
+                <li class="doc-toc-item">
+                    <a href="#secao-historico" class="doc-toc-link"><strong>1.</strong> Histórico &amp; Princípios do Manifesto</a>
+                </li>
+                <li class="doc-toc-item">
+                    <a href="#secao-presets" class="doc-toc-link"><strong>2.</strong> Catálogo de Presets Anti-Design &amp; Memoriais Culturais</a>
+                    <ul class="doc-toc-sublist">
+                        <li><a href="#preset-punk-riot" class="doc-toc-sublink">01. Punk Riot (Claudia Wonder)</a></li>
+                        <li><a href="#preset-navalha-sata" class="doc-toc-sublink">02. Navalha Satã (Madame Satã)</a></li>
+                        <li><a href="#preset-xerox-podre" class="doc-toc-sublink">03. Xerox Podre (Indianarae)</a></li>
+                        <li><a href="#preset-viagem-solitaria" class="doc-toc-sublink">04. Viagem Solitária (João W. Nery)</a></li>
+                        <li><a href="#preset-lapa-noturna" class="doc-toc-sublink">05. Lapa Noturna (Linn da Quebrada)</a></li>
+                        <li><a href="#preset-teatro-operario" class="doc-toc-sublink">06. Teatro Operário (Leo Moreira Sá)</a></li>
+                        <li><a href="#preset-risografia" class="doc-toc-sublink">07. Risografia (Erika Hilton)</a></li>
+                        <li><a href="#preset-fanzine-digital" class="doc-toc-sublink">08. Fanzine Digital (Amara Moira)</a></li>
+                        <li><a href="#preset-asfalto-alerta" class="doc-toc-sublink">09. Asfalto Alerta (Kátia Tapety)</a></li>
+                        <li><a href="#preset-vga256" class="doc-toc-sublink">10. VGA 256 (Márcia Pantera)</a></li>
+                        <li><a href="#preset-cga" class="doc-toc-sublink">11. CGA (Neon Cunha)</a></li>
+                        <li><a href="#preset-old-mac-pop-art" class="doc-toc-sublink">12. Old Mac (Rogéria)</a></li>
+                        <li><a href="#preset-ascii-art" class="doc-toc-sublink">13. ASCII Art (Laerte Coutinho)</a></li>
+                        <li><a href="#preset-tabloide-popular" class="doc-toc-sublink">14. Tabloide (Luana Muniz)</a></li>
+                        <li><a href="#preset-brutalismo" class="doc-toc-sublink">15. Brutalismo (Drica D'arc Meirelles)</a></li>
+                        <li><a href="#preset-trash-polka" class="doc-toc-sublink">16. Trash Polka (Renata Carvalho)</a></li>
+                        <li><a href="#preset-atari-gaming" class="doc-toc-sublink">17. Atari Gaming (Jovanna Baby)</a></li>
+                        <li><a href="#preset-mimeografo" class="doc-toc-sublink">18. Mimeógrafo (Keila Simpson)</a></li>
+                        <li><a href="#preset-xilogravura" class="doc-toc-sublink">19. Xilogravura (Xica Manicongo)</a></li>
+                        <li><a href="#preset-glitch-crt" class="doc-toc-sublink">20. Glitch CRT (Robeyoncé Lima)</a></li>
+                    </ul>
+                </li>
+                <li class="doc-toc-item">
+                    <a href="#secao-otsurotacao" class="doc-toc-link"><strong>3.</strong> Manipulação de Imagem: Rotação e Corte Otsu</a>
+                </li>
+                <li class="doc-toc-item">
+                    <a href="#secao-danos" class="doc-toc-link"><strong>4.</strong> Marcas, Danos &amp; Intervenção Física</a>
+                </li>
+                <li class="doc-toc-item">
+                    <a href="#secao-stickers" class="doc-toc-link"><strong>5.</strong> Stickers &amp; Adesivos Contraculturais</a>
+                </li>
+                <li class="doc-toc-item">
+                    <a href="#secao-textoextra" class="doc-toc-link"><strong>6.</strong> Caixas de Texto Extra &amp; Posicionamento Livre</a>
+                </li>
+                <li class="doc-toc-item">
+                    <a href="#secao-simetria" class="doc-toc-link"><strong>7.</strong> Arquitetura Simétrica CLI &amp; Web</a>
+                </li>
+            </ul>
+        </nav>
+
+        <section class="doc-section" id="secao-historico">
+            <h2>1. Histórico e Justificativa do Projeto</h2>
+            <p>
+                Nas últimas duas décadas, o design gráfico digital sofreu uma pasteurização em massa. Ferramentas corporativas de conveniência (no estilo Canva) e, mais recentemente, geradores probabilísticos de inteligência artificial inundaram o mundo com gradientes suaves idênticos, iluminações volumétricas sintéticas e layouts milimetricamente calculados para não ofender nem provocar ninguém.
+            </p>
+            <p>
+                O <strong>Navalha</strong> nasce como a antítese dessa conveniência covarde. Ele resgata a tradição da **contracultura gráfica, do fanzine punk, da xerografia clandestina e do anti-design dos anos 70, 80 e 90**. Em vez de tentar adivinhar pixels por regressão estatística, o Navalha utiliza matemática determinística pura de difusão de erro e quantização tonal.
+            </p>
+            <p>
+                <strong>Princípios Fundamentais do Motor:</strong>
+            </p>
+            <p>
+                • <strong>Zero IA Generativa:</strong> O sujeito da imagem é você ou o arquivo que você escolheu. O motor não cria nada do nada; ele corta, queima meios-tons, distorce e prensa.<br>
+                • <strong>Determinismo Bit a Bit:</strong> A mesma imagem de entrada com os mesmos argumentos gerará exatamente o mesmo mapa de pixels em qualquer sistema operacional e em qualquer navegador do mundo.<br>
+                • <strong>Soberania e Privacidade Absoluta (100% no Cliente):</strong> O aplicativo roda integralmente via WebAssembly na memória do seu navegador. Zero bytes de imagem são enviados para servidores externos.
+            </p>
+        </section>
+
+        <section class="doc-section" id="secao-presets">
+            <h2>2. Histórico e Justificativa de Cada Preset</h2>
+            <p>
+                Cada preset do Navalha não é um "filtro de Instagram", mas sim a reconstituição histórica e técnica de uma época ou movimento de atrito gráfico:
+            </p>
+
+            <!-- PRESET 1: PUNK RIOT -->
+            <div class="preset-card highlight" id="preset-punk-riot">
+                <div class="preset-header">
+                    <span class="preset-badge">PRESET 01</span>
+                    <strong style="color: #fff; font-size: 16px;">PUNK RIOT (Fanzine Anarquista)</strong>
+                </div>
+                <div class="palette-preview">
+                    <span class="palette-chip" style="background:#000; color:#fff;">#000000 Preto</span>
+                    <span class="palette-chip" style="background:#fff; color:#000;">#FFFFFF Branco</span>
+                    <span class="palette-chip" style="background:#ff0033; color:#fff;">#FF0033 Vermelho Punk</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Inspirado nos primeiros zines punks de 1976–1977 (como o lendário <em>Sniffin' Glue</em> de Mark Perry e os panfletos colados com fita durex nas ruas de Londres e Nova York), bem como nos fanzines anarcopunks dos anos 80 em São Paulo, Olinda e Brasília. Os zines eram feitos cortando fotos de jornais com estilete, colando manchetes com letras de tamanhos desconexos e fotocopiando em máquinas roubadas na calada da noite.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Utiliza o algoritmo de <em>Atkinson Dither</em> (desenvolvido por Bill Atkinson na Apple). Diferente do Floyd-Steinberg tradicional que espalha 100% do erro residual, o Atkinson descarta 25% do erro propositalmente. Isso cria zonas de alto contraste limpas, realçando olhos, ossos e silhuetas escuras contra fundo vermelho vivo, com letras vazadas dentro de tarjas pretas maciças.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-punk-riot.png" alt="Cartaz de referência Punk Riot — Claudia Wonder" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>CLAUDIA WONDER (Pioneira Punk &amp; Ativista Travesti)</strong><br>
+                        <em>"QUEM VÊ CARA NÃO VÊ CORRE"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">claudia-wonder.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">punk-riot</span> <span class="cli-arg">--frase</span> <span class="cli-val">"QUEM VÊ CARA NÃO VÊ CORRE"</span> <span class="cli-arg">-o</span> <span class="cli-val">claudia-wonder-poster.png</span></code>
+                    </div>
+                                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org/wiki/File:Claudia_Wonder_e_D%C3%A1cio_Pinheiro.png" target="_blank" rel="noopener">Wikimedia Commons</a> | <strong>Autor:</strong> Dácio Pinheiro / Acervo MixBrasil (recorte solo autorizado) | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Claudia Wonder (1955–2010):</strong> Cantora, atriz, escritora e ícone definitivo da noite underground e punk paulistana dos anos 80. Liderou a lendária banda de rock <em>Claudia Wonder &amp; Os Vândalos</em>, atuou no cinema marginal, compôs hinos da noite e publicou crônicas afiadas. Em plena ditadura militar e transição democrática, Claudia tomou a atitude DIY (Faça Você Mesma) do punk para fundar a visibilidade travesti na música independente brasileira, unindo jaquetas de couro com tachas, poesia debochada e resistência intransigente contra a violência policial.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Atkinson (75% erro) | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Vermelho Punk (#FF0033) | <strong>Tarja:</strong> Preto maciço com letras brancas
+                </div>
+            </div>
+
+            <!-- PRESET 2: NAVALHA SATÃ -->
+            <div class="preset-card highlight" id="preset-navalha-sata">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#D4883A; color:#000;">PRESET 02</span>
+                    <strong style="color: #fff; font-size: 16px;">NAVALHA SATÃ (Linóleo &amp; Ouro Queimado)</strong>
+                </div>
+                <div class="palette-preview">
+                    <span class="palette-chip" style="background:#1A1412; color:#fff;">#1A1412 Carvão Linóleo</span>
+                    <span class="palette-chip" style="background:#D4883A; color:#000;">#D4883A Ouro Cru Queimado</span>
+                    <span class="palette-chip" style="background:#FFFFFF; color:#000;">#FFFFFF Branco Navalha</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Evoca a mítica e indomável figura de Madame Satã nos cortiços e cabarés da Lapa boêmia carioca do início do século XX. O contraste áspero do entalhe em madeira e linóleo popular reflete a malandragem indócil, o capoeirista imbatível e a resistência de corpos negros e dissidentes contra a repressão policial da Primeira República.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Opera com segmentação estrita por luminância e difusão de erro <em>Atkinson</em> acentuada com filtro unsharp de 3.0x. A paleta tricromática em carvão linóleo e ouro queimado sobre papel kraft resgata o corte dramático da gravura popular e o fio cortante de navalhas no calcanhar.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-navalha-sata.png" alt="Cartaz de referência Navalha Satã — Madame Satã" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>MADAME SATÃ (O Mito da Lapa &amp; A Lâmina no Calcanhar)</strong><br>
+                        <em>"NO FIO DA NAVALHA // QUEM ME PROTEGE NÃO DORME"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">madame-sata.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">navalha-sata</span> <span class="cli-arg">--frase</span> <span class="cli-val">"NO FIO DA NAVALHA // QUEM ME PROTEGE NÃO DORME"</span> <span class="cli-arg">-o</span> <span class="cli-val">madame-sata-poster.png</span></code>
+                    </div>
+                                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org/wiki/File:Madame_Sat%C3%A3_(1972).tiff" target="_blank" rel="noopener">Wikimedia Commons</a> | <strong>Autor:</strong> Arquivo Nacional do Brasil / Correio da Manhã | <strong>Licença:</strong> <a href="https://creativecommons.org/publicdomain/mark/1.0/" target="_blank" rel="noopener">Domínio Público</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Madame Satã (João Francisco dos Santos, 1900–1976):</strong> Artista, cozinheiro, malandro lendário e símbolo monumental de resistência e insubmissão na Lapa do Rio de Janeiro. Negro, homossexual e de destreza física avassaladora na capoeira, Satã encarava cordões inteiros de policiais armados e transformou a perseguição cotidiana em mito revolucionário. Criador de performances teatrais e personificação da audácia periférica, seu nome ecoa na cultura brasileira como a encarnação viva de quem nunca abaixou a cabeça para o poder opressor.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Atkinson (75% erro) | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Ouro Cru (#D4883A) | <strong>Tarja:</strong> Carvão linóleo (#1A1412) com tipografia branca
+                </div>
+            </div>
+
+            <!-- PRESET 3: XEROX PODRE -->
+            <div class="preset-card" id="preset-xerox-podre">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#1c1917;">PRESET 03</span>
+                    <strong style="color: #fff; font-size: 16px;">XEROX PODRE (Fotocopiadora Velha)</strong>
+                </div>
+                <div class="palette-preview">
+                    <span class="palette-chip" style="background:#1c1917; color:#fff;">#1C1917 Toner Queimado</span>
+                    <span class="palette-chip" style="background:#f5f2eb; color:#000;">#F5F2EB Papel Oxidado</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Evoca as copiadoras analógicas de diretórios acadêmicos, sindicatos e repartições públicas dos anos 80 e 90. O cilindro fotocondutor já estava riscado, o pó de toner estava no fim, o vidro da máquina guardava impressões digitais de meses e o papel barato amarelava imediatamente ao sair quente da esteira.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Implementa a matriz geométrica <em>Bayer 8x8 (Ordered Dithering)</em> com unsharp masking agressivo (3.2x), queima drástica dos níveis intermediários e faixa com distorções e artefatos determinísticos de fotocopiadora analógica (jitter de varredura lateral, riscos de cilindro com perda de toner e micro-cavidades de descolamento de pó). O resultado é a textura granulada e física de toner de carbono sobre celulose oxidada.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-xerox-podre.png" alt="Cartaz de referência Xerox Podre — Indianarae Siqueira" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>INDIANARAE SIQUEIRA (Casa Nem &amp; Resistência Clandestina)</strong><br>
+                        <em>"NOSSO CORPO É TRINCHEIRA"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">indianarae-siqueira.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">xerox-podre</span> <span class="cli-arg">--frase</span> <span class="cli-val">"NOSSO CORPO É TRINCHEIRA"</span> <span class="cli-arg">-o</span> <span class="cli-val">indianarae-siqueira-poster.png</span></code>
+                    </div>
+                                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org/wiki/File:Indianarae_Siqueira.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> | <strong>Autor:</strong> Mídia NINJA | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Indianarae Siqueira (1971–):</strong> Ativista histórica dos direitos humanos, sobrevivente da violência estatal e fundadora da <em>Casa Nem</em> e da <em>Casa Laura Vermont</em> no Rio de Janeiro. Pioneira nos debates de redução de danos, acolhimento de pessoas LGBTQIA+ em situação de extrema vulnerabilidade e luta contra o extermínio sistemático de travestis. Sua militância não se curva a formalismos burocráticos: é a voz que ocupa as ruas, abre portas na marreta e faz do próprio corpo uma trincheira intransponível pela vida e pela moradia digna.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Bayer 8x8 Ordenado | <strong>Base:</strong> 640px | <strong>Fundo:</strong> Papel Amarelado (#F5F2EB) | <strong>Tarja:</strong> Toner com riscos e falhas de varredura | <strong>Níveis:</strong> Sombras &lt; 25% / Luzes &gt; 75%
+                </div>
+            </div>
+
+            <!-- PRESET 4: VIAGEM SOLITÁRIA -->
+            <div class="preset-card" id="preset-viagem-solitaria">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#2B1D0C; color:#fff;">PRESET 04</span>
+                    <strong style="color: #fff; font-size: 16px;">VIAGEM SOLITÁRIA (Papel Kraft &amp; Datilografia Olivetti)</strong>
+                </div>
+                <div class="palette-preview">
+                    <span class="palette-chip" style="background:#2B1D0C; color:#fff;">#2B1D0C Sépia Carbono</span>
+                    <span class="palette-chip" style="background:#C8A870; color:#000;">#C8A870 Ocre Kraft Cru</span>
+                    <span class="palette-chip" style="background:#F5EBE1; color:#000;">#F5EBE1 Papel Datilografado</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Inspirado na estética documental dos manuscritos e fichários datilografados em máquinas Olivetti durante os anos 70 e 80. Referencia a publicação clandestina e a escrita corajosa de cartas e relatórios médicos em papel kraft e fita de carbono oxidada que abriram caminho para os direitos transmasculinos no Brasil.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Difusão bidimensional <em>Floyd-Steinberg</em> de alta densidade associada a um recorte cirúrgico de silhueta (threshold 0.82) e gama rebaixada (0.85). A fusão do sépia escuro com o ocre kraft reproduz a granulação tátil de documentos antigos arquivados sob sigilo.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-viagem-solitaria.png" alt="Cartaz de referência Viagem Solitária — João W. Nery" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>JOÃO W. NERY (Pioneiro Transmasculino &amp; Datilografia Subversiva)</strong><br>
+                        <em>"VIAGEM SOLITÁRIA: MEU CORPO, MINHA LEI"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">joao-w-nery.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">viagem-solitaria</span> <span class="cli-arg">--frase</span> <span class="cli-val">"VIAGEM SOLITÁRIA: MEU CORPO, MINHA LEI"</span> <span class="cli-arg">-o</span> <span class="cli-val">joao-w-nery-poster.png</span></code>
+                    </div>
+                                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org/wiki/File:Sess%C3%A3o_SSex_BBox_S%C3%A3o_Paulo_(SP)_(8727246594)_(cropped).jpg" target="_blank" rel="noopener">Wikimedia Commons</a> | <strong>Autor:</strong> SSex BBox / Flickr | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by-sa/2.0/" target="_blank" rel="noopener">CC BY-SA 2.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — João W. Nery (1950–2018):</strong> Escritor, psicólogo e ativista lendário, reconhecido como o primeiro homem trans a ser operado e documentar sua transição no Brasil em plena ditadura militar. Autor do clássico autobiográfico <em>Viagem Solitária</em> (1984/2011), João desafiou a clandestinidade civil e a violência institucional para educar gerações, lutar pela retificação de registro civil e inspirar o projeto de lei de identidade de gênero no Congresso Nacional.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Floyd-Steinberg | <strong>Base:</strong> 640px | <strong>Fundo:</strong> Ocre Kraft (#C8A870) | <strong>Tarja:</strong> Sépia carbono (#2B1D0C) com letras vazadas
+                </div>
+            </div>
+
+            <!-- PRESET 5: LAPA NOTURNA -->
+            <div class="preset-card" id="preset-lapa-noturna">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#ff007f;">PRESET 05</span>
+                    <strong style="color: #fff; font-size: 16px;">LAPA NOTURNA (Cyber-Rua & Duotone Ácido)</strong>
+                </div>
+                <div class="palette-preview">
+                    <span class="palette-chip" style="background:#0b0b0e; color:#fff;">#0B0B0E Asfalto Sujo</span>
+                    <span class="palette-chip" style="background:#ff007f; color:#fff;">#FF007F Magenta Neon</span>
+                    <span class="palette-chip" style="background:#00f0ff; color:#000;">#00F0FF Ciano Elétrico</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Uma homenagem ao submundo boêmio do Rio de Janeiro: a Lapa histórica, as vielas sob os Arcos, luzes de neon refletidas no asfalto molhado após pancadas de chuva de verão e a estética cyberpunk da América Latina periférica.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Duotone ácido de alta frequência cromática. Utiliza a difusão de erro clássica de <em>Floyd-Steinberg com Varredura em Serpentina</em> (alternando esquerda-direita e direita-esquerda entre linhas pares e ímpares para aniquilar artefatos lineares). A tipografia recebe distorção vertical forçada de 180% a 220%, ocupando agressivamente a parte aérea do pôster.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-lapa-noturna.png" alt="Cartaz de referência Lapa Noturna — Linn da Quebrada" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>LINN DA QUEBRADA (Arte, Noite &amp; Revolução dos Corpos)</strong><br>
+                        <em>"TRAVESTI É REVOLUÇÃO"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">linn-da-quebrada.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">lapa-noturna</span> <span class="cli-arg">--frase</span> <span class="cli-val">"TRAVESTI É REVOLUÇÃO"</span> <span class="cli-arg">-o</span> <span class="cli-val">linn-da-quebrada-poster.png</span></code>
+                    </div>
+                                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org/wiki/File:Linn_da_Quebrada_-_Lady_Night_2022.png" target="_blank" rel="noopener">Wikimedia Commons</a> | <strong>Autor:</strong> Multishow / YouTube | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Linn da Quebrada (1990–):</strong> Artista multimídia, cantora, compositora e atriz paulistana. Com os discos antológicos <em>Pajubá</em> (2017) e <em>Traveqa</em> (2021), e sua atuação no cinema e na TV, Linn revolucionou a música popular brasileira contemporânea. Ela ressignificou o corpo travesti como território poético, político e erótico de disputa, quebrando convenções de gênero e normas estéticas com letras complexas, flow afiado e uma presença visual magnética que recusa qualquer tentativa de domesticação cultural.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Floyd-Steinberg Serpentina | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Asfalto (#0B0B0E) | <strong>Tipografia:</strong> Distorção vertical 2.2x
+                </div>
+            </div>
+
+            <!-- PRESET 6: TEATRO OPERÁRIO -->
+            <div class="preset-card highlight" id="preset-teatro-operario">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#B31B1B; color:#fff;">PRESET 06</span>
+                    <strong style="color: #fff; font-size: 16px;">TEATRO OPERÁRIO (Cartaz Construtivista)</strong>
+                </div>
+                <div class="palette-preview">
+                    <span class="palette-chip" style="background:#111111; color:#fff;">#111111 Preto Chumbo</span>
+                    <span class="palette-chip" style="background:#B31B1B; color:#fff;">#B31B1B Vermelho Carmesim</span>
+                    <span class="palette-chip" style="background:#E6E2D8; color:#000;">#E6E2D8 Papel Jornal Cru</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Inspirado nos cartazes de agitação e propaganda do teatro operário, teatro de arena e nas artes gráficas construtivistas dos anos 60 e 70. Transfere para a cena do teatro trans contemporâneo os blocos tipográficos maciços, as diagonais de tensão visual e a urgência da cena que não pede permissão para ocupar os palcos.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Retícula matricial ordenada <em>Bayer 4x4</em> combinada com corte de guilhotina e tipografia ampliada de fundo sangrando em vermelho carmesim vibrante (`#B31B1B`). O acabamento de linhas retas e alto contraste tipográfico gera o impacto imediato de cartazes de lambe-lambe de rua.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-teatro-operario.png" alt="Cartaz de referência Teatro Operário — Leo Moreira Sá" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>LEO MOREIRA SÁ (Cena Transmasculina &amp; Dramaturgia Marginal)</strong><br>
+                        <em>"DO PALCO À TRINCHEIRA"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">leo-moreira-sa.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">teatro-operario</span> <span class="cli-arg">--frase</span> <span class="cli-val">"DO PALCO À TRINCHEIRA"</span> <span class="cli-arg">-o</span> <span class="cli-val">leo-moreira-sa-poster.png</span></code>
+                    </div>
+                                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://midianinja.org/wp-content/uploads/2023/05/WhatsApp-Image-2023-04-19-at-09.48.37-1024x1024.jpeg" target="_blank" rel="noopener">Mídia NINJA</a> | <strong>Autor:</strong> Mídia NINJA | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Leo Moreira Sá:</strong> Ator, dramaturgo, diretor e fundador da cena teatral transmasculina no Brasil. Co-criador do Coletivo Homens Trans em Cena e protagonista de obras seminais como <em>Diga Que Você Está Vendo!</em> e <em>Lou&amp;Leo</em>. Sua trajetória une a militância anticapitalista, a defesa dos direitos humanos nas periferias e o resgate da arte cênica como trincheira de afirmação de corpos transmasculinos.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Bayer 4x4 | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Papel Jornal Cru (#E6E2D8) | <strong>Tarja:</strong> Preto chumbo com letras vazadas
+                </div>
+            </div>
+
+            <!-- PRESET 7: RISOGRAFIA CRUA -->
+            <div class="preset-card" id="preset-risografia">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#0038a8;">PRESET 07</span>
+                    <strong style="color: #fff; font-size: 16px;">RISOGRAFIA CRUA (Ponto de Impressão)</strong>
+                </div>
+                <div class="palette-preview">
+                    <span class="palette-chip" style="background:#0038a8; color:#fff;">#0038A8 Azul Royal</span>
+                    <span class="palette-chip" style="background:#ff48b0; color:#fff;">#FF48B0 Rosa Flúor</span>
+                    <span class="palette-chip" style="background:#fff200; color:#000;">#FFF200 Amarelo Riso</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> A Risografia (inventada pela Riso Kagaku Corporation no Japão nos anos 80) foi adotada por artistas independentes no mundo inteiro por sua textura tátil única. Na impressora Riso, cada cor é física e independente, passando por um tambor de malha que deposita tinta pura com pontos mecânicos visíveis.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Algoritmo de <em>Halftone Analógico a 45 graus</em>, simulando o comportamento de retículas de chapa física de jornal e silk-screen. As altas luzes preservam o amarelo elétrico, enquanto os meios-tons e sombras são sustentados pelo rosa fluorescente e azul royal.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-risografia.png" alt="Cartaz de referência Risografia Crua — Erika Hilton" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>ERIKA HILTON (Voz Política &amp; Ocupação Democrática)</strong><br>
+                        <em>"NADA SOBRE NÓS SEM NÓS"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">erika-hilton.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">risografia</span> <span class="cli-arg">--frase</span> <span class="cli-val">"NADA SOBRE NÓS SEM NÓS"</span> <span class="cli-arg">-o</span> <span class="cli-val">erika-hilton-poster.png</span></code>
+                    </div>
+                                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org/wiki/File:Erika_Hilton_em_sess%C3%A3o_em_abril_de_2024_(cropped).jpg" target="_blank" rel="noopener">Wikimedia Commons</a> | <strong>Autor:</strong> Zeca Ribeiro / Câmara dos Deputados | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Erika Hilton (1992–):</strong> Primeira mulher trans negra eleita deputada federal na história do Brasil e uma das parlamentares mais votadas do país. Nascida em Franco da Rocha e sobrevivente da expulsão familiar e das esquinas de São Paulo, Erika transformou a dor em oratória arrebatadora e capacidade de liderança política. Preside comissões estratégicas no Congresso Nacional, enfrentando o ódio de frente com elegância cortante e pautando a dignidade, a empregabilidade e os direitos fundamentais da população trans.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Halftone Analógico 45° (grade 6px) | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Amarelo Riso (#FFF200) | <strong>Cores:</strong> Separação mecânica
+                </div>
+            </div>
+
+            <!-- PRESET 8: FANZINE DIGITAL -->
+            <div class="preset-card" id="preset-fanzine-digital">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#001188; color:#fff;">PRESET 08</span>
+                    <strong style="color: #fff; font-size: 16px;">FANZINE DIGITAL (Cyber-BBS Anos 90)</strong>
+                </div>
+                <div class="palette-preview">
+                    <span class="palette-chip" style="background:#001188; color:#fff;">#001188 Azul Ultramarino</span>
+                    <span class="palette-chip" style="background:#FFEE00; color:#000;">#FFEE00 Amarelo CRT</span>
+                    <span class="palette-chip" style="background:#FFFFFF; color:#000;">#FFFFFF Branco Puro</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Homenagem à primeira onda de manifestos eletrônicos, zines distribuídos via BBS (Bulletin Board Systems), disquetes e os primeiros sites da Web 1.0 dos anos 90. Representa a circulação livre de textos ensaísticos, subversão linguística e a demolição das fronteiras entre a literatura erudita e a vivência da rua.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Quantização matricial com retícula <em>Bayer 8x8</em> em fundo azul ultramarino (`#001188`) associada a tarjas contrastantes em amarelo elétrico CRT (`#FFEE00`). O sujeito preserva o enquadramento fotográfico pleno sem guilhotina e adquire a estética inconfundível dos gráficos digitais dos primeiros sistemas de rede.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-amara-moira.png" alt="Cartaz de referência Fanzine Digital — Amara Moira" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>AMARA MOIRA (Escritora, Zines &amp; Doutora em Teoria Literária)</strong><br>
+                        <em>"LITERATURA É GUERRILHA"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">amara-moira.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">fanzine-digital</span> <span class="cli-arg">--frase</span> <span class="cli-val">"LITERATURA É GUERRILHA"</span> <span class="cli-arg">-o</span> <span class="cli-val">amara-moira-poster.png</span></code>
+                    </div>
+                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org/wiki/File:Amara_Moira.png" target="_blank" rel="noopener">Wikimedia Commons</a> | <strong>Autor:</strong> SSEXBBOX | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Amara Moira:</strong> Primeira travesti a obter o título de doutora em Teoria Literária pela Unicamp, escritora, tradutora de James Joyce e cronista de combate. Sua produção intelectual e literária (como <em>E se eu fosse puta</em>) implode os limites entre a academia e as esquinas, transformando a língua portuguesa em ferramenta afiada de libertação, visibilidade e defesa incondicional dos direitos das pessoas trans e profissionais do sexo.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Bayer 8x8 | <strong>Base:</strong> 640px | <strong>Fundo:</strong> Azul Ultramarino (#001188) | <strong>Tarja:</strong> Amarelo CRT com letras em azul ultramarino
+                </div>
+            </div>
+
+            <!-- PRESET 9: ASFALTO & OURO -->
+            <div class="preset-card" id="preset-asfalto-alerta">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#ffcc00; color:#000;">PRESET 09</span>
+                    <strong style="color: #fff; font-size: 16px;">ASFALTO & OURO (Alerta Industrial)</strong>
+                </div>
+                <div class="palette-preview">
+                    <span class="palette-chip" style="background:#111111; color:#fff;">#111111 Preto Piche</span>
+                    <span class="palette-chip" style="background:#ffcc00; color:#000;">#FFCC00 Amarelo Perigo</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> O brutalismo industrial e a estética operária: sinalizações de perigo em usinas, fitas de interdição de obras públicas, maquinários pesados e símbolos de alta tensão. É a paleta de maior urgência e contraste da percepção óptica humana.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Paleta binária pura com Atkinson dither, combinada com marcas de corte nas quatro quinas e tarja maciça diagonal de aviso. Transmite choque visual imediato mesmo a longas distâncias.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-asfalto-alerta.png" alt="Cartaz de referência Asfalto &amp; Ouro — Kátia Tapety" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>KÁTIA TAPETY (Primeira Travesti Eleita na História do Brasil — 1992)</strong><br>
+                        <em>"ABRINDO CAMINHO NA RAÇA"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">katia-tapety.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">asfalto-alerta</span> <span class="cli-arg">--frase</span> <span class="cli-val">"ABRINDO CAMINHO NA RAÇA"</span> <span class="cli-arg">-o</span> <span class="cli-val">katia-tapety-poster.png</span></code>
+                    </div>
+                                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org/wiki/File:K%C3%A1tia_Tapety.webp" target="_blank" rel="noopener">Wikimedia Commons</a> | <strong>Autor:</strong> Acervo Kátia Tapety | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Kátia Tapety (1949–):</strong> A pioneira absoluta da representação política travesti no Brasil e na América Latina. Nascida no sertão do Piauí, foi eleita vereadora de Colônia do Piauí em 1992, reeleita três vezes consecutivas e chegou ao cargo de vice-prefeita em 2004. Muito antes de qualquer debate acadêmico ou institucional sobre diversidade, Kátia conquistou o respeito incondicional de sua comunidade rural distribuindo remédios, articulando socorro e exercendo poder popular com coragem sertaneja e generosidade inabalável.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Atkinson | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Piche (#111111) | <strong>Contraste:</strong> Óptico binário
+                </div>
+            </div>
+
+            <!-- PRESET 10: VGA 256 -->
+            <div class="preset-card highlight" id="preset-vga256">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#0000aa;">PRESET 10</span>
+                    <strong style="color: #fff; font-size: 16px;">VGA 256 (Modo 13h / Low-Res / Demoscene)</strong>
+                </div>
+                <div class="palette-preview">
+                    <span class="palette-chip" style="background:#0000aa; color:#fff;">#0000AA Azul DOS</span>
+                    <span class="palette-chip" style="background:#ffff55; color:#000;">#FFFF55 Amarelo VGA</span>
+                    <span class="palette-chip" style="background:#55ffff; color:#000;">#55FFFF Ciano VGA</span>
+                    <span class="palette-chip" style="background:#aaaaaa; color:#000;">+253 Cores Indexadas</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Em 1987, a IBM introduziu o padrão VGA. Seu subsistema mais lendário foi o <strong>Modo 13h</strong>: uma tela de 320x200 pixels com 256 cores simultâneas selecionadas de um DAC de 18 bits. O Modo 13h deu origem à era de ouro dos jogos de computador para MS-DOS (<em>Doom, Wolfenstein 3D, Monkey Island</em>), aos programas de arte gráfica como o <em>Deluxe Paint</em> e à lendária demoscene dos anos 90 que cabia em disquetes de 1.44MB.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Opera com downsampling forçado para exatamente <strong>320 pixels de largura base</strong> (proporção idêntica ao Modo 13h). A quantização utiliza a tabela exata de 256 cores (as 16 cores básicas do BIOS/EGA, o cubo RGB 6x6x6 de 216 cores e uma rampa de 24 tons de cinza). O dither é processado por matriz <em>Bayer 4x4</em> e ampliado por Nearest-Neighbor 3x, mantendo os pixels perfeitamente duros, sem qualquer borrão bilinear.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-vga256.png" alt="Cartaz de referência VGA 256 — Márcia Pantera" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>MÁRCIA PANTERA (Criadora do Bate-Cabelo &amp; Lenda da Pista)</strong><br>
+                        <em>"BATE CABELO E BATE DE FRENTE"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">marcia-pantera.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">vga256</span> <span class="cli-arg">--frase</span> <span class="cli-val">"BATE CABELO E BATE DE FRENTE"</span> <span class="cli-arg">-o</span> <span class="cli-val">marcia-pantera-poster.png</span></code>
+                    </div>
+                                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org/wiki/File:M%C3%A1rcia_Pantera.png" target="_blank" rel="noopener">Wikimedia Commons</a> | <strong>Autor:</strong> Guilherme Santos | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Márcia Pantera (1969–):</strong> Criadora seminal do movimento do "bate-cabelo" nas pistas paulistanas no final dos anos 1980. Na Blue Space e na Nostromondo, Márcia revolucionou a performance noturna, transformando saltos agulha de 15 centímetros, giros velozes de coluna e movimentos circulares de peruca em uma proeza atlética reverenciada e copiada por drag queens do mundo inteiro. Musa de estilistas e fotógrafos de moda, personifica o glamour e a altivez de quem reina na noite brasileira.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Bayer 4x4 Ordenado | <strong>Base:</strong> 320px (Modo 13h) | <strong>Escala:</strong> 3x Nearest-Neighbor | <strong>Fundo:</strong> Azul DOS (#0000AA)
+                </div>
+            </div>
+
+            <!-- PRESET 11: CGA (1981) -->
+            <div class="preset-card" style="border-left: 5px solid #55ffff;" id="preset-cga">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#55ffff; color:#000;">PRESET #11</span>
+                    <strong style="color: #fff; font-size: 16px;">CGA / IBM PC 1981 (4 CORES)</strong>
+                </div>
+                <div class="preset-palette-preview">
+                    <span class="palette-chip" style="background:#000000; color:#fff;">#000000 Preto</span>
+                    <span class="palette-chip" style="background:#55ffff; color:#000;">#55FFFF Ciano</span>
+                    <span class="palette-chip" style="background:#ff55ff; color:#000;">#FF55FF Magenta</span>
+                    <span class="palette-chip" style="background:#ffffff; color:#000;">#FFFFFF Branco</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Em agosto de 1981, a IBM lançou a placa Color/Graphics Adapter (CGA) para o IBM PC 5150. Equipada com um controlador Motorola MC6845 e míseros 16 KB de memória de vídeo, a placa não tinha capacidade de endereçar livremente cores por pixel em resolução gráfica (320x200). A engenharia da IBM fixou então duas paletas rígidas de 4 cores no hardware (Paleta 1: Preto, Ciano, Magenta, Branco; Paleta 0: Preto, Verde, Vermelho, Amarelo). Essa restrição forçou os primeiros desenvolvedores e artistas a criarem mundos com céus magenta e mares ciano fluorescente, fundando a estética cibernética mais alienígena dos primórdios da microinformática.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Downsampling forçado para 320 pixels de largura com quantização euclidiana estrita sobre a Paleta 1 CGA em alto brilho. O padrão de retícula utiliza dithering matricial Bayer 4x4 expandido por Nearest-Neighbor 3x, preservando a pureza geométrica crua dos monitores CRT RGB com entrada digital TTL da década de 1980.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-neon-cunha.png" alt="Cartaz de referência CGA 1981 — Neon Cunha" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>NEON CUNHA (Estilista, Ativista Independente &amp; Resistência Negra Trans)</strong><br>
+                        <em>"MEU CORPO É TERRITÓRIO POLÍTICO"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">neon-cunha.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">cga</span> <span class="cli-arg">--frase</span> <span class="cli-val">"MEU CORPO É TERRITÓRIO POLÍTICO"</span> <span class="cli-arg">-o</span> <span class="cli-val">neon-cunha-poster.png</span></code>
+                    </div>
+                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org/wiki/File:Neon_Cunha_(52269362312).jpg" target="_blank" rel="noopener">Wikimedia Commons</a> | <strong>Autor:</strong> Mídia NINJA | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by-sa/2.0/" target="_blank" rel="noopener">CC BY-SA 2.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Neon Cunha:</strong> Mulher negra, travesti e ativista independente com décadas de protagonismo nas lutas interseccionais brasileiras. Notabilizou-se internacionalmente ao enfrentar a tutela do Estado brasileiro e reivindicar sua retificação de registro civil sem laudo psiquiátrico ou patologização médica, afirmando de maneira categórica a autodeterminação corporal, a soberania e a dignidade humana.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Bayer 4x4 Ordenado | <strong>Base:</strong> 320px | <strong>Escala:</strong> 3x Nearest-Neighbor | <strong>Cores:</strong> 4 fixas (MC6845)
+                </div>
+            </div>
+
+            <!-- PRESET 12: OLD MAC POP ART -->
+            <div class="preset-card" style="border-left: 5px solid #ff007f;" id="preset-old-mac-pop-art">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#ff007f; color:#fff;">PRESET #12</span>
+                    <strong style="color: #fff; font-size: 16px;">OLD MAC POP ART / WARHOL & ATKINSON (1984–1985)</strong>
+                </div>
+                <div class="preset-palette-preview">
+                    <span class="palette-chip" style="background:#000000; color:#fff;">#000000 Preto</span>
+                    <span class="palette-chip" style="background:#ffffff; color:#000;">#FFFFFF Branco</span>
+                    <span class="palette-chip" style="background:#ff007f; color:#fff;">#FF007F Rosa Pop</span>
+                    <span class="palette-chip" style="background:#ffe600; color:#000;">#FFE600 Amarelo</span>
+                    <span class="palette-chip" style="background:#00d2ff; color:#000;">#00D2FF Azul Turquesa</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Em 1984, Bill Atkinson criou para o Macintosh original a rotina gráfica <em>QuickDraw</em> e o célebre algoritmo <em>Atkinson Dithering</em> para simular gradientes ricos na tela monocromática de 512x342 pixels. No ano seguinte, em 1985, Andy Warhol subiu ao palco de lançamento do Commodore Amiga 1000 com Debbie Harry e declarou sua fascinação pela estética de preenchimentos eletrônicos saturados. Este preset funde o grão tipográfico do Mac clássico com as sobreposições de silkscreen desalinhadas e cores fluorescentes da Pop Art novaiorquina.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Downsampling na proporção canônica de 512 pixels com difusão de erro de 1 bit calibrada por Atkinson. A saída é mapeada com contraste forçado sobre duotones serigráficos de alta vibração ótica (amarelo puro e rosa fluorescente), com registro propositalmente deslocado nos elementos de moldura e tipografia pesada.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-old-mac-pop-art.png" alt="Cartaz de referência Old Mac Pop Art — Rogéria" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>ROGÉRIA (A Maior das Artistas &amp; Estrela Pop Internacional)</strong><br>
+                        <em>"A MAIOR DAS ARTISTAS"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">rogeria.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">old-mac-pop-art</span> <span class="cli-arg">--frase</span> <span class="cli-val">"A MAIOR DAS ARTISTAS"</span> <span class="cli-arg">-o</span> <span class="cli-val">rogeria-poster.png</span></code>
+                    </div>
+                                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org/wiki/File:26_Pr%C3%AAmio_da_M%C3%BAsica_Brasileira_(18523218108).jpg" target="_blank" rel="noopener">Wikimedia Commons</a> | <strong>Autor:</strong> Flickr / 26º Prêmio da Música Brasileira | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by/2.0/" target="_blank" rel="noopener">CC BY 2.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Rogéria (1943–2017):</strong> Autointitulada com imenso afeto e orgulho popular como "a travesti da família brasileira". Começou como maquiadora da TV Rio nos anos 60, ao lado de grandes astros da época de ouro, e despontou para a consagração internacional nos palcos de Paris (Carrousel de Paris), do Rio e de Buenos Aires. Vedete, cantora e atriz de telenovelas e cinema, Rogéria conquistou corações de todas as gerações, unindo sofisticação cosmopolita, talento monumental e recusa a esconder sua identidade.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Atkinson Difusão | <strong>Base:</strong> 512px (Mac 128K) | <strong>Escala:</strong> 2x Nearest-Neighbor | <strong>Estilo:</strong> Serigrafia Pop Art
+                </div>
+            </div>
+
+            <!-- PRESET 13: ASCII ART -->
+            <div class="preset-card" style="border-left: 5px solid #00ff66;" id="preset-ascii-art">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#00ff66; color:#000;">PRESET 13</span>
+                    <strong style="color: #fff; font-size: 16px;">ASCII ART / WALDEMAR CORDEIRO (USP 1971)</strong>
+                </div>
+                <div class="preset-palette-preview">
+                    <span class="palette-chip" style="background:#050a05; color:#fff;">#050A05 Fundo CRT</span>
+                    <span class="palette-chip" style="background:#005514; color:#fff;">#005514 Fósforo Escuro</span>
+                    <span class="palette-chip" style="background:#00aa32; color:#fff;">#00AA32 Fósforo Médio</span>
+                    <span class="palette-chip" style="background:#00ff66; color:#000;">#00FF66 Fósforo Brilhante</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Tributo à série histórica <em>"Derivadas de uma Imagem"</em> criada em 1971 pelo artista concreto paulistano <strong>Waldemar Cordeiro</strong> e pelo físico <strong>Giorgio Moscati</strong> no Centro de Computação da USP, utilizando um computador IBM 360/44 e impressora matricial de linha IBM 1403. Cordeiro foi o pioneiro absoluto da arte digital na América Latina, decompondo fotografias da imprensa em caracteres alfanuméricos com diferentes densidades de tinta para subverter o controle da informação durante os anos de chumbo da ditadura militar.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Implementa algoritmo de conversão por densidade ótica alfanumérica monoespaçada com rasterização tipográfica em alta fidelidade no pôster (<code>@%#*+=-:.</code>). A chapa é mapeada em grade de células 9x12 px (~82 colunas) renderizadas diretamente sobre fundo preto CRT P1 (#050A05) com 4 níveis tonais de fósforo verde (#005514, #00AA32 e #00FF66), e o CLI disponibiliza o comando nativo <code>navalha ascii &lt;foto&gt; --colunas 80</code> para despejo direto em texto puro no stdout do terminal Linux.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-ascii-art.png" alt="Cartaz de referência ASCII Art — Laerte Coutinho" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>LAERTE COUTINHO (Mestra do Quadrinho &amp; Traço Crítico Nacional)</strong><br>
+                        <em>"A VIDA NÃO CABE EM DUAS CORES"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">laerte-coutinho.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">ascii-art</span> <span class="cli-arg">--frase</span> <span class="cli-val">"A VIDA NÃO CABE EM DUAS CORES"</span> <span class="cli-arg">-o</span> <span class="cli-val">laerte-coutinho-poster.png</span></code>
+                    </div>
+                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org/wiki/File:Laerte_em_2015.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> | <strong>Autor:</strong> Marcello Casal Jr / Agência Brasil | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by/3.0/br/" target="_blank" rel="noopener">CC BY 3.0 BR</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Laerte Coutinho (1951–):</strong> Uma das maiores cartunistas, roteiristas e desenhistas da história da imprensa e cultura do Brasil. Cofundadora da revista <em>Chiclete com Banana</em> e criadora de personagens imortais como <em>Os Piratas do Tietê</em> e <em>Overman</em>. Quando realizou publicamente sua transição de gênero aos quase sessenta anos, Laerte desafiou com inteligência, delicadeza e humor cortante os preconceitos arraigados da sociedade brasileira, redefinindo as tiras diárias como espaço de profunda reflexão existencial e filosófica.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Raster Tipográfico ASCII Real (9x12px) | <strong>Colunas:</strong> ~82 | <strong>Fósforo:</strong> CRT Verde (#00FF66) | <strong>CLI:</strong> navalha ascii
+                </div>
+            </div>
+
+            <!-- PRESET 14: TABLOIDE POPULAR -->
+            <div class="preset-card highlight" style="border-left: 5px solid #ffe600;" id="preset-tabloide-popular">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#e60000; color:#fff;">PRESET 14</span>
+                    <strong style="color: #fff; font-size: 16px;">TABLOIDE POPULAR / MANCHETE DE ROTATIVA</strong>
+                </div>
+                <div class="preset-palette-preview">
+                    <span class="palette-chip" style="background:#0a0a0a; color:#fff;">#0A0A0A Preto Chumbo</span>
+                    <span class="palette-chip" style="background:#e60000; color:#fff;">#E60000 Vermelho Manchete</span>
+                    <span class="palette-chip" style="background:#ffe600; color:#000;">#FFE600 Amarelo Jornal</span>
+                    <span class="palette-chip" style="background:#e8e6df; color:#000;">#E8E6DF Papel Imprensa</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Inspirado na imprensa sensacionalista de circulação diária e nos jornais populares de rotativa das décadas de 1980 e 1990 (como o clássico paulistano <em>Notícias Populares</em>, <em>O Povo</em> e o jornalismo investigativo de ronda policial). Esse formato explorava a urgência e o choque urbano com manchetes em caixas amarelas e vermelhas gritadas e fotos granuladas de rotativa rápida sobre papel jornal cinza. Era a imprensa que frequentemente abordava as travestis da noite com estigma e sensacionalismo policialesco — e que encontrou em <strong>Luana Muniz</strong> uma força inquebrantável que tomava o microfone com altivez, queixo erguido e autoridade moral absoluta para impor respeito e dignidade.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Downsampling forçado para 720 pixels de largura com unsharp masking agressivo (3.2x) que força os microcontrastes de contorno facial da rotativa. A quantização utiliza difusão de erro Floyd-Steinberg em 4 tons saturados (papel jornal cinza claro, amarelo manchete, vermelho e preto), tarja vermelha de edição extra no topo e tarja preta de manchete urgente na base, com marcas de registro gráfico industrial.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-tabloide-popular.png" alt="Cartaz de referência Tabloide Popular — Luana Muniz" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>LUANA MUNIZ (A Rainha da Lapa &amp; Liderança Comunitária)</strong><br>
+                        <em>"TRAVESTI NÃO É BAGUNÇA"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">luana-muniz.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">tabloide-popular</span> <span class="cli-arg">--frase</span> <span class="cli-val">"TRAVESTI NÃO É BAGUNÇA"</span> <span class="cli-arg">-o</span> <span class="cli-val">luana-muniz-poster.png</span></code>
+                    </div>
+                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org/wiki/File:Luana_Muniz.jpg" target="_blank" rel="noopener">Wikimedia Commons</a> | <strong>Autor:</strong> Acervo Luana Muniz | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Luana Muniz (1961–2017):</strong> A lendária "Rainha da Lapa", líder comunitária, atriz e ativista carioca. Em plena rua Mem de Sá, fundou o Casarão Luana Muniz, abrigo histórico que acolheu durante décadas centenas de travestis, pessoas trans e portadoras do vírus HIV expulsas de suas casas e da sociedade. Diante das câmeras sensacionalistas que buscavam escandalizar a vida noturna carioca, Luana eternizou o grito definitivo da dignidade marginal: <em>"Travesti não é bagunça!"</em>. Uma guerreira destemida que impôs respeito à força de sua generosidade, coragem e compromisso incondicional com os mais vulneráveis.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Floyd-Steinberg Rotativa | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Papel Jornal (#E8E6DF) | <strong>Cores:</strong> 4 (Imprensa Popular)
+                </div>
+            </div>
+
+            <!-- PRESET 15: BRUTALISMO -->
+            <div class="preset-card" style="border-left: 5px solid #0a0a0a;" id="preset-brutalismo">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#0a0a0a; color:#fff;">PRESET 15</span>
+                    <strong style="color: #fff; font-size: 16px;">BRUTALISMO / CONCRETO &amp; BLOCOS ORTOGONAIS</strong>
+                </div>
+                <div class="preset-palette-preview">
+                    <span class="palette-chip" style="background:#0a0a0a; color:#fff;">#0A0A0A Preto Piche</span>
+                    <span class="palette-chip" style="background:#e5e5e5; color:#000;">#E5E5E5 Concreto</span>
+                    <span class="palette-chip" style="background:#fafafa; color:#000;">#FAFAFA Branco Gesso</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Inspirado na rigidez construtivista e na arquitetura brutalista urbana: concreto aparente, blocos ortogonais sem concessões estéticas fáceis e o peso da resistência coletiva nas metrópoles. Homenagem a <strong>Drica D'arc Meirelles</strong>, fundadora e liderança histórica da ADEH (Associação em Defesa dos Direitos Humanos com Enfoque na Sexualidade) em Santa Catarina, combatente incansável da letalidade policial e esteio de acolhimento de base para pessoas trans em extrema vulnerabilidade.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Downsampling para largura base de 720px com pré-processamento de máscara de nitidez brutal (unsharp masking 3.5x). Binarização ótica estrita por limiar médio de luminância (Threshold Global), eliminando dispersões estocásticas para produzir silhuetas pesadas e cortes ortogonais contrastantes sobre textura de concreto.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-brutalismo.png" alt="Cartaz de referência Brutalismo — Drica D'arc Meirelles" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>DRICA D'ARC MEIRELLES (Fundadora da ADEH &amp; Direitos Humanos)</strong><br>
+                        <em>"CONCRETO, ACOLHIMENTO E LUTA"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">drica-meirelles.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">brutalismo</span> <span class="cli-arg">--frase</span> <span class="cli-val">"CONCRETO, ACOLHIMENTO E LUTA"</span> <span class="cli-arg">-o</span> <span class="cli-val">drica-meirelles-poster.png</span></code>
+                    </div>
+                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Acervo ADEH Memorial</a> | <strong>Autor:</strong> Acervo ADEH | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Drica D'arc Meirelles:</strong> Ativista histórica, fundadora e coordenadora da ADEH em Santa Catarina. Sua liderança pioneira foi pilar de sustentação na acolhida a travestis e transexuais em situação de vulnerabilidade extrema, denunciando execuções sumárias, abusos de poder e estruturando redes de assistência jurídica, psicológica e social quando o poder público se omitia por completo.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Threshold Global Binarizado (Unsharp 3.5x) | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Concreto (#E5E5E5) | <strong>Tarja:</strong> Preto Piche com letras gesso
+                </div>
+            </div>
+
+            <!-- PRESET 16: TRASH POLKA -->
+            <div class="preset-card" style="border-left: 5px solid #ba0c2f;" id="preset-trash-polka">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#ba0c2f; color:#fff;">PRESET 16</span>
+                    <strong style="color: #fff; font-size: 16px;">TRASH POLKA / NOVO MOTOR &amp; TRANSPOFAGIA</strong>
+                </div>
+                <div class="preset-palette-preview">
+                    <span class="palette-chip" style="background:#0a0a0a; color:#fff;">#0A0A0A Preto Carvão</span>
+                    <span class="palette-chip" style="background:#ba0c2f; color:#fff;">#BA0C2F Carmim Sangue</span>
+                    <span class="palette-chip" style="background:#ffffff; color:#000;">#FFFFFF Branco Cirúrgico</span>
+                    <span class="palette-chip" style="background:#808080; color:#fff;">#808080 Cinza Neutro</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Fusão agressiva entre fotografia realista, caos de colagem jornalística e tipografia mecânica. Homenagem a <strong>Renata Carvalho</strong>, atriz, dramaturga, formuladora do conceito estético e político da <em>Transpofagia</em> (o corpo travesti como matéria-prima e manifesto cênico) e fundadora do MONART (Movimento Nacional de Artistas Trans).
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Motor reescrito do zero: realce morfológico de contornos faciais, quantização tonal em 4 níveis calibrados por Floyd-Steinberg em escala carmim e preto profundo, com tarja mecânica inspirada em fitas de máquina de escrever analógica e carimbos de choque visual.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-trash-polka.png" alt="Cartaz de referência Trash Polka — Renata Carvalho" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>RENATA CARVALHO (Dramaturga, Atriz &amp; Transpofagia)</strong><br>
+                        <em>"O CORPO É MEU MANIFESTO"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">renata-carvalho.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">trash-polka</span> <span class="cli-arg">--frase</span> <span class="cli-val">"O CORPO É MEU MANIFESTO"</span> <span class="cli-arg">-o</span> <span class="cli-val">renata-carvalho-poster.png</span></code>
+                    </div>
+                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org/wiki/File:Renata_Carvalho.png" target="_blank" rel="noopener">Wikimedia Commons</a> | <strong>Autor:</strong> Acervo Transpofagia | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Renata Carvalho (1981–):</strong> Atriz, dramaturga, pesquisadora e encenadora santista. Criadora do conceito da <em>Transpofagia</em> e fundadora do MONART. Ao protagonizar o espetáculo <em>O Evangelho Segundo Jesus, Rainha do Céu</em>, enfrentou dezenas de tentativas de censura judicial e perseguição fanática, transformando a arte teatral em trincheira inexpugnável de humanização e dignidade travesti.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Floyd-Steinberg 4 Níveis | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Carmim Sangue (#BA0C2F) | <strong>Tarja:</strong> Máquina mecânica
+                </div>
+            </div>
+
+            <!-- PRESET 17: ATARI GAMING -->
+            <div class="preset-card" style="border-left: 5px solid #d06c6c;" id="preset-atari-gaming">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#d06c6c; color:#fff;">PRESET 17</span>
+                    <strong style="color: #fff; font-size: 16px;">ATARI GAMING / TIA VCS 2600 &amp; SCANLINES CRT</strong>
+                </div>
+                <div class="preset-palette-preview">
+                    <span class="palette-chip" style="background:#000000; color:#fff;">#000000 Preto Tubo</span>
+                    <span class="palette-chip" style="background:#fcfc70; color:#000;">#FCFC70 Amarelo Stella</span>
+                    <span class="palette-chip" style="background:#d06c6c; color:#fff;">#D06C6C Carmim TIA</span>
+                    <span class="palette-chip" style="background:#5478e4; color:#fff;">#5478E4 Azul VCS</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Homenagem ao hardware lendário de jogos eletrônicos de 8 bits do final dos anos 70, centrado no circuito integrado TIA (Television Interface Adapter) do Atari 2600. Associa a revolução das primeiras comunidades digitais à articulação pioneira de base liderada por <strong>Jovanna Baby</strong>, fundadora da ASTRAL (1992) e idealizadora do I Encontro Nacional de Travestis e Liberados (ENTLAIDS, 1993).
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Downsampling estrito para a geometria nativa TIA de <strong>160x192 pixels</strong>. Quantização euclidiana rápida sobre paleta de cores NTSC do console com dithering matricial Bayer 4x4. Intercalação de scanlines horizontais (linhas de varredura pares forçadas a preto) e upscaling por Nearest-Neighbor 4x sem interpolação linear, emulando a sensação de um monitor CRT analógico de 1977.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-atari-gaming.png" alt="Cartaz de referência Atari Gaming — Jovanna Baby" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>JOVANNA BABY (Fundadora da ASTRAL &amp; Pioneira do ENTLAIDS 1993)</strong><br>
+                        <em>"CONSTRUINDO A NOSSA HISTÓRIA"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">jovanna-baby.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">atari-gaming</span> <span class="cli-arg">--frase</span> <span class="cli-val">"CONSTRUINDO A NOSSA HISTÓRIA"</span> <span class="cli-arg">-o</span> <span class="cli-val">jovanna-baby-poster.png</span></code>
+                    </div>
+                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Acervo ASTRAL / FONATRAMS</a> | <strong>Autor:</strong> Acervo Jovanna Baby | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Jovanna Baby:</strong> Pioneira histórica do movimento social de travestis e transexuais no Brasil. Em 1992, fundou no Rio de Janeiro a ASTRAL (Associação de Travestis e Liberados) e, em 1993, realizou o I ENTLAIDS em Curitiba, primeiro encontro em escala nacional para combater o preconceito, a violência policial e o estigma da epidemia de HIV/Aids. Sua visão de união comunitária consolidou os alicerces de organizações em todo o país.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Stella TIA Bayer 4x4 + Scanlines CRT | <strong>Base:</strong> 160x192px | <strong>Escala:</strong> 4x Nearest-Neighbor | <strong>Paleta:</strong> TIA 8-bit
+                </div>
+            </div>
+
+            <!-- PRESET 18: MIMEÓGRAFO -->
+            <div class="preset-card" style="border-left: 5px solid #432c7a;" id="preset-mimeografo">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#432c7a; color:#fff;">PRESET 18</span>
+                    <strong style="color: #fff; font-size: 16px;">MIMEÓGRAFO / ÁLCOOL &amp; ESTÊNCIL VIOLETA</strong>
+                </div>
+                <div class="preset-palette-preview">
+                    <span class="palette-chip" style="background:#f4efe6; color:#000;">#F4EFE6 Papel Manilha</span>
+                    <span class="palette-chip" style="background:#432c7a; color:#fff;">#432C7A Violeta Metil</span>
+                    <span class="palette-chip" style="background:#2a1954; color:#fff;">#2A1954 Tinta Densa</span>
+                    <span class="palette-chip" style="background:#795290; color:#fff;">#795290 Lavado Alcoólico</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Tributo à mídia artesanal de panfletagem de base, centros acadêmicos e sindicatos das décadas de 70 e 80: o mimeógrafo a álcool e a tinta violeta cópia. Homenagem a <strong>Keila Simpson</strong> (1944–1996), "O Anjo do Bixiga", pioneira dos direitos humanos e fundadora do Palacete dos Padres (1986), o primeiro abrigo do Brasil para travestis e pessoas com HIV/Aids.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Algoritmo de reprodução capilar: inversão de densidade óptica em papel manilha amarelado (`#F4EFE6`), retícula Bayer 4x4 e sangramento morfológico simulando o vazamento do solvente alcoólico (dispersão em raio de 1px nas áreas com saturação superior a 70%), com bordas em picote de estêncil manual.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-mimeografo.png" alt="Cartaz de referência Mimeógrafo — Keila Simpson" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>KEILA SIMPSON (O Anjo do Bixiga &amp; Palacete dos Padres 1986)</strong><br>
+                        <em>"ACOLHER É O MAIOR ATO DE CORAGEM"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">keila-simpson.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">mimeografo</span> <span class="cli-arg">--frase</span> <span class="cli-val">"ACOLHER É O MAIOR ATO DE CORAGEM"</span> <span class="cli-arg">-o</span> <span class="cli-val">keila-simpson-poster.png</span></code>
+                    </div>
+                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Acervo Palacete dos Padres</a> | <strong>Autor:</strong> Acervo Casa Keila Simpson | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Keila Simpson:</strong> "O Anjo do Bixiga", Keila Simpson abriu as portas de seu próprio lar em São Paulo em 1986 para acolher travestis, transexuais e enfermos abandonados nos momentos mais cruéis do preconceito em torno do HIV/Aids. Provedora incansável de leito, medicamento e calor humano, sua memória é patrona perpétua da solidariedade e do amor comunitário radical no Brasil.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Mimeógrafo Bayer 4x4 com Sangramento Capilar | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Manilha (#F4EFE6) | <strong>Cores:</strong> Violeta Metil
+                </div>
+            </div>
+
+            <!-- PRESET 19: XILOGRAVURA -->
+            <div class="preset-card" style="border-left: 5px solid #d6c4a5;" id="preset-xilogravura">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#131110; color:#d6c4a5; border: 1px solid #d6c4a5;">PRESET 19</span>
+                    <strong style="color: #fff; font-size: 16px;">XILOGRAVURA / CORTE EM MADEIRA &amp; CORDEL</strong>
+                </div>
+                <div class="preset-palette-preview">
+                    <span class="palette-chip" style="background:#131110; color:#fff;">#131110 Tinta Fumo Negra</span>
+                    <span class="palette-chip" style="background:#d6c4a5; color:#000;">#D6C4A5 Papel Kraft Queimado</span>
+                    <span class="palette-chip" style="background:#6e473b; color:#fff;">#6E473B Sulco de Madeira</span>
+                    <span class="palette-chip" style="background:#f5ebe1; color:#000;">#F5EBE1 Fibra Clara</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Inspirado na secular gravura popular e na literatura de cordel brasileira: matrizes talhadas na faca, prensa manual e tinta gráfica crua. Homenagem à ancestralidade de <strong>Xica Manicongo</strong>, primeira travesti não-indígena documentada na história do Brasil colonial (Salvador, século XVI), cujo porte e insubmissão desafiaram a violência do Santo Ofício.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Algoritmo de binarização adaptativa de Sauvola ($15 \times 15$, $k=0.35$, $R=128$) com intercalação de ranhuras direcionais que simulam veios vegetais da tábua de corte. Contraste talhado em preto de fumo (`#131110`) e papel kraft envelhecido (`#D6C4A5`) com tarja de impacto entalhada.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-xilogravura.png" alt="Cartaz de referência Xilogravura — Xica Manicongo" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>XICA MANICONGO (Ancestralidade Travesti Colonial — Salvador, Séc. XVI)</strong><br>
+                        <em>"ANCESTRALIDADE QUE RESISTE AO FOGO"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">xica-manicongo.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">xilogravura</span> <span class="cli-arg">--frase</span> <span class="cli-val">"ANCESTRALIDADE QUE RESISTE AO FOGO"</span> <span class="cli-arg">-o</span> <span class="cli-val">xica-manicongo-poster.png</span></code>
+                    </div>
+                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Arquivo Histórico Colonial</a> | <strong>Autor:</strong> Domínio Público / Santo Ofício | <strong>Licença:</strong> Domínio Público
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Xica Manicongo (Séc. XVI):</strong> Mulher escravizada de origem congo em Salvador no final dos quinhentos, Xica é o mais antigo testemunho documentado de vivência travesti no país. Recusando as roupas masculinas impostas pelo senhorio e mantendo as vestimentas femininas tradicionais de sua terra de origem, foi denunciada à Inquisição. É venerada hoje como o símbolo fundante da ancestralidade e resistência travesti no Brasil.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Sauvola Adaptativo (15x15) + Estrias de Madeira | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Kraft Queimado (#D6C4A5) | <strong>Cores:</strong> Tinta de Fumo
+                </div>
+            </div>
+
+            <!-- PRESET 20: GLITCH CRT -->
+            <div class="preset-card" style="border-left: 5px solid #ff0033;" id="preset-glitch-crt">
+                <div class="preset-header">
+                    <span class="preset-badge" style="background:#ff0033; color:#fff;">PRESET 20</span>
+                    <strong style="color: #fff; font-size: 16px;">GLITCH CRT / SINAL ANALÓGICO CORROMPIDO &amp; V-HOLD</strong>
+                </div>
+                <div class="preset-palette-preview">
+                    <span class="palette-chip" style="background:#0d0f12; color:#fff;">#0D0F12 Tubo Apagado</span>
+                    <span class="palette-chip" style="background:#00ffcc; color:#000;">#00FFCC Ciano Fósforo</span>
+                    <span class="palette-chip" style="background:#ff0033; color:#fff;">#FF0033 Aberração Vermelha</span>
+                    <span class="palette-chip" style="background:#fafafa; color:#000;">#FAFAFA Ponto de Luz</span>
+                </div>
+                <p>
+                    <strong>Histórico Cultural:</strong> Estética de telas catódicas instáveis, perda de sincronismo vertical e desvio de fases de canhão eletrônico. Homenagem à coragem pioneira de <strong>Robeyoncé Lima</strong> (1960–2004), a primeira travesti a receber registro oficial na Ordem dos Advogados do Brasil (OAB-CE) e defensora intransigente do direito e da cidadania trans.
+                </p>
+                <p>
+                    <strong>Justificativa Técnica:</strong> Algoritmo de corrupção analógica determinística: jitter senoidal de linhas com saltos abruptos de fase, aberração cromática com dispersão planar de canais R e B (&plusmn;4px), barra de perda de sincronismo vertical (V-Hold de 12px) e entrelaçamento de scanlines luminosas em tons de ciano CRT e vermelho aberração.
+                </p>
+                <div class="preset-poster-preview">
+                    <img src="../assets/exemplos/exemplo-glitch-crt.png" alt="Cartaz de referência Glitch CRT — Robeyoncé Lima" class="preset-poster-img" loading="lazy">
+                    <div class="preset-poster-caption">
+                        <strong>ROBEYONCÉ LIMA (Primeira Advogada Travesti da OAB &amp; Fundadora da ATRAC)</strong><br>
+                        <em>"DIREITO É ARMA DE LIBERTAÇÃO"</em>
+                    </div>
+                    <div class="cli-example-box">
+                        <span class="cli-example-label">⚡ Linha de comando para gerar este pôster:</span>
+                        <code class="cli-example-code"><span class="cli-prompt">$</span><span class="cli-cmd">navalha poster</span> <span class="cli-val">robeyonce-lima.jpg</span> <span class="cli-arg">--estetica</span> <span class="cli-val">glitch-crt</span> <span class="cli-arg">--frase</span> <span class="cli-val">"DIREITO É ARMA DE LIBERTAÇÃO"</span> <span class="cli-arg">-o</span> <span class="cli-val">robeyonce-lima-poster.png</span></code>
+                    </div>
+                    <div class="asset-attribution">
+                        📷 <strong>Imagem Original:</strong> <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Acervo ATRAC / OAB-CE</a> | <strong>Autor:</strong> Acervo Família Dutra / ATRAC | <strong>Licença:</strong> <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+                    </div>
+                </div>
+                <div class="tribute-bio">
+                    <strong>Memória &amp; Legado — Robeyoncé Lima:</strong> Advogada e pioneira cearense. Fez história como a primeira travesti a portar a carteira profissional da OAB no Brasil. Cofundadora da ATRAC e da ANTRA, atuou no Ministério da Saúde desenvolvendo as diretrizes pioneiras de políticas públicas inclusivas de prevenção e dignidade, provando que o saber jurídico é território que pertence ao povo.
+                </div>
+                <div class="tech-specs">
+                    <strong>Algoritmo:</strong> Jitter Senoidal + Aberração R/B (4px) + Barra V-Hold (12px) | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Tubo Ruído (#0D0F12) | <strong>Cores:</strong> CRT Ciano/Vermelho
+                </div>
+            </div>
+
+        </section>
+
+        <section class="doc-section" id="secao-otsurotacao">
+            <h2>3. Manipulação de Imagem: Rotação e Corte Automático Otsu</h2>
+            <p>
+                O motor do Navalha inclui ferramentas de geometria e segmentação binarizada para recorte de elementos visuais antes da retícula:
+            </p>
+            <ul>
+                <li><strong>Rotação Ortogonal Arbitrária (0°, 90°, 180°, 270°):</strong> Permite inverter a orientação de fotos de celular ou produzir diagramações verticais/horizontais imediatas via <code>--rotacao</code> no CLI ou botão direto na interface web.</li>
+                <li><strong>Limiar Automático de Otsu (Otsu's Binarization):</strong> Calcula estatisticamente a variância intra-classes do histograma da imagem para encontrar o limiar exato que separa sujeito e fundo sem necessidade de ajuste manual no slider da guilhotina (<code>--auto-threshold</code>).</li>
+            </ul>
+        </section>
+
+        <section class="doc-section" id="secao-danos">
+            <h2>4. Marcas, Danos & Intervenção Física</h2>
+            <p>
+                O design de fanzine punk e pôsteres urbanos subversivos não nasce limpo em softwares vetoriais assépticos: ele carrega as cicatrizes da rua, da prensa mecânica clandestina e da censura policial. O Navalha implementa algoritmos de degradação e intervenção física deliberada:
+            </p>
+            <ul>
+                <li><strong>💥 Tiro:</strong> Impactos de projétil com perfuração profunda, halo de queima de pólvora e estrias de fratura radial no papel.</li>
+                <li><strong>⚡ Rasgo:</strong> Ruptura diagonal com borda em zigue-zague exibindo o miolo fibroso exposto do papel e sombra projetada da fenda.</li>
+                <li><strong>🌧️ Chuva:</strong> Linhas estocásticas de intempérie que simulam pôster lambe-lambe exposto à chuva ácida nas ruas.</li>
+                <li><strong>🩸 Sangue:</strong> Respingo violento em tom carmesim com gotículas satélites radiais e escorrimento gravitacional.</li>
+                <li><strong>💧 Tinta:</strong> Poça de tinta preta industrial sangrada no topo com pingos densos de gotejamento vertical.</li>
+                <li><strong>🗡️ Faca:</strong> Incisões duplas de navalha rasgando a chapa com realce de fibras rompidas sob tração mecânica.</li>
+                <li><strong>🔤 Pixo:</strong> Inscrição rúnica da pixação brutalista paulistana com flecha de ascensão e traçado agressivo.</li>
+                <li><strong>⬛ Censura:</strong> Tarja preta espessa de bloqueio governamental com tipografia brutalista vazada <code>[ CENSURADO ]</code>.</li>
+                <li><strong>🚨 Puliça:</strong> Carimbo avermelhado de apreensão policial (<code>PULIÇA / APREENDIDO</code>) com falhas e textura de borracha envelhecida.</li>
+            </ul>
+        </section>
+
+        <section class="doc-section" id="secao-stickers">
+            <h2>5. Stickers & Adesivos Contraculturais</h2>
+            <p>
+                Os lambe-lambes, zines e cartazes de contracultura sempre foram enriquecidos por adesivos vinílicos colados sobre a chapa principal. O motor do Navalha disponibiliza uma coleção vetorial procedural de stickers temáticos que podem ser aplicados com cores originais autênticas ou filtrados deterministamente na paleta do pôster (<code>--filtrar-stickers</code>):
+            </p>
+            <ul>
+                <li><strong>Ⓐ Anarquia:</strong> O clássico 'A' transpassando o círculo em vermelho vivo sobre base circular recortada.</li>
+                <li><strong>🗡️ Lâmina de Barbear:</strong> Chapa de aço niquelada com os cortes canônicos centrais vazados e entalhe industrial.</li>
+                <li><strong>☠️ Caveira Punk:</strong> Crânio brutalista em tom osso sobre fundo negro com tíbias cruzadas.</li>
+                <li><strong>☣️ Biohazard:</strong> Selo de alerta amarelo fluorescente com trifólio de perigo biológico.</li>
+                <li><strong>🄯 Copyleft:</strong> O 'C' espelhado de libertação da propriedade intelectual com aro de alto contraste.</li>
+                <li><strong>📊 Barcode 1312:</strong> Código de barras consumista rasurado com tinta vermelha em spray diagonal.</li>
+                <li><strong>🧷 Alfinete de Fralda:</strong> O ícone seminal do punk britânico de 1976 em aço e reflexo metálico.</li>
+                <li><strong>☻ Acid Smiley:</strong> Smiley ácido em amarelo tóxico com costura cirúrgica na boca e olhos em 'X'.</li>
+            </ul>
+        </section>
+
+        <section class="doc-section" id="secao-textoextra">
+            <h2>6. Caixas de Texto Extra &amp; Posicionamento Livre</h2>
+            <p>
+                O pôster punk de rua nunca foi construído com uma única frase centralizada. Lambe-lambes, colagens situacionistas e fanzines de xerox acumulam camadas tipográficas sobrepostas em ângulos conflitantes — o texto como intervenção espacial, e não como legenda comportada. O Navalha resolve isso com a seção <strong>6. CAIXAS DE TEXTO EXTRA</strong> da interface web e a flag <code>--texto-extra</code> na CLI.
+            </p>
+
+            <h3>Acabamentos Tipográficos</h3>
+            <ul>
+                <li><strong>TARJA (padrão):</strong> Fundo preto chapado, texto branco. Herança direta dos recortes de jornal usados em panfletos anarquistas e fanzines DIY dos anos 1970–80.</li>
+                <li><strong>TAPE (fita adesiva):</strong> Fundo cinza-claro envelhecido, texto quase preto. Evoca a fita crepe da <em>mail art</em> e das instalações precárias.</li>
+                <li><strong>SERRILHADO (neon amarelo):</strong> Fundo amarelo-neon, texto preto. Herdeiro da sinalização de segurança industrial subvertida pelos cartazes de protesto.</li>
+                <li><strong>RASGO:</strong> Sem fundo, texto vermelho-sangue puro sobre a imagem. Referência ao <em>détournement</em> situacionista e à fanzine britânica <em>Sniffin' Glue</em> (1976).</li>
+            </ul>
+
+            <h3>CLI: flag <code>--texto-extra</code></h3>
+            <div style="background:#000; padding:14px; border:1px solid #444; font-family:monospace; color:#00f0ff; font-size:12px; margin-bottom:14px;">
+                $ navalha poster foto.jpg --frase "EU SOBREVIVO" --estetica punk-riot \<br>
+                &nbsp;&nbsp;--texto-extra "RESISTÊNCIA:0.5:0.25:56:10:tape" \<br>
+                &nbsp;&nbsp;--texto-extra "RASGO TOTAL:0.5:0.75:64:-8:rasgo" -o poster.png
+            </div>
+            <h3>Faixas Canônicas de Texto: Manchete Superior &amp; Slogan Inferior</h3>
+            <p>
+                Além das caixas livres de texto extra, o Navalha oferece suporte nativo e integrado a duas faixas canônicas de texto na composição do pôster: a <strong>Faixa Superior</strong> (manchete no topo, opcional) e a <strong>Faixa Inferior</strong> (frase de choque na base). Ambas mantêm consistência visual e estilística automática estrita com o preset ativo — herdando proporções, paleta cromática de texto e fundo de tarja, e o acabamento textural (como artefatos mecânicos e riscos de rolete no preset <em>Xerox Podre</em>).
+            </p>
+            <div style="background:#000; padding:14px; border:1px solid #444; font-family:monospace; color:#00f0ff; font-size:12px; margin-bottom:14px;">
+                $ navalha poster foto.jpg --frase-superior "MANCHETE SUPERIOR" --frase "FRASE PRINCIPAL" --estetica xerox-podre -o poster.png
+            </div>
+        </section>
+
+        <section class="doc-section" id="secao-simetria">
+            <h2>7. Arquitetura Simétrica CLI &amp; Web</h2>
+
+            <p>
+                Uma das marcas registradas do ecossistema do Navalha é a paridade completa entre o terminal UNIX e o navegador:
+            </p>
+            <p>
+                Quando você ajusta qualquer parâmetro na interface web (seja arrastando o slider de corte guilhotina, trocando a paleta ou alterando a frase), o rodapé do aplicativo recompõe instantaneamente o comando correspondente da CLI:
+            </p>
+            <div style="background:#000; padding:14px; border:1px solid #444; font-family:monospace; color:#00f0ff; font-size:12px; margin-bottom:14px;">
+                $ navalha poster foto.jpg --frase "EU SOBREVIVO AO MUNDO" --estetica vga256 -o poster.png
+            </div>
+            <p>
+                Basta clicar no botão de cópia rápida no rodapé e rodar em lote no seu servidor ou terminal Linux.
+            </p>
+        </section>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="/" class="btn-back">CRIAR MEU PÔSTER AGORA NA APLICAÇÃO WEB →</a>
+        </div>
+    </div>
+</body>
+</html>

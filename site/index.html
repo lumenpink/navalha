@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAVALHA — Motor Gráfico Anti-Design & Pôster Zine Punk</title>
+    <meta name="title" content="NAVALHA — Motor Gráfico Anti-Design & Pôster Zine Punk">
+    <meta name="description" content="Motor gráfico determinístico anti-design. 100% no navegador via WebAssembly em Rust. Zero IA generativa.">
+    <meta name="theme-color" content="#ff0033">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://navalha.2lp.in/">
+    <meta property="og:site_name" content="Navalha">
+    <meta property="og:title" content="NAVALHA — Motor Gráfico Anti-Design & Pôster Zine Punk">
+    <meta property="og:description" content="Motor gráfico determinístico anti-design. 100% no navegador via WebAssembly em Rust. Zero IA generativa.">
+
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <div id="main"></div>
+    <script type="module">
+        import init from './pkg/navalha_web.js';
+        init();
+    </script>
+</body>
+</html>
