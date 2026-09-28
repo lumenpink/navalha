@@ -1,4 +1,4 @@
-name: CI, Build & Distribution
+name: "CI / CD Pipeline"
 
 on:
   push:
@@ -7,25 +7,15 @@ on:
   pull_request:
     branches: ["main"]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
-
-permissions:
-  contents: write
-
 jobs:
-  # ─────────────────────────────────────────────────────────────────────────────
-  # JOB 1 — Rust Workspace: Tests & Binaries
-  # ─────────────────────────────────────────────────────────────────────────────
-  test-and-build:
-    name: "Rust Workspace — Tests, CLI & Wasm"
+  build-and-deploy:
+    name: "Rust Workspace — Testes, Build & Deploy"
     runs-on: ubuntu-latest
     container:
       image: codeberg.org/lumenpink/gost-ci-wasm:latest
     steps:
       - name: "Checkout repository"
-        uses: https://github.com/actions/checkout@v4
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -42,73 +32,38 @@ jobs:
           cp target/release/navalha dist/bin/navalha-linux-x86_64
           chmod +x dist/bin/navalha-linux-x86_64
 
-      - name: "Build Dioxus WebAssembly Bundle (navalha-web)"
+      - name: "Build WebAssembly Bundle (navalha-web)"
         run: |
+          mkdir -p dist/web site/pkg
           cd crates/navalha-web
-          wasm-pack build --target web --out-dir ../../dist/web/pkg
+          wasm-pack build --target web --out-dir ../../site/pkg
+          cp -r ../../site/pkg ../../dist/web/
           cp -r assets ../../dist/web/ || true
+          cp -r assets ../../site/ || true
           cp index.html ../../dist/web/
 
       - name: "Upload Artifacts"
-        uses: https://github.com/actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: navalha-dist
           path: dist/
 
-  # ─────────────────────────────────────────────────────────────────────────────
-  # JOB 2 — Deploy WebApp & Documentation (navalha.2lp.in)
-  # ─────────────────────────────────────────────────────────────────────────────
-  deploy-site:
-    name: "Deploy Site & WebApp (navalha.2lp.in)"
-    runs-on: ubuntu-latest
-    container:
-      image: codeberg.org/lumenpink/gost-ci-deploy:latest
-    needs: [test-and-build]
-    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push'
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-    steps:
-      - name: "Checkout repository"
-        uses: https://github.com/actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: "Deploy to Cloudflare Workers"
-        run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "::warning::Cloudflare credentials (CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID) not configured in secrets. Skipping Cloudflare deployment."
-          else
-            echo "Publishing WebApp and docs to navalha.2lp.in via Cloudflare Workers..."
-            wrangler deploy || echo "::warning::Cloudflare deployment failed, proceeding to Codeberg Pages fallback."
-          fi
-
-      - name: "Deploy to Codeberg Pages (Redundancy Fallback)"
+        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          git config user.name "actions-user"
-          git config user.email "actions@codeberg.org"
-
-          WORKTREE_DIR=$(mktemp -d)
-          if git ls-remote --exit-code --heads origin pages >/dev/null 2>&1; then
-            git fetch origin pages:pages
-            git worktree add "$WORKTREE_DIR" pages
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "Publicando WebApp e documentação em navalha.2lp.in via Cloudflare Workers..."
+            wrangler deploy
           else
-            git worktree add --orphan -b pages "$WORKTREE_DIR"
+            echo "CLOUDFLARE_API_TOKEN não configurado, pulando deploy no Cloudflare."
           fi
 
-          rm -rf "${WORKTREE_DIR:?}"/*
-          cp -r site/* "$WORKTREE_DIR/"
-
-          cd "$WORKTREE_DIR"
-          rm -f CNAME
-          git add -A
-          if git diff --staged --quiet; then
-            echo "No changes to deploy to Codeberg Pages."
-          else
-            git commit -m "docs(site): deploy site to Codeberg Pages [skip ci]"
-            git push origin pages
-            echo "Successfully deployed site to Codeberg Pages."
-          fi
-
+      - name: "Deploy to Codeberg Pages (Fallback)"
+        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && github.event_name == 'push'
+        uses: https://codeberg.org/actions/pages@v1
+        with:
+          path: site
