@@ -460,9 +460,9 @@ impl Palette {
             "brutalismo" | "brutalista" | "dricadarc" | "dricadarcmeirelles" => Some(Self::brutalismo()),
             "trashpolka" | "trash" | "polka" | "renatacarvalho" => Some(Self::trash_polka()),
             "atarigaming" | "atari" | "tia" | "stella" | "jovannababy" => Some(Self::atari_gaming()),
-            "mimeografo" | "mimeo" | "anilina" | "keilasimpson" => Some(Self::mimeografo()),
+            "mimeografo" | "mimeo" | "anilina" | "keilasimpson" | "keila" => Some(Self::mimeografo()),
             "xilogravura" | "xilo" | "cordel" | "xicamanicongo" => Some(Self::xilogravura()),
-            "glitchcrt" | "glitch" | "vhs" | "robeyoncelima" => Some(Self::glitch_crt()),
+            "glitchcrt" | "glitch" | "vhs" | "robeyonce" | "robeyoncelima" => Some(Self::glitch_crt()),
             _ => None,
         }
     }

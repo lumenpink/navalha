@@ -335,6 +335,6 @@ O projeto mantém em seu memorial público ([`navalha.2lp.in/doc`](https://naval
 15. **Drica D'arc Meirelles** (Brutalismo) — Fundadora e coordenadora da ADEH em Santa Catarina, combatente da letalidade policial e acolhimento de base.
 16. **Renata Carvalho** (Trash Polka) — Atriz, dramaturga santista, formuladora da *Transpofagia* e protagonista de *O Evangelho Segundo Jesus, Rainha do Céu*.
 17. **Jovanna Baby** (Atari Gaming) — Fundadora da ASTRAL (1992) e idealizadora do I Encontro Nacional de Travestis e Liberados (ENTLAIDS, 1993).
-18. **Keila Simpson** (Mimeógrafo) — "O Anjo do Bixiga", fundadora do Palacete dos Padres (1986), primeiro abrigo da América Latina para travestis e pessoas com HIV/Aids.
+18. **Keila Simpson** (Mimeógrafo) — Presidenta da ANTRA, liderança histórica nacional na luta contra a violência, pelos direitos humanos e acolhimento comunitário de travestis e pessoas trans.
 19. **Xica Manicongo** (Xilogravura) — Primeira travesti não-indígena documentada no Brasil colonial (Salvador, séc. XVI), processada pelo Santo Ofício da Inquisição.
-20. **Robeyoncé Lima** (Glitch CRT) — Primeira travesti com carteira da OAB no Brasil, fundadora da ATRAC e formuladora de diretrizes de saúde no Ministério da Saúde.
+20. **Robeyoncé Lima** (Glitch CRT) — Primeira advogada travesti negra do Nordeste (OAB-PE), co-deputada estadual e pioneira da insurgência jurídica popular.

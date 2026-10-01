@@ -126,9 +126,9 @@ impl AestheticPreset {
             "brutalismo" | "brutalista" | "dricadarc" | "dricadarcmeirelles" => Some(Self::Brutalismo),
             "trashpolka" | "trash" | "polka" | "renatacarvalho" => Some(Self::TrashPolka),
             "atarigaming" | "atari" | "tia" | "stella" | "jovannababy" => Some(Self::AtariGaming),
-            "mimeografo" | "mimeo" | "anilina" | "keilasimpson" => Some(Self::Mimeografo),
+            "mimeografo" | "mimeo" | "anilina" | "keilasimpson" | "keila" => Some(Self::Mimeografo),
             "xilogravura" | "xilo" | "cordel" | "xicamanicongo" => Some(Self::Xilogravura),
-            "glitchcrt" | "glitch" | "crt" | "robeyoncelima" => Some(Self::GlitchCrt),
+            "glitchcrt" | "glitch" | "crt" | "robeyonce" | "robeyoncelima" => Some(Self::GlitchCrt),
             _ => None,
         }
     }

@@ -24,12 +24,12 @@ Todas as imagens de entrada foram selecionadas estritamente de acervos públicos
 | **12. Old Mac Pop Art** | Rogéria | `exemplo-old-mac-pop-art.png` | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:26_Pr%C3%AAmio_da_M%C3%BAsica_Brasileira_(18523218108).jpg) | Flickr / 26º Prêmio da Música Brasileira | **CC BY 2.0** |
 | **13. ASCII Art** | Laerte Coutinho | `exemplo-ascii-art.png` | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Laerte_em_2015.jpg) | Marcello Casal Jr / Agência Brasil | **CC BY 3.0 BR** |
 | **14. Tabloide Popular** | Luana Muniz | `exemplo-tabloide-popular.png` | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Luana_Muniz.jpg) | Acervo Luana Muniz | **CC BY-SA 4.0** |
-| **15. Brutalismo** | Drica D'arc Meirelles | `exemplo-brutalismo.png` | [Acervo ADEH Memorial](https://commons.wikimedia.org) | Acervo ADEH | **CC BY-SA 4.0** |
+| **15. Brutalismo** | Drica D'arc Meirelles | `exemplo-brutalismo.png` | [Acervo ADEH / NSC / G1](https://g1.globo.com/sc/santa-catarina/noticia/2024/01/02/ativista-lgbtqia-morre-afogada-em-florianopolis.ghtml) | Acervo Pessoal / ADEH | **Uso Editorial Memorial** |
 | **16. Trash Polka** | Renata Carvalho | `exemplo-trash-polka.png` | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Renata_Carvalho.png) | Acervo Transpofagia | **CC BY-SA 4.0** |
-| **17. Atari Gaming** | Jovanna Baby | `exemplo-atari-gaming.png` | [Acervo ASTRAL / FONATRAMS](https://commons.wikimedia.org) | Acervo Jovanna Baby / FONATRAMS | **CC BY-SA 4.0** |
-| **18. Mimeógrafo** | Keila Simpson | `exemplo-mimeografo.png` | [Acervo Palacete dos Padres](https://commons.wikimedia.org) | Acervo Casa Keila Simpson | **CC BY-SA 4.0** |
-| **19. Xilogravura** | Xica Manicongo | `exemplo-xilogravura.png` | [Arquivo Histórico Colonial](https://commons.wikimedia.org) | Domínio Público / Acervo Histórico | **Domínio Público** |
-| **20. Glitch CRT** | Robeyoncé Lima | `exemplo-glitch-crt.png` | [Acervo ATRAC / OAB-CE](https://commons.wikimedia.org) | Acervo ATRAC / Família Dutra | **CC BY-SA 4.0** |
+| **17. Atari Gaming** | Jovanna Baby | `exemplo-atari-gaming.png` | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:IV-ENTLAIDS-1996.jpg) | Keila Simpson / ASTRAL (recorte IV ENTLAIDS 1996) | **Domínio Público** |
+| **18. Mimeógrafo** | Keila Simpson | `exemplo-mimeografo.png` | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Fotos_produzidas_pelo_Senado_(35118778242).jpg) | Senado Federal | **CC BY 2.0** |
+| **19. Xilogravura** | Xica Manicongo | `exemplo-xilogravura.png` | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Xica_Manicongo_PT-TT-TSO-IL-038-0779_m0267.jpg) | Arquivo Nacional da Torre do Tombo (1591) | **Domínio Público** |
+| **20. Glitch CRT** | Robeyoncé Lima | `exemplo-glitch-crt.png` | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Robeyonc%C3%A9_Lima.png) | Odara - Instituto da Mulher Negra | **CC BY 3.0** |
 
 ---
 
