@@ -35,30 +35,31 @@ Todas as imagens de entrada foram selecionadas estritamente de acervos públicos
 
 ## 🎲 Acervo de Imagens de Entrada da Interface Web (`assets/backgrounds/`)
 
-A interface web do Navalha carrega aleatoriamente a cada inicialização uma imagem de alto impacto do acervo curado sob licença Creative Commons ou Domínio Público, permitindo experimentar imediatamente os motores de anti-design e colagem zine com fotos reais:
+A interface web do Navalha carrega aleatoriamente a cada inicialização uma imagem de alto impacto do acervo temático curado sob licença Creative Commons ou Domínio Público (estátuas, pinturas históricas, animais urbanos, protestos, prédios brutalistas e maquinários analógicos), servindo como tela crua para os motores de anti-design e colagem zine:
 
-| Arquivo de Fundo | Personalidade / Sujeito | Licença | Fonte Canônica |
-| :--- | :--- | :--- | :--- |
-| `01-claudia-wonder.jpg` | Claudia Wonder | **CC BY-SA 4.0** | Wikimedia Commons (Dácio Pinheiro / MixBrasil) |
-| `02-madame-sata.jpg` | Madame Satã | **Domínio Público** | Wikimedia Commons (Arquivo Nacional do Brasil) |
-| `03-indianarae-siqueira.jpg` | Indianarae Siqueira | **CC BY-SA 4.0** | Wikimedia Commons (Mídia NINJA) |
-| `04-joao-w-nery.jpg` | João W. Nery | **CC BY-SA 2.0** | Wikimedia Commons (SSex BBox) |
-| `05-linn-da-quebrada.jpg` | Linn da Quebrada | **CC BY-SA 4.0** | Wikimedia Commons (Multishow / YouTube) |
-| `06-leo-moreira-sa.jpg` | Leo Moreira Sá | **CC BY-SA** | Mídia NINJA |
-| `07-erika-hilton.jpg` | Erika Hilton | **CC BY 3.0** | Wikimedia Commons (Zeca Ribeiro / Câmara) |
-| `08-amara-moira.jpg` | Amara Moira | **CC BY 3.0** | Wikimedia Commons (SSEXBBOX) |
-| `09-katia-tapety.jpg` | Kátia Tapety | **CC BY-SA 4.0** | Wikimedia Commons (IV ENTLAIDS 1996) |
-| `10-marcia-pantera.jpg` | Márcia Pantera | **CC BY-SA 4.0** | Wikimedia Commons (Guilherme Santos) |
-| `11-neon-cunha.jpg` | Neon Cunha | **CC BY 2.0** | Wikimedia Commons (Mídia NINJA) |
-| `12-rogeria.jpg` | Rogéria | **CC BY 2.0** | Wikimedia Commons (26º Prêmio da Música) |
-| `13-laerte-coutinho.jpg` | Laerte Coutinho | **CC BY 3.0 BR** | Wikimedia Commons (Marcello Casal Jr / Agência Brasil) |
-| `14-luana-muniz.jpg` | Luana Muniz | **CC BY-SA 4.0** | Wikimedia Commons (Acervo Luana Muniz) |
-| `15-susy-shock.jpg` | Susy Shock | **CC BY-SA 4.0** | Acervo Transfeminista Latino-Americano |
-| `16-renata-carvalho.jpg` | Renata Carvalho | **CC BY-SA 4.0** | Wikimedia Commons (Acervo Transpofagia) |
-| `17-jovanna-baby.jpg` | Jovanna Baby | **Domínio Público** | Wikimedia Commons (Keila Simpson / ASTRAL 1996) |
-| `18-keila-simpson.jpg` | Keila Simpson | **CC BY 2.0** | Wikimedia Commons (Senado Federal) |
-| `19-xica-manicongo.jpg` | Xica Manicongo | **Domínio Público** | Arquivo Nacional da Torre do Tombo (1591) |
-| `20-robeyonce-lima.jpg` | Robeyoncé Lima | **CC BY 3.0** | Wikimedia Commons (Odara Instituto) |
+| Arquivo | Tema / Sujeito | Licença | Autor / Instituição | Fonte & Título Original |
+| :--- | :--- | :--- | :--- | :--- |
+| `01-busto-marmore.jpg` | Busto Romano de Mármore | **CC0 (Domínio Público)** | J. Paul Getty Museum | Wikimedia Commons (`Bust of Germanicus, back - Getty Museum`) |
+| `02-gargula-gotica.jpg` | Gárgula Gótica de Catedral | **CC BY-SA 4.0** | Dietmar Rabich | Wikimedia Commons (`Paris, Notre Dame -- 2014`) |
+| `03-monumento-brutalista.jpg` | Monumento Brutalista Spomenik | **CC BY-SA 4.0** | Aleksandar Lakic | Wikimedia Commons (`Kosmaj 2015 01.jpg`) |
+| `04-o-grito-munch.jpg` | O Grito (Edvard Munch, 1893) | **Domínio Público** | Edvard Munch | Wikimedia Commons (`The Scream, National Gallery of Norway`) |
+| `05-esqueleto-vesalius.jpg` | Esqueleto Anatômico (Vesalius, 1543) | **CC BY 4.0** | Andreas Vesalius | Wikimedia Commons (`A. Vesalius, De humani corporis fabrica`) |
+| `06-onda-kanagawa.jpg` | A Grande Onda de Kanagawa | **Domínio Público** | Katsushika Hokusai | Wikimedia Commons (`Great Wave Hokusai BM`) |
+| `07-caravaggio-claroscuro.jpg` | São Jerônimo (Caravaggio, 1606) | **Domínio Público** | Caravaggio | Wikimedia Commons (`Caravaggio - Saint Jerome - Galleria Borghese`) |
+| `08-corvo-urbano.jpg` | Corvo Urbano (*Corvus corax*) | **CC0 (Domínio Público)** | Saiquaticlifeform | Wikimedia Commons (`Common Raven (Corvus corax) perched`) |
+| `09-cachorro-rua.jpg` | Cachorro em Alerta | **OGL v1.0 (Livre)** | Graeme Main | Wikimedia Commons (`German Shepherd Military Working Dog MOD`) |
+| `10-pombo-urbano.jpg` | Pombo Urbano em Concreto | **CC BY-SA 4.0** | PattayaPatrol | Wikimedia Commons (`DFC 0351 A dark-feathered pigeon perched`) |
+| `11-caveira-anatomica.jpg` | Crânio Humano / Estudo Ósseo | **Domínio Público** | Internet Archive Book Images | Wikimedia Commons (`Anatomical technology as applied to human anatomy`) |
+| `12-protesto-rua.jpg` | Manifestação de Rua e Fumaça | **Domínio Público** | Serouj | Wikimedia Commons (`Armenian Presidential Elections 2008 Protest crowd`) |
+| `13-cartazes-muro.jpg` | Cartazes e Lambe-Lambe Sobrepostos | **CC0 (Domínio Público)** | Manolo Chrétien | Wikimedia Commons (`Nazaré Wall Art`) |
+| `14-pichacao-urbana.jpg` | Pichação e Grafite em Muro | **CC0 (Domínio Público)** | Fons Heijnsbroek | Wikimedia Commons (`Amsterdam photo Bikes talking to the tags on the wall`) |
+| `15-predio-brutalista.jpg` | Fachada de Edifício Brutalista | **CC BY 4.0** | Vilacor | Wikimedia Commons (`159 rue Nationale. Paris.jpg`) |
+| `16-torre-transmissao.jpg` | Torre de Transmissão Elétrica | **CC BY-SA 4.0** | Fredericknoronha | Wikimedia Commons (`Transmission tower, possibly radio against blue skies`) |
+| `17-ruina-industrial.jpg` | Ruína Industrial Desativada | **CC BY 3.0** | Piotr Kubowicz | Wikimedia Commons (`Abandoned factory - panoramio`) |
+| `18-escada-incendio.jpg` | Escadaria de Incêndio de Ferro | **CC BY-SA 4.0** | LBM1948 | Wikimedia Commons (`Brooklyn, N.Y.C. 1997`) |
+| `19-televisao-crt.jpg` | Televisor de Tubo CRT Vintage | **CC BY-SA 2.0** | Housing Works Thrift Shops | Wikimedia Commons (`Philco-Ford Orange Retro TV (1970s)`) |
+| `20-fita-cassete.jpg` | Fita Cassete K7 Analógica | **CC BY-SA 3.0** | 星空マニア | Wikimedia Commons (`Panasonic Audio tape PX.JPG`) |
+
 
 ---
 
