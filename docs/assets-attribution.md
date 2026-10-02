@@ -33,6 +33,36 @@ Todas as imagens de entrada foram selecionadas estritamente de acervos públicos
 
 ---
 
+## 🎲 Acervo de Imagens de Entrada da Interface Web (`assets/backgrounds/`)
+
+A interface web do Navalha carrega aleatoriamente a cada inicialização uma imagem de alto impacto do acervo curado sob licença Creative Commons ou Domínio Público, permitindo experimentar imediatamente os motores de anti-design e colagem zine com fotos reais:
+
+| Arquivo de Fundo | Personalidade / Sujeito | Licença | Fonte Canônica |
+| :--- | :--- | :--- | :--- |
+| `01-claudia-wonder.jpg` | Claudia Wonder | **CC BY-SA 4.0** | Wikimedia Commons (Dácio Pinheiro / MixBrasil) |
+| `02-madame-sata.jpg` | Madame Satã | **Domínio Público** | Wikimedia Commons (Arquivo Nacional do Brasil) |
+| `03-indianarae-siqueira.jpg` | Indianarae Siqueira | **CC BY-SA 4.0** | Wikimedia Commons (Mídia NINJA) |
+| `04-joao-w-nery.jpg` | João W. Nery | **CC BY-SA 2.0** | Wikimedia Commons (SSex BBox) |
+| `05-linn-da-quebrada.jpg` | Linn da Quebrada | **CC BY-SA 4.0** | Wikimedia Commons (Multishow / YouTube) |
+| `06-leo-moreira-sa.jpg` | Leo Moreira Sá | **CC BY-SA** | Mídia NINJA |
+| `07-erika-hilton.jpg` | Erika Hilton | **CC BY 3.0** | Wikimedia Commons (Zeca Ribeiro / Câmara) |
+| `08-amara-moira.jpg` | Amara Moira | **CC BY 3.0** | Wikimedia Commons (SSEXBBOX) |
+| `09-katia-tapety.jpg` | Kátia Tapety | **CC BY-SA 4.0** | Wikimedia Commons (IV ENTLAIDS 1996) |
+| `10-marcia-pantera.jpg` | Márcia Pantera | **CC BY-SA 4.0** | Wikimedia Commons (Guilherme Santos) |
+| `11-neon-cunha.jpg` | Neon Cunha | **CC BY 2.0** | Wikimedia Commons (Mídia NINJA) |
+| `12-rogeria.jpg` | Rogéria | **CC BY 2.0** | Wikimedia Commons (26º Prêmio da Música) |
+| `13-laerte-coutinho.jpg` | Laerte Coutinho | **CC BY 3.0 BR** | Wikimedia Commons (Marcello Casal Jr / Agência Brasil) |
+| `14-luana-muniz.jpg` | Luana Muniz | **CC BY-SA 4.0** | Wikimedia Commons (Acervo Luana Muniz) |
+| `15-susy-shock.jpg` | Susy Shock | **CC BY-SA 4.0** | Acervo Transfeminista Latino-Americano |
+| `16-renata-carvalho.jpg` | Renata Carvalho | **CC BY-SA 4.0** | Wikimedia Commons (Acervo Transpofagia) |
+| `17-jovanna-baby.jpg` | Jovanna Baby | **Domínio Público** | Wikimedia Commons (Keila Simpson / ASTRAL 1996) |
+| `18-keila-simpson.jpg` | Keila Simpson | **CC BY 2.0** | Wikimedia Commons (Senado Federal) |
+| `19-xica-manicongo.jpg` | Xica Manicongo | **Domínio Público** | Arquivo Nacional da Torre do Tombo (1591) |
+| `20-robeyonce-lima.jpg` | Robeyoncé Lima | **CC BY 3.0** | Wikimedia Commons (Odara Instituto) |
+
+---
+
 ## 🛠️ Reprodução Determinística dos Pôsteres
 
 Os pôsteres listados acima são obras derivadas geradas através da ferramenta de linha de comando `navalha poster` do projeto Navalha. Qualquer pessoa pode reproduzir exatamente os mesmos resultados executando os comandos documentados em [site/doc/index.html](../site/doc/index.html).
+
