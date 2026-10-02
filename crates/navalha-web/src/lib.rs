@@ -60,6 +60,68 @@ fn create_default_graphic(w: u32, h: u32) -> RgbaImage {
     img
 }
 
+/// Catálogo de 20 retratos de alto impacto com licença Creative Commons / Domínio Público
+pub const BACKGROUND_COLLECTION: &[(&str, &str)] = &[
+    ("assets/backgrounds/01-claudia-wonder.jpg", "Claudia Wonder"),
+    ("assets/backgrounds/02-madame-sata.jpg", "Madame Satã"),
+    ("assets/backgrounds/03-indianarae-siqueira.jpg", "Indianarae Siqueira"),
+    ("assets/backgrounds/04-joao-w-nery.jpg", "João W. Nery"),
+    ("assets/backgrounds/05-linn-da-quebrada.jpg", "Linn da Quebrada"),
+    ("assets/backgrounds/06-leo-moreira-sa.jpg", "Leo Moreira Sá"),
+    ("assets/backgrounds/07-erika-hilton.jpg", "Erika Hilton"),
+    ("assets/backgrounds/08-amara-moira.jpg", "Amara Moira"),
+    ("assets/backgrounds/09-katia-tapety.jpg", "Kátia Tapety"),
+    ("assets/backgrounds/10-marcia-pantera.jpg", "Márcia Pantera"),
+    ("assets/backgrounds/11-neon-cunha.jpg", "Neon Cunha"),
+    ("assets/backgrounds/12-rogeria.jpg", "Rogéria"),
+    ("assets/backgrounds/13-laerte-coutinho.jpg", "Laerte Coutinho"),
+    ("assets/backgrounds/14-luana-muniz.jpg", "Luana Muniz"),
+    ("assets/backgrounds/15-susy-shock.jpg", "Susy Shock"),
+    ("assets/backgrounds/16-renata-carvalho.jpg", "Renata Carvalho"),
+    ("assets/backgrounds/17-jovanna-baby.jpg", "Jovanna Baby"),
+    ("assets/backgrounds/18-keila-simpson.jpg", "Keila Simpson"),
+    ("assets/backgrounds/19-xica-manicongo.jpg", "Xica Manicongo"),
+    ("assets/backgrounds/20-robeyonce-lima.jpg", "Robeyoncé Lima"),
+];
+
+/// Busca assincronamente os bytes de uma imagem remota do acervo e decodifica para RGBA
+pub async fn load_remote_image(url: &str) -> Option<RgbaImage> {
+    let window = web_sys::window()?;
+    let promise = window.fetch_with_str(url);
+    let resp_val = wasm_bindgen_futures::JsFuture::from(promise).await.ok()?;
+    let resp: web_sys::Response = resp_val.dyn_into().ok()?;
+    if !resp.ok() {
+        return None;
+    }
+    let array_buffer_promise = resp.array_buffer().ok()?;
+    let buf_val = wasm_bindgen_futures::JsFuture::from(array_buffer_promise).await.ok()?;
+    let uint8_arr = js_sys::Uint8Array::new(&buf_val);
+    let bytes = uint8_arr.to_vec();
+    let decoded = ImageReader::new(Cursor::new(bytes)).with_guessed_format().ok()?.decode().ok()?;
+    Some(decoded.to_rgba8())
+}
+
+/// Sorteia um índice aleatório válido dentro do catálogo de backgrounds
+pub fn pick_random_background_index() -> usize {
+    #[cfg(target_arch = "wasm32")]
+    {
+        let rand = js_sys::Math::random();
+        let idx = (rand * (BACKGROUND_COLLECTION.len() as f64)).floor() as usize;
+        idx.min(BACKGROUND_COLLECTION.len() - 1)
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        use std::time::SystemTime;
+        let nanos = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .map(|d| d.subsec_nanos())
+            .unwrap_or(42);
+        (nanos as usize) % BACKGROUND_COLLECTION.len()
+    }
+}
+
+
+
 fn trigger_download(href: &str, filename: &str) {
     if let Some(window) = web_sys::window() {
         if let Some(document) = window.document() {
@@ -77,9 +139,26 @@ fn trigger_download(href: &str, filename: &str) {
 pub fn App() -> Element {
     // Imagem base decodificada
     let raw_image = use_signal(|| create_default_graphic(360, 480));
+    let current_bg_subject = use_signal(String::new);
+
+
+    // Carregamento aleatório inicial a partir do acervo CC de 20 retratos históricos
+    use_hook(|| {
+        let mut raw_setter = raw_image;
+        let mut subject_setter = current_bg_subject;
+        spawn(async move {
+            let idx = pick_random_background_index();
+            let (path, name) = BACKGROUND_COLLECTION[idx];
+            if let Some(img) = load_remote_image(path).await {
+                raw_setter.set(img);
+                subject_setter.set(name.to_string());
+            }
+        });
+    });
 
     // Abas do painel de controle ("poster", "intervencao", "ajustes")
     let mut active_tab = use_signal(|| String::from("poster"));
+
     // Alternador de visão mobile ("controls", "preview")
     let mut mobile_view = use_signal(|| String::from("controls"));
 
@@ -725,6 +804,7 @@ pub fn App() -> Element {
                         let reader = web_sys::FileReader::new().unwrap();
                         let r_clone = reader.clone();
                         let mut raw_image_setter = raw_image;
+                        let mut subject_setter = current_bg_subject;
 
                         let onload = Closure::wrap(Box::new(move |_: web_sys::Event| {
                             if let Ok(result) = r_clone.result() {
@@ -733,6 +813,7 @@ pub fn App() -> Element {
                                 if let Ok(img_reader) = ImageReader::new(Cursor::new(bytes)).with_guessed_format() {
                                     if let Ok(decoded) = img_reader.decode() {
                                         raw_image_setter.set(decoded.to_rgba8());
+                                        subject_setter.set(String::from("Foto do Usuário"));
                                     }
                                 }
                             }
@@ -746,6 +827,21 @@ pub fn App() -> Element {
             }
         }
     };
+
+    // Callback para sortear outra imagem do acervo CC
+    let on_random_bg = move |_| {
+        let mut raw_setter = raw_image;
+        let mut subject_setter = current_bg_subject;
+        spawn(async move {
+            let idx = pick_random_background_index();
+            let (path, name) = BACKGROUND_COLLECTION[idx];
+            if let Some(img) = load_remote_image(path).await {
+                raw_setter.set(img);
+                subject_setter.set(name.to_string());
+            }
+        });
+    };
+
 
     let on_custom_sticker_upload = move |_evt: Event<FormData>| {
         async move {
@@ -963,7 +1059,21 @@ pub fn App() -> Element {
                                     class: "file-input-punk",
                                     onchange: on_file_upload,
                                 }
+                                div { class: "random-bg-row",
+                                    button {
+                                        class: "btn-random-bg",
+                                        r#type: "button",
+                                        onclick: on_random_bg,
+                                        "🎲 IMAGEM ALEATÓRIA (ACERVO CC)"
+                                    }
+                                    if !current_bg_subject().is_empty() {
+                                        span { class: "current-subject-badge",
+                                            "✨ Retrato: {current_bg_subject()}"
+                                        }
+                                    }
+                                }
                                 div { class: "img-edit-tools-row",
+
                                     button {
                                         class: "btn-edit-action",
                                         onclick: move |_| {
@@ -2069,3 +2179,46 @@ pub fn App() -> Element {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_background_collection_count() {
+        assert_eq!(BACKGROUND_COLLECTION.len(), 20, "O catálogo de backgrounds deve conter exatamente 20 imagens CC");
+    }
+
+    #[test]
+    fn test_background_collection_unique() {
+        let mut paths = std::collections::HashSet::new();
+        let mut names = std::collections::HashSet::new();
+        for (path, name) in BACKGROUND_COLLECTION {
+            assert!(paths.insert(path), "Caminho duplicado no catálogo: {}", path);
+            assert!(names.insert(name), "Nome de personalidade duplicado: {}", name);
+        }
+    }
+
+    #[test]
+    fn test_background_files_exist_on_disk() {
+        let manifest_dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        for (rel_path, name) in BACKGROUND_COLLECTION {
+            let full_path = manifest_dir.join(rel_path);
+            assert!(
+                full_path.exists(),
+                "Arquivo de background não encontrado em disco para {}: {:?}",
+                name,
+                full_path
+            );
+            let metadata = std::fs::metadata(&full_path).unwrap();
+            assert!(metadata.len() > 1024, "Arquivo de imagem vazio ou corrompido: {:?}", full_path);
+        }
+    }
+
+    #[test]
+    fn test_pick_random_background_index_bounds() {
+        let idx = pick_random_background_index();
+        assert!(idx < BACKGROUND_COLLECTION.len());
+    }
+}
+

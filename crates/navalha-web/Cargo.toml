@@ -30,9 +30,12 @@ web-sys = { version = "0.3", features = [
     "FileReader",
     "HtmlAnchorElement",
     "Blob",
-    "Url"
+    "Url",
+    "Response"
 ] }
+wasm-bindgen-futures = "0.4"
 gloo-timers = { version = "0.3", features = ["futures"] }
+
 js-sys = "0.3"
 console_error_panic_hook = "0.1"
 base64 = "0.22"
