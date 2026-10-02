@@ -60,29 +60,30 @@ fn create_default_graphic(w: u32, h: u32) -> RgbaImage {
     img
 }
 
-/// Catálogo de 20 retratos de alto impacto com licença Creative Commons / Domínio Público
+/// Catálogo de 20 imagens temáticas genéricas com licença Creative Commons / Domínio Público
 pub const BACKGROUND_COLLECTION: &[(&str, &str)] = &[
-    ("assets/backgrounds/01-claudia-wonder.jpg", "Claudia Wonder"),
-    ("assets/backgrounds/02-madame-sata.jpg", "Madame Satã"),
-    ("assets/backgrounds/03-indianarae-siqueira.jpg", "Indianarae Siqueira"),
-    ("assets/backgrounds/04-joao-w-nery.jpg", "João W. Nery"),
-    ("assets/backgrounds/05-linn-da-quebrada.jpg", "Linn da Quebrada"),
-    ("assets/backgrounds/06-leo-moreira-sa.jpg", "Leo Moreira Sá"),
-    ("assets/backgrounds/07-erika-hilton.jpg", "Erika Hilton"),
-    ("assets/backgrounds/08-amara-moira.jpg", "Amara Moira"),
-    ("assets/backgrounds/09-katia-tapety.jpg", "Kátia Tapety"),
-    ("assets/backgrounds/10-marcia-pantera.jpg", "Márcia Pantera"),
-    ("assets/backgrounds/11-neon-cunha.jpg", "Neon Cunha"),
-    ("assets/backgrounds/12-rogeria.jpg", "Rogéria"),
-    ("assets/backgrounds/13-laerte-coutinho.jpg", "Laerte Coutinho"),
-    ("assets/backgrounds/14-luana-muniz.jpg", "Luana Muniz"),
-    ("assets/backgrounds/15-susy-shock.jpg", "Susy Shock"),
-    ("assets/backgrounds/16-renata-carvalho.jpg", "Renata Carvalho"),
-    ("assets/backgrounds/17-jovanna-baby.jpg", "Jovanna Baby"),
-    ("assets/backgrounds/18-keila-simpson.jpg", "Keila Simpson"),
-    ("assets/backgrounds/19-xica-manicongo.jpg", "Xica Manicongo"),
-    ("assets/backgrounds/20-robeyonce-lima.jpg", "Robeyoncé Lima"),
+    ("assets/backgrounds/01-busto-marmore.jpg", "Busto de Mármore Clássico"),
+    ("assets/backgrounds/02-gargula-gotica.jpg", "Gárgula Gótica de Pedra"),
+    ("assets/backgrounds/03-monumento-brutalista.jpg", "Monumento Brutalista Spomenik"),
+    ("assets/backgrounds/04-o-grito-munch.jpg", "O Grito (Edvard Munch)"),
+    ("assets/backgrounds/05-esqueleto-vesalius.jpg", "Esqueleto Anatômico (Vesalius)"),
+    ("assets/backgrounds/06-onda-kanagawa.jpg", "A Grande Onda de Kanagawa"),
+    ("assets/backgrounds/07-caravaggio-claroscuro.jpg", "São Jerônimo (Caravaggio)"),
+    ("assets/backgrounds/08-corvo-urbano.jpg", "Corvo Urbano"),
+    ("assets/backgrounds/09-cachorro-rua.jpg", "Cachorro em Alerta"),
+    ("assets/backgrounds/10-pombo-urbano.jpg", "Pombo Urbano"),
+    ("assets/backgrounds/11-caveira-anatomica.jpg", "Crânio Humano"),
+    ("assets/backgrounds/12-protesto-rua.jpg", "Manifestação de Rua e Fumaça"),
+    ("assets/backgrounds/13-cartazes-muro.jpg", "Cartazes e Lambe-Lambe"),
+    ("assets/backgrounds/14-pichacao-urbana.jpg", "Pichação e Grafite"),
+    ("assets/backgrounds/15-predio-brutalista.jpg", "Fachada de Edifício Brutalista"),
+    ("assets/backgrounds/16-torre-transmissao.jpg", "Torre de Transmissão Elétrica"),
+    ("assets/backgrounds/17-ruina-industrial.jpg", "Ruína Industrial Desativada"),
+    ("assets/backgrounds/18-escada-incendio.jpg", "Escadaria de Incêndio de Ferro"),
+    ("assets/backgrounds/19-televisao-crt.jpg", "Televisor de Tubo CRT Vintage"),
+    ("assets/backgrounds/20-fita-cassete.jpg", "Fita Cassete K7 Analógica"),
 ];
+
 
 /// Busca assincronamente os bytes de uma imagem remota do acervo e decodifica para RGBA
 pub async fn load_remote_image(url: &str) -> Option<RgbaImage> {
@@ -1068,9 +1069,10 @@ pub fn App() -> Element {
                                     }
                                     if !current_bg_subject().is_empty() {
                                         span { class: "current-subject-badge",
-                                            "✨ Retrato: {current_bg_subject()}"
+                                            "✨ Sujeito: {current_bg_subject()}"
                                         }
                                     }
+
                                 }
                                 div { class: "img-edit-tools-row",
 
