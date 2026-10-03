@@ -397,6 +397,11 @@ Barra Horizontal V-Hold: Inversão total de fase a cada ciclo vertical periódic
             <p>
                 <strong>Particularidade do Preset:</strong> Homenagem à advogada pioneira Robeyoncé Lima e à televisão pirata dos anos 80/90; aberração cromática analógica e perda periódica de sincronismo vertical.
             </p>
+
+            <h3>Etapa 3.4: Prensagem Tipográfica &amp; Ondulação CRT</h3>
+            <p>
+                <strong>Efeito Diferenciado de Tarja:</strong> Deformação ondulada contínua senoidal (<code>wave_amplitude = 8.0</code> px, <code>wave_wavelength = 140.0</code> px) modulando o texto e a tarja, simulando instabilidade de varredura eletromagnética do canhão de elétrons do tubo CRT. A fase inicial da onda é derivada deterministicamente da imagem via hash FNV-1a (consulte o <a href="../determinismo-seed.html" style="color: #00f0ff; font-weight: bold; text-decoration: underline;">Motor de Determinismo &amp; Sementes</a>).
+            </p>
         </section>
 
         <!-- SEÇÃO 4: DIAGRAMA DE PIPELINE -->
@@ -423,7 +428,7 @@ Barra Horizontal V-Hold: Inversão total de fase a cada ciclo vertical periódic
 [ 5. Mapeamento Estrito na Paleta de Cores ]
                │
                ▼
-[ 6. Prensagem de Tarjas, Tipografia e Moldura ]
+[ 6. Prensagem de Tarjas Onduladas (Senóide 8px / 140px), Tipografia e Moldura ]
                │
                ▼
 [ Pôster Final Renderizado Bit-a-Bit Idêntico ]

@@ -394,6 +394,11 @@ Preto Grafite #111111, Papel Cinza #E8E6DF, Amarelo Choque #FFCC00, Vermelho Car
             <p>
                 <strong>Particularidade do Preset:</strong> Estética do lendário jornal Notícias Populares dos anos 80/90, notícias policiais urgentes, unsharp estourado e caixa amarela.
             </p>
+
+            <h3>Etapa 3.4: Prensagem Tipográfica &amp; Manchete Recortada</h3>
+            <p>
+                <strong>Efeito Diferenciado de Tarja:</strong> Palavras recortadas individualmente (<code>word_tarja_cut = true</code>) com inclinação e desalinhamento angular de até <strong>&plusmn;5.0&deg;</strong> (<code>word_jitter_rotation = 5.0</code>), simulando manchetes e palavras coladas às pressas para fechamento de edição de rotativa policial. O cálculo da semente e os ângulos são puramente determinísticos derivados da imagem de entrada (saiba mais no <a href="../determinismo-seed.html" style="color: #00f0ff; font-weight: bold; text-decoration: underline;">Motor de Determinismo &amp; Sementes</a>).
+            </p>
         </section>
 
         <!-- SEÇÃO 4: DIAGRAMA DE PIPELINE -->
@@ -420,7 +425,7 @@ Preto Grafite #111111, Papel Cinza #E8E6DF, Amarelo Choque #FFCC00, Vermelho Car
 [ 5. Mapeamento Estrito na Paleta de Cores ]
                │
                ▼
-[ 6. Prensagem de Tarjas, Tipografia e Moldura ]
+[ 6. Prensagem de Manchetes Recortadas (&plusmn;5.0&deg; LCG), Tipografia e Moldura ]
                │
                ▼
 [ Pôster Final Renderizado Bit-a-Bit Idêntico ]

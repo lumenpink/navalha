@@ -475,6 +475,9 @@
                     </ul>
                 </li>
                 <li class="doc-toc-item">
+                    <a href="determinismo-seed.html" class="doc-toc-link" style="color: #00f0ff;"><strong>★</strong> Motor de Determinismo (Hash FNV-1a, Semente &amp; Reprodutibilidade) →</a>
+                </li>
+                <li class="doc-toc-item">
                     <a href="#secao-otsurotacao" class="doc-toc-link"><strong>3.</strong> Manipulação de Imagem: Rotação e Corte Otsu</a>
                 </li>
                 <li class="doc-toc-item">
@@ -505,7 +508,7 @@
             </p>
             <p>
                 • <strong>Zero IA Generativa:</strong> O sujeito da imagem é você ou o arquivo que você escolheu. O motor não cria nada do nada; ele corta, queima meios-tons, distorce e prensa.<br>
-                • <strong>Determinismo Bit a Bit:</strong> A mesma imagem de entrada com os mesmos argumentos gerará exatamente o mesmo mapa de pixels em qualquer sistema operacional e em qualquer navegador do mundo.<br>
+                • <strong>Determinismo Bit a Bit:</strong> A mesma imagem de entrada com os mesmos argumentos gerará exatamente o mesmo mapa de pixels em qualquer sistema operacional e em qualquer navegador do mundo. Conheça nossa especificação detalhada do <a href="determinismo-seed.html" style="color: #00f0ff; font-weight: bold; text-decoration: underline;">Motor de Determinismo (Hash FNV-1a de 64 bits &amp; LCG)</a>.<br>
                 • <strong>Soberania e Privacidade Absoluta (100% no Cliente):</strong> O aplicativo roda integralmente via WebAssembly na memória do seu navegador. Zero bytes de imagem são enviados para servidores externos.
             </p>
         </section>
@@ -551,7 +554,7 @@
                     <strong>Memória &amp; Legado — Claudia Wonder (1955–2010):</strong> Cantora, atriz, escritora e ícone definitivo da noite underground e punk paulistana dos anos 80. Liderou a lendária banda de rock <em>Claudia Wonder &amp; Os Vândalos</em>, atuou no cinema marginal, compôs hinos da noite e publicou crônicas afiadas. Em plena ditadura militar e transição democrática, Claudia tomou a atitude DIY (Faça Você Mesma) do punk para fundar a visibilidade travesti na música independente brasileira, unindo jaquetas de couro com tachas, poesia debochada e resistência intransigente contra a violência policial.
                 </div>
                 <div class="tech-specs">
-                    <strong>Algoritmo:</strong> Atkinson (75% erro) | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Vermelho Punk (#FF0033) | <strong>Tarja:</strong> Preto maciço com letras brancas
+                    <strong>Algoritmo:</strong> Atkinson (75% erro) | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Vermelho Punk (#FF0033) | <strong>Tarja:</strong> Preto maciço com recorte de palavras (&plusmn;6.0&deg; LCG) (<a href="determinismo-seed.html" style="color: #00f0ff; text-decoration: underline;">Motor Seed</a>)
                 </div>
                 <div style="margin-top: 14px; text-align: right;">
                     <a href="presets/punk-riot.html" style="display: inline-block; background: #1a1a24; color: #00f0ff; border: 1px solid #00f0ff; padding: 8px 14px; text-decoration: none; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
@@ -638,7 +641,7 @@
                     <strong>Memória &amp; Legado — Indianarae Siqueira (1971–):</strong> Ativista histórica dos direitos humanos, sobrevivente da violência estatal e fundadora da <em>Casa Nem</em> e da <em>Casa Laura Vermont</em> no Rio de Janeiro. Pioneira nos debates de redução de danos, acolhimento de pessoas LGBTQIA+ em situação de extrema vulnerabilidade e luta contra o extermínio sistemático de travestis. Sua militância não se curva a formalismos burocráticos: é a voz que ocupa as ruas, abre portas na marreta e faz do próprio corpo uma trincheira intransponível pela vida e pela moradia digna.
                 </div>
                 <div class="tech-specs">
-                    <strong>Algoritmo:</strong> Bayer 8x8 Ordenado | <strong>Base:</strong> 640px | <strong>Fundo:</strong> Papel Amarelado (#F5F2EB) | <strong>Tarja:</strong> Toner com riscos e falhas de varredura | <strong>Níveis:</strong> Sombras &lt; 25% / Luzes &gt; 75%
+                    <strong>Algoritmo:</strong> Bayer 8x8 Ordenado | <strong>Base:</strong> 640px | <strong>Fundo:</strong> Papel Amarelado (#F5F2EB) | <strong>Tarja:</strong> Retidão estrita sem distorção com riscos LCG (<a href="determinismo-seed.html" style="color: #00f0ff; text-decoration: underline;">Motor Seed</a>) | <strong>Níveis:</strong> Sombras &lt; 25% / Luzes &gt; 75%
                 </div>
                 <div style="margin-top: 14px; text-align: right;">
                     <a href="presets/xerox-podre.html" style="display: inline-block; background: #1a1a24; color: #00f0ff; border: 1px solid #00f0ff; padding: 8px 14px; text-decoration: none; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
@@ -726,7 +729,7 @@
                     <strong>Memória &amp; Legado — Linn da Quebrada (1990–):</strong> Artista multimídia, cantora, compositora e atriz paulistana. Com os discos antológicos <em>Pajubá</em> (2017) e <em>Traveqa</em> (2021), e sua atuação no cinema e na TV, Linn revolucionou a música popular brasileira contemporânea. Ela ressignificou o corpo travesti como território poético, político e erótico de disputa, quebrando convenções de gênero e normas estéticas com letras complexas, flow afiado e uma presença visual magnética que recusa qualquer tentativa de domesticação cultural.
                 </div>
                 <div class="tech-specs">
-                    <strong>Algoritmo:</strong> Floyd-Steinberg Serpentina | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Asfalto (#0B0B0E) | <strong>Tipografia:</strong> Distorção vertical 2.2x
+                    <strong>Algoritmo:</strong> Floyd-Steinberg Serpentina | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Asfalto (#0B0B0E) | <strong>Tarja:</strong> Ondulação senoidal suave (5px / 160px) (<a href="determinismo-seed.html" style="color: #00f0ff; text-decoration: underline;">Motor Seed</a>) | <strong>Tipografia:</strong> Distorção vertical 2.2x
                 </div>
                 <div style="margin-top: 14px; text-align: right;">
                     <a href="presets/lapa-noturna.html" style="display: inline-block; background: #1a1a24; color: #00f0ff; border: 1px solid #00f0ff; padding: 8px 14px; text-decoration: none; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
@@ -858,7 +861,7 @@
                     <strong>Memória &amp; Legado — Amara Moira:</strong> Primeira travesti a obter o título de doutora em Teoria Literária pela Unicamp, escritora, tradutora de James Joyce e cronista de combate. Sua produção intelectual e literária (como <em>E se eu fosse puta</em>) implode os limites entre a academia e as esquinas, transformando a língua portuguesa em ferramenta afiada de libertação, visibilidade e defesa incondicional dos direitos das pessoas trans e profissionais do sexo.
                 </div>
                 <div class="tech-specs">
-                    <strong>Algoritmo:</strong> Bayer 8x8 | <strong>Base:</strong> 640px | <strong>Fundo:</strong> Azul Ultramarino (#001188) | <strong>Tarja:</strong> Amarelo CRT com letras em azul ultramarino
+                    <strong>Algoritmo:</strong> Bayer 8x8 | <strong>Base:</strong> 640px | <strong>Fundo:</strong> Azul Ultramarino (#001188) | <strong>Tarja:</strong> Amarelo CRT com ondulação scanner de mão (6px / 110px) (<a href="determinismo-seed.html" style="color: #00f0ff; text-decoration: underline;">Motor Seed</a>)
                 </div>
                 <div style="margin-top: 14px; text-align: right;">
                     <a href="presets/fanzine-digital.html" style="display: inline-block; background: #1a1a24; color: #00f0ff; border: 1px solid #00f0ff; padding: 8px 14px; text-decoration: none; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
@@ -901,7 +904,7 @@
                     <strong>Memória &amp; Legado — Kátia Tapety (1949–):</strong> A pioneira absoluta da representação política travesti no Brasil e na América Latina. Nascida no sertão do Piauí, foi eleita vereadora de Colônia do Piauí em 1992, reeleita três vezes consecutivas e chegou ao cargo de vice-prefeita em 2004. Muito antes de qualquer debate acadêmico ou institucional sobre diversidade, Kátia conquistou o respeito incondicional de sua comunidade rural distribuindo remédios, articulando socorro e exercendo poder popular com coragem sertaneja e generosidade inabalável.
                 </div>
                 <div class="tech-specs">
-                    <strong>Algoritmo:</strong> Atkinson | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Piche (#111111) | <strong>Contraste:</strong> Óptico binário
+                    <strong>Algoritmo:</strong> Atkinson | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Piche (#111111) | <strong>Tarja:</strong> Recorte de palavras tático (&plusmn;4.0&deg; LCG) (<a href="determinismo-seed.html" style="color: #00f0ff; text-decoration: underline;">Motor Seed</a>) | <strong>Contraste:</strong> Óptico binário
                 </div>
                 <div style="margin-top: 14px; text-align: right;">
                     <a href="presets/asfalto-alerta.html" style="display: inline-block; background: #1a1a24; color: #00f0ff; border: 1px solid #00f0ff; padding: 8px 14px; text-decoration: none; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
@@ -1127,7 +1130,7 @@
                     <strong>Memória &amp; Legado — Luana Muniz (1961–2017):</strong> A lendária "Rainha da Lapa", líder comunitária, atriz e ativista carioca. Em plena rua Mem de Sá, fundou o Casarão Luana Muniz, abrigo histórico que acolheu durante décadas centenas de travestis, pessoas trans e portadoras do vírus HIV expulsas de suas casas e da sociedade. Diante das câmeras sensacionalistas que buscavam escandalizar a vida noturna carioca, Luana eternizou o grito definitivo da dignidade marginal: <em>"Travesti não é bagunça!"</em>. Uma guerreira destemida que impôs respeito à força de sua generosidade, coragem e compromisso incondicional com os mais vulneráveis.
                 </div>
                 <div class="tech-specs">
-                    <strong>Algoritmo:</strong> Floyd-Steinberg Rotativa | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Papel Jornal (#E8E6DF) | <strong>Cores:</strong> 4 (Imprensa Popular)
+                    <strong>Algoritmo:</strong> Floyd-Steinberg Rotativa | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Papel Jornal (#E8E6DF) | <strong>Tarja:</strong> Manchete com recorte de palavras (&plusmn;5.0&deg; LCG) (<a href="determinismo-seed.html" style="color: #00f0ff; text-decoration: underline;">Motor Seed</a>) | <strong>Cores:</strong> 4 (Imprensa Popular)
                 </div>
                 <div style="margin-top: 14px; text-align: right;">
                     <a href="presets/tabloide-popular.html" style="display: inline-block; background: #1a1a24; color: #00f0ff; border: 1px solid #00f0ff; padding: 8px 14px; text-decoration: none; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
@@ -1216,7 +1219,7 @@
                     <strong>Memória &amp; Legado — Renata Carvalho (1981–):</strong> Atriz, dramaturga, pesquisadora e encenadora santista. Criadora do conceito da <em>Transpofagia</em> e fundadora do MONART. Ao protagonizar o espetáculo <em>O Evangelho Segundo Jesus, Rainha do Céu</em>, enfrentou dezenas de tentativas de censura judicial e perseguição fanática, transformando a arte teatral em trincheira inexpugnável de humanização e dignidade travesti.
                 </div>
                 <div class="tech-specs">
-                    <strong>Algoritmo:</strong> Floyd-Steinberg 4 Níveis | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Carmim Sangue (#BA0C2F) | <strong>Tarja:</strong> Máquina mecânica
+                    <strong>Algoritmo:</strong> Floyd-Steinberg 4 Níveis | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Carmim Sangue (#BA0C2F) | <strong>Tarja:</strong> Recorte de palavras mecânicas (&plusmn;8.0&deg; LCG) (<a href="determinismo-seed.html" style="color: #00f0ff; text-decoration: underline;">Motor Seed</a>)
                 </div>
                 <div style="margin-top: 14px; text-align: right;">
                     <a href="presets/trash-polka.html" style="display: inline-block; background: #1a1a24; color: #00f0ff; border: 1px solid #00f0ff; padding: 8px 14px; text-decoration: none; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
@@ -1396,7 +1399,7 @@
                     <strong>Memória &amp; Legado — Robeyoncé Lima:</strong> Advogada, ativista e defensora de direitos humanos. Fez história como a primeira travesti negra a exercer a advocacia em Pernambuco e como co-deputada eleita pela mandata coletiva Juntas. Atua incansavelmente na defesa jurídica da população trans e periférica, provando que o direito é instrumento emancipatório a serviço da liberdade.
                 </div>
                 <div class="tech-specs">
-                    <strong>Algoritmo:</strong> Jitter Senoidal + Aberração R/B (4px) + Barra V-Hold (12px) | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Tubo Ruído (#0D0F12) | <strong>Cores:</strong> CRT Ciano/Vermelho
+                    <strong>Algoritmo:</strong> Jitter Senoidal + Aberração R/B (4px) + Barra V-Hold (12px) | <strong>Base:</strong> 720px | <strong>Fundo:</strong> Tubo Ruído (#0D0F12) | <strong>Tarja:</strong> Ondulação senoidal contínua (8px / 140px) (<a href="determinismo-seed.html" style="color: #00f0ff; text-decoration: underline;">Motor Seed</a>) | <strong>Cores:</strong> CRT Ciano/Vermelho
                 </div>
                 <div style="margin-top: 14px; text-align: right;">
                     <a href="presets/glitch-crt.html" style="display: inline-block; background: #1a1a24; color: #00f0ff; border: 1px solid #00f0ff; padding: 8px 14px; text-decoration: none; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">

@@ -387,6 +387,11 @@ Fundo e sombras profundas em Asfalto Noturno #0B0B0E.
             <p>
                 <strong>Particularidade do Preset:</strong> Contraste vibrante das noites da Lapa carioca e da Santa Cecília paulistana, neon cyberpunk e atrito de rua.
             </p>
+
+            <h3>Etapa 3.4: Prensagem Tipográfica &amp; Ondulação Reflexiva de Neon</h3>
+            <p>
+                <strong>Efeito Diferenciado de Tarja:</strong> Deformação senoidal suave e contínua (<code>wave_amplitude = 5.0</code> px, <code>wave_wavelength = 160.0</code> px), simulando a refração ondulada de letreiros de neon sobre o reflexo de água da chuva no asfalto. A semente é derivada via hash FNV-1a dos pixels da foto (consulte o <a href="../determinismo-seed.html" style="color: #00f0ff; font-weight: bold; text-decoration: underline;">Motor de Determinismo &amp; Sementes</a>).
+            </p>
         </section>
 
         <!-- SEÇÃO 4: DIAGRAMA DE PIPELINE -->
@@ -413,7 +418,7 @@ Fundo e sombras profundas em Asfalto Noturno #0B0B0E.
 [ 5. Mapeamento Estrito na Paleta de Cores ]
                │
                ▼
-[ 6. Prensagem de Tarjas, Tipografia e Moldura ]
+[ 6. Prensagem de Tarjas Onduladas (Senóide 5px / 160px), Tipografia e Moldura ]
                │
                ▼
 [ Pôster Final Renderizado Bit-a-Bit Idêntico ]

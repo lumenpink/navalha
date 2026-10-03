@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motor de Determinismo: Hash FNV-1a, Semente &amp; Reprodutibilidade | NAVALHA</title>
+    <meta name="description" content="Especificação técnica e matemática do motor de determinismo e cálculo de sementes (FNV-1a 64-bit + LCG) do Navalha para artes gráficas e serigrafia reproduzíveis.">
+    <link rel="stylesheet" href="../assets/style.css">
+    <style>
+        html, body {
+            height: auto !important;
+            min-height: 100% !important;
+            max-height: none !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+        .doc-container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 30px 20px 80px 20px;
+        }
+        .nav-breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .nav-breadcrumbs a {
+            color: #00f0ff;
+            text-decoration: none;
+        }
+        .nav-breadcrumbs a:hover {
+            text-decoration: underline;
+        }
+        .nav-breadcrumbs span {
+            color: #666;
+        }
+        .doc-hero-spec {
+            background-color: #141416;
+            border-left: 6px solid #00f0ff;
+            border-top: 1px solid #333;
+            border-right: 1px solid #333;
+            border-bottom: 1px solid #333;
+            padding: 28px;
+            margin-bottom: 35px;
+            box-shadow: 6px 6px 0px #000;
+        }
+        .spec-badge-tag {
+            display: inline-block;
+            background-color: #00f0ff;
+            color: #000000;
+            font-size: 12px;
+            font-weight: 900;
+            padding: 3px 8px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .doc-page-title {
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+        }
+        .doc-page-subtitle {
+            font-size: 15px;
+            color: #e2f835;
+            letter-spacing: 1px;
+            margin: 0 0 16px 0;
+            text-transform: uppercase;
+        }
+        .doc-section {
+            margin-bottom: 45px;
+            background-color: #0e0e11;
+            border: 2px solid #24242a;
+            padding: 30px;
+            box-shadow: 4px 4px 0px #000;
+        }
+        .doc-section h2 {
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #e2f835;
+            margin-top: 0;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .doc-section h3 {
+            font-size: 17px;
+            font-weight: 800;
+            color: #00f0ff;
+            margin: 22px 0 10px 0;
+            letter-spacing: 0.8px;
+        }
+        .doc-section p {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #d0ced8;
+            margin-bottom: 14px;
+        }
+        .code-block-container {
+            margin: 20px 0;
+            border: 1px solid #333;
+            background: #08080a;
+        }
+        .code-block-header {
+            background: #18181f;
+            padding: 8px 14px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            font-weight: bold;
+            color: #aaa;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+        }
+        .code-block {
+            padding: 16px;
+            margin: 0;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #00f0ff;
+            background: #08080a;
+        }
+        .formula-box {
+            background: #121218;
+            border-left: 4px solid #ff0033;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            color: #ffffff;
+            line-height: 1.7;
+        }
+        .spec-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+        }
+        .spec-table th {
+            background-color: #1a1a24;
+            color: #e2f835;
+            padding: 10px 12px;
+            text-align: left;
+            border: 1px solid #333;
+        }
+        .spec-table td {
+            padding: 9px 12px;
+            border: 1px solid #262630;
+            color: #ccc;
+        }
+        .spec-table tr:nth-child(even) {
+            background-color: #111116;
+        }
+        .spec-table tr:hover {
+            background-color: #181822;
+        }
+    </style>
+</head>
+<body>
+    <div class="doc-container">
+        <!-- Navegação Breadcrumbs -->
+        <nav class="nav-breadcrumbs" aria-label="Navegação">
+            <a href="../">Navalha App</a>
+            <span>/</span>
+            <a href="./">Documentação</a>
+            <span>/</span>
+            <strong style="color: #00f0ff;">Motor de Determinismo &amp; Sementes</strong>
+        </nav>
+
+        <!-- Cabeçalho -->
+        <header class="doc-hero-spec">
+            <span class="spec-badge-tag">ESPECIFICAÇÃO DE ENGENHARIA #CORE-001</span>
+            <h1 class="doc-page-title">Motor de Determinismo</h1>
+            <div class="doc-page-subtitle">Hash FNV-1a de 64 Bits, Sementes &amp; Reprodutibilidade Gráfica Estrita</div>
+            <p style="color: #bbb; font-size: 14px; margin: 0; line-height: 1.6;">
+                Como o NAVALHA garante artefatos orgânicos de colagem analógica, tremores de fanzine e ondulações senoidais sem recorrer a geradores estocásticos voláteis ou aleatoriedade imprevisível.
+            </p>
+        </header>
+
+        <!-- SEÇÃO 1: O PRINCÍPIO DO DETERMINISMO -->
+        <section class="doc-section" id="filosofia">
+            <h2>1. O Princípio do Anti-Design Determinístico</h2>
+            <p>
+                No ecossistema de artes gráficas, serigrafia, risografia e publicação independente, a <strong>reprodutibilidade bit-a-bit</strong> é um requisito fundamental:
+            </p>
+            <ul>
+                <li><strong>Separação de Cores Fiel:</strong> Ao decompor o cartaz em matrizes de impressão (PDFs de fotolito por cor), a geometria, os recortes de tarja e as ondulações precisam coincidir com exatidão micrométrica em cada chapa.</li>
+                <li><strong>Paridade CLI &amp; Web:</strong> O mesmo comando executado no terminal headless ou pelo botão do navegador deve entregar uma imagem final idêntica pixel por pixel.</li>
+                <li><strong>Reversibilidade e Testabilidade:</strong> Testes de regressão automatizados e testes de sanidade visual exigem hashes de saída constantes para as mesmas entradas.</li>
+            </ul>
+            <p>
+                Por essa razão, o núcleo do Navalha (<code>navalha-core</code> e <code>navalha-cli</code>) <strong>recusa qualquer chamada a geradores de números aleatórios estocásticos</strong> (como <code>rand::random()</code> ou funções dependentes do relógio do sistema <code>SystemTime::now()</code>). Todas as variações orgânicas e imperfeições táteis são derivadas como funções puras dos dados de entrada.
+            </p>
+        </section>
+
+        <!-- SEÇÃO 2: CÁLCULO DA SEMENTE FNV-1a -->
+        <section class="doc-section" id="fnv1a">
+            <h2>2. Cálculo da Semente Primária (Hash FNV-1a de 64 Bits)</h2>
+            <p>
+                A semente básica (<code>seed: u64</code>) é extraída diretamente do buffer de pixels da imagem de sujeito tratada (<code>processed_subject</code>) através do algoritmo não-criptográfico de alta dispersão <strong>FNV-1a de 64 bits</strong>.
+            </p>
+
+            <div class="formula-box">
+                <strong>Constantes Canônicas FNV-1a (64 bits):</strong><br>
+                Offset Basis = <code>0xcbf29ce484222325</code> (14695981039346656037)<br>
+                FNV Prime    = <code>0x100000001b3</code> (1099511628211)<br>
+                <br>
+                <strong>Regra de Acumulação:</strong><br>
+                <code>hash = (hash ^ byte) * FNV_PRIME</code> (com wrap aritmético de 64 bits)
+            </div>
+
+            <h3>Etapa 2.1: Varredura de Pixels da Imagem</h3>
+            <p>
+                A função <code>compute_subject_seed(image, fallback_text)</code> itera sequencialmente sobre cada canal de cada pixel RGBA da imagem de entrada:
+            </p>
+            <div class="code-block-container">
+                <div class="code-block-header">crates/navalha-core/src/press.rs</div>
+                <pre class="code-block">
+pub fn compute_subject_seed(image: Option<&amp;RgbaImage>, fallback_text: &amp;str) -> u64 {
+    const FNV_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
+    const FNV_PRIME: u64 = 0x100000001b3;
+
+    if let Some(img) = image {
+        let mut hash = FNV_OFFSET_BASIS;
+        for pixel in img.pixels() {
+            for &amp;byte in &amp;pixel.0 {
+                hash ^= byte as u64;
+                hash = hash.wrapping_mul(FNV_PRIME);
+            }
+        }
+        hash
+    } else {
+        // Fallback determinístico caso o cartaz não possua imagem
+        let mut hash = FNV_OFFSET_BASIS;
+        for &amp;byte in fallback_text.as_bytes() {
+            hash ^= byte as u64;
+            hash = hash.wrapping_mul(FNV_PRIME);
+        }
+        hash
+    }
+}
+                </pre>
+            </div>
+
+            <h3>Etapa 2.2: Fallback Determinístico de Tipografia</h3>
+            <p>
+                Quando o cartaz não possui imagem de sujeito carregada (modo estritamente tipográfico), a semente é computada sobre os bytes UTF-8 da manchete/slogan combinados (<code>fallback_text</code>). Isso garante que até mesmo cartazes puramente textuais tenham variações determinísticas e estáveis baseadas nas palavras digitadas.
+            </p>
+        </section>
+
+        <!-- SEÇÃO 3: MOTOR LCG -->
+        <section class="doc-section" id="lcg">
+            <h2>3. Motor Pseudoaleatório Linear (LCG com Salt)</h2>
+            <p>
+                Para derivar valores independentes para diferentes elementos do cartaz (ex: rotação de cada palavra individual, fase de onda senoidal, ou distribuição de falhas de toner de xerox), utiliza-se o gerador congruencial linear canônico de Donald Knuth (MMIX / 64 bits):
+            </p>
+
+            <div class="formula-box">
+                <code>lcg_hash(seed, salt) = seed.wrapping_mul(6364136223846793005) + salt.wrapping_mul(1442695040888963407) + 1</code>
+            </div>
+
+            <h3>Aplicações Práticas:</h3>
+            <ul>
+                <li><strong>Rotação Orgânica de Palavras:</strong> Cada palavra <code>i</code> recebe o salt <code>i * 7 + 13</code>. O resultado normalizado em $[0.0, 1.0]$ mapeia para o intervalo de rotação $[-\theta_{max}, +\theta_{max}]$.</li>
+                <li><strong>Fase da Onda Senoidal:</strong> O salt <code>101</code> deriva o deslocamento de fase $\phi$, fazendo com que cada imagem cause uma modulação de onda única no texto, mas 100% reproduzível.</li>
+                <li><strong>Artefatos de Toner da Xerox:</strong> Coordenadas $(x, y)$ são combinadas com a semente para calcular riscos verticais e micro-falhas de pó de carbono sem tabelas estáticas.</li>
+            </ul>
+        </section>
+
+        <!-- SEÇÃO 4: MATRIZ DE PRESETS -->
+        <section class="doc-section" id="matriz-presets">
+            <h2>4. Matriz de Comportamento nos Presets Canônicos</h2>
+            <p>
+                O Navalha aplica regras estilísticas estritas sobre quais presets recebem distorções não-lineares e quais devem se manter estritamente retos:
+            </p>
+
+            <table class="spec-table">
+                <thead>
+                    <tr>
+                        <th>Preset Canônico</th>
+                        <th>Corte de Palavras (`word_tarja_cut`)</th>
+                        <th>Jitter Angular (`word_jitter_rotation`)</th>
+                        <th>Ondulação Senoidal (`wave_amplitude`)</th>
+                        <th>Comportamento Estilístico</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Punk Riot</strong></td>
+                        <td>Sim (Ativado)</td>
+                        <td>±6.0°</td>
+                        <td>0.0px (Desativado)</td>
+                        <td>Palavras recortadas coladas tortas com tesoura manual.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Trash Polka</strong></td>
+                        <td>Sim (Ativado)</td>
+                        <td>±8.0°</td>
+                        <td>0.0px (Desativado)</td>
+                        <td>Fragmentação agressiva germânica com ângulo pronunciado.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tabloide Popular</strong></td>
+                        <td>Sim (Ativado)</td>
+                        <td>±5.0°</td>
+                        <td>0.0px (Desativado)</td>
+                        <td>Manchete sensacionalista barata com tipografia montada às pressas.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Asfalto Alerta</strong></td>
+                        <td>Sim (Ativado)</td>
+                        <td>±4.0°</td>
+                        <td>0.0px (Desativado)</td>
+                        <td>Tarjas de intervenção tática e sinalização urbana de guerrilha.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Glitch CRT</strong></td>
+                        <td>Não (Contínua)</td>
+                        <td>0.0°</td>
+                        <td>8.0px (Freq: 140px)</td>
+                        <td>Aberração de deflexão magnética do tubo de raios catódicos.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Fanzine Digital</strong></td>
+                        <td>Não (Contínua)</td>
+                        <td>0.0°</td>
+                        <td>6.0px (Freq: 110px)</td>
+                        <td>Distorção de scanner de mão barato arrastado com a mão trêmula.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lapa Noturna</strong></td>
+                        <td>Não (Contínua)</td>
+                        <td>0.0°</td>
+                        <td>5.0px (Freq: 160px)</td>
+                        <td>Ondulação suave de reflexo de luz de neon sobre asfalto molhado.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Xerox Podre</strong></td>
+                        <td>Não (Contínua)</td>
+                        <td>0.0° (Reto Estrito)</td>
+                        <td>0.0px (Reto Estrito)</td>
+                        <td>Tarja rígida e contínua; distorção apenas no toner fotocondutor.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Brutalismo / Suíço</strong></td>
+                        <td>Não (Contínua)</td>
+                        <td>0.0° (Reto Estrito)</td>
+                        <td>0.0px (Reto Estrito)</td>
+                        <td>Grid ortogonal e arquitetura rigorosamente reta sem flexão.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Viagem Solitária</strong></td>
+                        <td>Não (Contínua)</td>
+                        <td>0.0° (Reto Estrito)</td>
+                        <td>0.0px (Reto Estrito)</td>
+                        <td>Equilíbrio sóbrio e tipografia de manifesto impassível.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- SEÇÃO 5: CÓDIGO DE REFERÊNCIA EM PYTHON -->
+        <section class="doc-section" id="codigo-referencia">
+            <h2>5. Código de Referência para Reimplementação Agnóstica</h2>
+            <p>
+                Script autocontido em <strong>Python 3</strong> reproduzindo a exata lógica matemática de hash FNV-1a de 64 bits e derivação LCG para verificação em testes externos:
+            </p>
+
+            <div class="code-block-container">
+                <div class="code-block-header">
+                    <span>deterministic_seed.py (Python 3)</span>
+                    <span style="color:#00f0ff;">LICENÇA: GPL-3.0 / MIT</span>
+                </div>
+                <pre class="code-block">
+def compute_subject_seed(rgba_bytes: bytes, fallback_text: str = "") -> int:
+    """Calcula a semente FNV-1a de 64 bits idêntica à do navalha-core."""
+    FNV_OFFSET = 0xcbf29ce484222325
+    FNV_PRIME  = 0x100000001b3
+    MASK64     = 0xFFFFFFFFFFFFFFFF
+
+    if rgba_bytes and len(rgba_bytes) > 0:
+        h = FNV_OFFSET
+        for b in rgba_bytes:
+            h = (h ^ b) &amp; MASK64
+            h = (h * FNV_PRIME) &amp; MASK64
+        return h
+    else:
+        h = FNV_OFFSET
+        for b in fallback_text.encode('utf-8'):
+            h = (h ^ b) &amp; MASK64
+            h = (h * FNV_PRIME) &amp; MASK64
+        return h
+
+def lcg_hash(seed: int, salt: int) -> int:
+    """Deriva pseudoaleatoriedade determinística a partir de uma semente e salt."""
+    MASK64 = 0xFFFFFFFFFFFFFFFF
+    term1 = (seed * 6364136223846793005) &amp; MASK64
+    term2 = (salt * 1442695040888963407) &amp; MASK64
+    return (term1 + term2 + 1) &amp; MASK64
+
+def get_word_rotation(seed: int, word_index: int, max_degrees: float) -> float:
+    """Calcula o ângulo determinístico para a palavra de índice word_index."""
+    salt = word_index * 7 + 13
+    rnd = (lcg_hash(seed, salt) &amp; 0xFFFF) / 65535.0  # Normalizado entre 0.0 e 1.0
+    return (rnd * 2.0 - 1.0) * max_degrees
+
+# Exemplo de teste de sanidade:
+if __name__ == "__main__":
+    # Teste com bytes artificiais
+    sample_pixels = bytes([255, 0, 0, 255, 0, 255, 0, 255])
+    s = compute_subject_seed(sample_pixels)
+    print(f"Seed calculada: {hex(s)}")
+    print(f"Rotação Palavra 0 (max 6.0°): {get_word_rotation(s, 0, 6.0):.2f}°")
+    print(f"Rotação Palavra 1 (max 6.0°): {get_word_rotation(s, 1, 6.0):.2f}°")
+                </pre>
+            </div>
+        </section>
+
+        <!-- Navegação Inferior -->
+        <div style="margin-top: 30px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+            <a href="./" style="color: #00f0ff; text-decoration: none; font-weight: bold; font-family: 'Courier New', Courier, monospace;">
+                &larr; Voltar para o Catálogo Geral
+            </a>
+            <a href="../" style="color: #e2f835; text-decoration: none; font-weight: bold; font-family: 'Courier New', Courier, monospace;">
+                Abrir o Navalha App &rarr;
+            </a>
+        </div>
+    </div>
+</body>
+</html>

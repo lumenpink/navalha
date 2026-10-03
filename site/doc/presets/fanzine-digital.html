@@ -385,6 +385,11 @@ Azul Ultramarino #001188, Amarelo Fanzine #FFEE00 e Branco Puro #FFFFFF.
             <p>
                 <strong>Particularidade do Preset:</strong> Homenagem às publicações digitais distribuídas em disquetes e BBSs nos anos 90, literatura de guerrilha e ativismo.
             </p>
+
+            <h3>Etapa 3.4: Prensagem Tipográfica &amp; Ondulação Scanner de Mão</h3>
+            <p>
+                <strong>Efeito Diferenciado de Tarja:</strong> Deformação ondulada senoidal contínua (<code>wave_amplitude = 6.0</code> px, <code>wave_wavelength = 110.0</code> px), simulando a puxada irregular de scanners manuais portáteis dos anos 90. A fase da onda é calculada a partir da semente da imagem com hash FNV-1a (veja a documentação no <a href="../determinismo-seed.html" style="color: #00f0ff; font-weight: bold; text-decoration: underline;">Motor de Determinismo &amp; Sementes</a>).
+            </p>
         </section>
 
         <!-- SEÇÃO 4: DIAGRAMA DE PIPELINE -->
@@ -411,7 +416,7 @@ Azul Ultramarino #001188, Amarelo Fanzine #FFEE00 e Branco Puro #FFFFFF.
 [ 5. Mapeamento Estrito na Paleta de Cores ]
                │
                ▼
-[ 6. Prensagem de Tarjas, Tipografia e Moldura ]
+[ 6. Prensagem de Tarjas Onduladas (Senóide 6px / 110px), Tipografia e Moldura ]
                │
                ▼
 [ Pôster Final Renderizado Bit-a-Bit Idêntico ]

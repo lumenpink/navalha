@@ -389,6 +389,11 @@ Fração descartada para manter alto contraste: 2/8 = 25%
             <p>
                 <strong>Particularidade do Preset:</strong> Descarte de 25% do erro residual para eliminar ruído em brancos e negros profundos; tarja preta de choque com letras vazadas e fundo vermelho vivo.
             </p>
+
+            <h3>Etapa 3.4: Prensagem Tipográfica &amp; Colagem de Palavras</h3>
+            <p>
+                <strong>Efeito Diferenciado de Tarja:</strong> Palavras recortadas individualmente (<code>word_tarja_cut = true</code>) com rotação angular orgânica de colagem de até <strong>&plusmn;6.0&deg;</strong> (<code>word_jitter_rotation = 6.0</code>), simulando recorte manual de fanzine punk. Toda a dispersão e os ângulos são estritamente reproduzíveis derivados da imagem via hash FNV-1a de 64 bits. Para detalhes matemáticos e código de reprodução do hash/LCG, consulte o <a href="../determinismo-seed.html" style="color: #00f0ff; font-weight: bold; text-decoration: underline;">Motor de Determinismo &amp; Sementes</a>.
+            </p>
         </section>
 
         <!-- SEÇÃO 4: DIAGRAMA DE PIPELINE -->
@@ -415,7 +420,7 @@ Fração descartada para manter alto contraste: 2/8 = 25%
 [ 5. Mapeamento Estrito na Paleta de Cores ]
                │
                ▼
-[ 6. Prensagem de Tarjas, Tipografia e Moldura ]
+[ 6. Prensagem de Tarjas Recortadas (&plusmn;6.0&deg; LCG), Tipografia e Moldura ]
                │
                ▼
 [ Pôster Final Renderizado Bit-a-Bit Idêntico ]

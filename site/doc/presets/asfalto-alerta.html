@@ -379,6 +379,11 @@ Eliminação total de meios-tons intermediários.
             <p>
                 <strong>Particularidade do Preset:</strong> Inspirado em placas de perigo industrial, asfalto quente e marcas de lâmina com moldura chanfrada de advertência.
             </p>
+
+            <h3>Etapa 3.4: Prensagem Tipográfica &amp; Sinalização de Perigo</h3>
+            <p>
+                <strong>Efeito Diferenciado de Tarja:</strong> Palavras recortadas individualmente em blocos de alerta (<code>word_tarja_cut = true</code>) com desalinhamento tático de até <strong>&plusmn;4.0&deg;</strong> (<code>word_jitter_rotation = 4.0</code>), evocando faixas de isolamento e estêncil urbano colados em superfície irregular. Sementes e rotações são 100% determinísticas (detalhes no <a href="../determinismo-seed.html" style="color: #00f0ff; font-weight: bold; text-decoration: underline;">Motor de Determinismo &amp; Sementes</a>).
+            </p>
         </section>
 
         <!-- SEÇÃO 4: DIAGRAMA DE PIPELINE -->
@@ -405,7 +410,7 @@ Eliminação total de meios-tons intermediários.
 [ 5. Mapeamento Estrito na Paleta de Cores ]
                │
                ▼
-[ 6. Prensagem de Tarjas, Tipografia e Moldura ]
+[ 6. Prensagem de Tarjas Recortadas (&plusmn;4.0&deg; LCG), Tipografia e Moldura ]
                │
                ▼
 [ Pôster Final Renderizado Bit-a-Bit Idêntico ]

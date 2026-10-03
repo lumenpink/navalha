@@ -388,6 +388,11 @@ Artefatos de Toner: ruído pseudoaleatório determinístico por Linear Congruent
             <p>
                 <strong>Particularidade do Preset:</strong> Simula cilindro de fotocopiadora desgastado, perda de toner vertical, poeira de carvão e papel jornal oxidado com micro-riscos.
             </p>
+
+            <h3>Etapa 3.4: Prensagem Tipográfica &amp; Retidão Estrutural Estrita</h3>
+            <p>
+                <strong>Efeito Diferenciado de Tarja:</strong> Ao contrário dos presets punk ou ondulados, o <strong>Xerox Podre mantém sua tarja estritamente reta e contínua</strong> (<code>wave_amplitude = 0.0</code> px, <code>word_jitter_rotation = 0.0&deg;</code>, <code>word_tarja_cut = false</code>). A textura e as imperfeições atuam exclusivamente na perda de toner, riscos de cilindro e descolamento de pó gerados deterministicamente por LCG (veja a separação conceitual no <a href="../determinismo-seed.html" style="color: #00f0ff; font-weight: bold; text-decoration: underline;">Motor de Determinismo &amp; Sementes</a>).
+            </p>
         </section>
 
         <!-- SEÇÃO 4: DIAGRAMA DE PIPELINE -->
@@ -414,7 +419,7 @@ Artefatos de Toner: ruído pseudoaleatório determinístico por Linear Congruent
 [ 5. Mapeamento Estrito na Paleta de Cores ]
                │
                ▼
-[ 6. Prensagem de Tarjas, Tipografia e Moldura ]
+[ 6. Prensagem de Tarjas Retas Contínuas (Sem Distorção), Tipografia e Moldura ]
                │
                ▼
 [ Pôster Final Renderizado Bit-a-Bit Idêntico ]

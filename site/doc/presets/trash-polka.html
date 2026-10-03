@@ -393,6 +393,11 @@ Adição de miras concêntricas 90° e manchas procedurais LCG na cor Carmim.
             <p>
                 <strong>Particularidade do Preset:</strong> Colisão entre realismo fotográfico em tons de cinza, carmim coagulado, elementos gráficos de mira e colagem caótica.
             </p>
+
+            <h3>Etapa 3.4: Prensagem Tipográfica &amp; Colagem de Palavras</h3>
+            <p>
+                <strong>Efeito Diferenciado de Tarja:</strong> Palavras recortadas individualmente (<code>word_tarja_cut = true</code>) com jitter de rotação angular agressivo de até <strong>&plusmn;8.0&deg;</strong> (<code>word_jitter_rotation = 8.0</code>), simulando a desconstrução gráfica radical do estilo germânico Trash Polka. As rotações são computadas deterministicamente pelo hash FNV-1a de 64 bits da imagem (veja detalhes no <a href="../determinismo-seed.html" style="color: #00f0ff; font-weight: bold; text-decoration: underline;">Motor de Determinismo &amp; Sementes</a>).
+            </p>
         </section>
 
         <!-- SEÇÃO 4: DIAGRAMA DE PIPELINE -->
@@ -419,7 +424,7 @@ Adição de miras concêntricas 90° e manchas procedurais LCG na cor Carmim.
 [ 5. Mapeamento Estrito na Paleta de Cores ]
                │
                ▼
-[ 6. Prensagem de Tarjas, Tipografia e Moldura ]
+[ 6. Prensagem de Tarjas Recortadas (&plusmn;8.0&deg; LCG), Tipografia e Moldura ]
                │
                ▼
 [ Pôster Final Renderizado Bit-a-Bit Idêntico ]
