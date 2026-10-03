@@ -136,6 +136,22 @@ enum Commands {
         #[arg(long = "banner-efeito")]
         banner_efeito: Option<String>,
 
+        /// Amplitude da distorção ondulada em pixels (0.0 = desativada)
+        #[arg(long = "onda-amp")]
+        onda_amp: Option<f32>,
+
+        /// Comprimento de onda senoidal em pixels
+        #[arg(long = "onda-freq")]
+        onda_freq: Option<f32>,
+
+        /// Jitter de rotação individual por palavra em graus (0 = desativado)
+        #[arg(long = "palavra-rot")]
+        palavra_rot: Option<i16>,
+
+        /// Ativa ou desativa modo de palavras recortadas com mini-tarjas individuais
+        #[arg(long = "palavra-tarja")]
+        palavra_tarja: Option<bool>,
+
         /// Desativa/remove totalmente as faixas decorativas de texto
         #[arg(long = "sem-faixa", default_value_t = false)]
         sem_faixa: bool,
@@ -379,6 +395,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             banner_borda_largura,
             banner_borda_cor,
             banner_efeito,
+            onda_amp,
+            onda_freq,
+            palavra_rot,
+            palavra_tarja,
             sem_faixa,
             sem_recorte,
             recorte,
@@ -469,6 +489,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if let Some(ef) = TarjaEffect::parse(eff) {
                         t.tarja_effect = ef;
                     }
+                }
+                if let Some(amp) = onda_amp {
+                    t.wave_amplitude = amp;
+                }
+                if let Some(freq) = onda_freq {
+                    t.wave_wavelength = freq;
+                }
+                if let Some(rot_p) = palavra_rot {
+                    t.word_jitter_rotation = rot_p;
+                    if rot_p > 0 {
+                        t.word_tarja_cut = true;
+                    }
+                }
+                if let Some(cut) = palavra_tarja {
+                    t.word_tarja_cut = cut;
                 }
             }
 

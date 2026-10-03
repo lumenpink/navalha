@@ -1188,6 +1188,85 @@ mod tests {
         let svg = generate_poster_svg(&comp, None);
         assert!(svg.contains("data:image/png;base64,"), "SVG deve embutir o sticker customizado como imagem base64");
     }
+
+    #[test]
+    fn test_xerox_podre_stays_strictly_straight() {
+        let banner = AestheticPreset::XeroxPodre.default_banner_element("RESISTÊNCIA DADAÍSTA");
+        assert_eq!(banner.wave_amplitude, 0.0, "XeroxPodre deve ter ondulação desativada");
+        assert_eq!(banner.word_jitter_rotation, 0, "XeroxPodre não deve ter rotação de palavras");
+        assert!(!banner.word_tarja_cut, "XeroxPodre deve usar tarja contínua tradicional e reta");
+    }
+
+    #[test]
+    fn test_presets_wave_and_word_cut_distribution() {
+        // Presets punk/colagem com palavras recortadas
+        for preset in [
+            AestheticPreset::PunkRiot,
+            AestheticPreset::TrashPolka,
+            AestheticPreset::TabloidePopular,
+            AestheticPreset::AsfaltoAlerta,
+        ] {
+            let b = preset.default_banner_element("PROTESTO PUNK");
+            assert!(b.word_tarja_cut, "Preset {:?} deve ter word_tarja_cut ativo", preset);
+            assert!(b.word_jitter_rotation > 0, "Preset {:?} deve ter jitter angular ativo", preset);
+        }
+
+        // Presets com ondulação não-linear
+        for preset in [
+            AestheticPreset::GlitchCrt,
+            AestheticPreset::FanzineDigital,
+            AestheticPreset::LapaNoturna,
+        ] {
+            let b = preset.default_banner_element("ONDA ANALÓGICA");
+            assert!(b.wave_amplitude > 0.0, "Preset {:?} deve ter wave_amplitude > 0", preset);
+        }
+
+        // Presets sóbrios estritamente retos
+        for preset in [
+            AestheticPreset::XeroxPodre,
+            AestheticPreset::ViagemSolitaria,
+            AestheticPreset::Brutalismo,
+            AestheticPreset::TeatroOperario,
+            AestheticPreset::AsciiArt,
+            AestheticPreset::Vga256,
+            AestheticPreset::Cga,
+            AestheticPreset::AtariGaming,
+            AestheticPreset::Risografia,
+            AestheticPreset::Mimeografo,
+            AestheticPreset::Xilogravura,
+        ] {
+            let b = preset.default_banner_element("TARJA RETA");
+            assert_eq!(b.wave_amplitude, 0.0, "Preset {:?} deve ser reto", preset);
+            assert_eq!(b.word_jitter_rotation, 0, "Preset {:?} deve ter jitter 0", preset);
+            assert!(!b.word_tarja_cut, "Preset {:?} não deve ter recorte individual", preset);
+        }
+    }
+
+    #[test]
+    fn test_wave_and_word_cut_determinism_with_image_seed() {
+        let (_, _, _, _, _, comp) = AestheticPreset::PunkRiot.build_pipeline_and_composition("NUNCA SEREMOS DÓCEIS");
+
+        // Cria imagem com padrão específico
+        let mut img = image::RgbaImage::new(120, 160);
+        for y in 0..160 {
+            for x in 0..120 {
+                let val = ((x * 7 + y * 13) % 256) as u8;
+                img.put_pixel(x, y, image::Rgba([val, 255 - val, val / 2, 255]));
+            }
+        }
+
+        let poster1 = render_poster(&comp, Some(&img));
+        let poster2 = render_poster(&comp, Some(&img));
+
+        // Determinismo absoluto: a mesma imagem e mesma frase geram pixels 100% idênticos
+        assert_eq!(poster1.as_raw(), poster2.as_raw(), "Renderizações repetidas devem ser deterministicamente idênticas");
+
+        // Imagem diferente gera pixels diferentes
+        let mut img_diff = img.clone();
+        img_diff.put_pixel(50, 50, image::Rgba([0, 0, 0, 255]));
+        let poster_diff = render_poster(&comp, Some(&img_diff));
+        assert_ne!(poster1.as_raw(), poster_diff.as_raw(), "Imagens de entrada distintas geram sementes distintas");
+    }
 }
 
 

@@ -147,12 +147,14 @@ impl AestheticPreset {
                 pos_x: 0.5,
                 pos_y: 0.88,
                 center_x: true,
-                rotation: 0,
+                rotation: -2,
                 tarja_effect: TarjaEffect::Solida,
                 font_family: BannerFontFamily::Impact,
                 border_finish: TarjaBorderFinish::Solida,
                 border_width: 2,
                 border_color: Some(RgbColor::new(255, 0, 51)),
+                word_jitter_rotation: 6,
+                word_tarja_cut: true,
                 ..Default::default()
             },
             Self::NavalhaSata => TextElement {
@@ -229,6 +231,8 @@ impl AestheticPreset {
                 border_finish: TarjaBorderFinish::Solida,
                 border_width: 2,
                 border_color: Some(RgbColor::new(255, 0, 128)),
+                wave_amplitude: 5.0,
+                wave_wavelength: 200.0,
                 ..Default::default()
             },
             Self::TeatroOperario => TextElement {
@@ -286,6 +290,8 @@ impl AestheticPreset {
                 border_finish: TarjaBorderFinish::Tracejada,
                 border_width: 2,
                 border_color: Some(RgbColor::new(0, 17, 136)),
+                wave_amplitude: 6.0,
+                wave_wavelength: 160.0,
                 ..Default::default()
             },
             Self::AsfaltoAlerta => TextElement {
@@ -299,12 +305,14 @@ impl AestheticPreset {
                 pos_x: 0.5,
                 pos_y: 0.88,
                 center_x: true,
-                rotation: 0,
+                rotation: 2,
                 tarja_effect: TarjaEffect::Solida,
                 font_family: BannerFontFamily::Impact,
                 border_finish: TarjaBorderFinish::Solida,
                 border_width: 4,
                 border_color: Some(RgbColor::new(17, 17, 17)),
+                word_jitter_rotation: 4,
+                word_tarja_cut: true,
                 ..Default::default()
             },
             Self::Vga256 => TextElement {
@@ -394,12 +402,14 @@ impl AestheticPreset {
                 pos_x: 0.5,
                 pos_y: 0.86,
                 center_x: true,
-                rotation: 0,
+                rotation: 3,
                 tarja_effect: TarjaEffect::Solida,
                 font_family: BannerFontFamily::Monospace,
                 border_finish: TarjaBorderFinish::Tracejada,
                 border_width: 2,
                 border_color: Some(RgbColor::new(17, 17, 17)),
+                word_jitter_rotation: 8,
+                word_tarja_cut: true,
                 ..Default::default()
             },
             Self::AtariGaming => TextElement {
@@ -476,6 +486,8 @@ impl AestheticPreset {
                 border_finish: TarjaBorderFinish::Tracejada,
                 border_width: 2,
                 border_color: Some(RgbColor::new(255, 0, 51)),
+                wave_amplitude: 8.0,
+                wave_wavelength: 180.0,
                 ..Default::default()
             },
             Self::AsciiArt => TextElement {
@@ -508,12 +520,14 @@ impl AestheticPreset {
                 pos_x: 0.5,
                 pos_y: 0.88,
                 center_x: true,
-                rotation: 0,
+                rotation: -1,
                 tarja_effect: TarjaEffect::Solida,
                 font_family: BannerFontFamily::Impact,
                 border_finish: TarjaBorderFinish::Solida,
                 border_width: 3,
                 border_color: Some(RgbColor::new(255, 204, 0)),
+                word_jitter_rotation: 5,
+                word_tarja_cut: true,
                 ..Default::default()
             },
         }

@@ -121,6 +121,18 @@ pub struct TextElement {
     pub border_color: Option<RgbColor>,
     #[serde(default)]
     pub border_finish: TarjaBorderFinish,
+    /// Amplitude da ondulação senoidal em pixels (0.0 = desativada)
+    #[serde(default)]
+    pub wave_amplitude: f32,
+    /// Comprimento de onda da ondulação em pixels (padrão 200.0 se 0.0)
+    #[serde(default)]
+    pub wave_wavelength: f32,
+    /// Jitter de rotação individual por palavra em graus (0 = desativado)
+    #[serde(default)]
+    pub word_jitter_rotation: i16,
+    /// Se true, cada palavra ganha sua própria mini-tarja recortada independente
+    #[serde(default)]
+    pub word_tarja_cut: bool,
 }
 
 impl Default for TextElement {
@@ -143,6 +155,10 @@ impl Default for TextElement {
             border_width: 0,
             border_color: None,
             border_finish: TarjaBorderFinish::Nenhuma,
+            wave_amplitude: 0.0,
+            wave_wavelength: 0.0,
+            word_jitter_rotation: 0,
+            word_tarja_cut: false,
         }
     }
 }
@@ -564,6 +580,13 @@ where
         return None;
     }
 
+    let fallback_phrase = composition
+        .foreground_texts
+        .first()
+        .map(|t| t.text.as_str())
+        .unwrap_or("");
+    let seed = compute_subject_seed(processed_subject, fallback_phrase);
+
     // ── Camada 0: Fundo sólido chapado ──────────────────────────────────────────
     let bg = composition.background_color;
     for pixel in canvas.pixels_mut() {
@@ -576,7 +599,7 @@ where
 
     // ── Camada 1: Texto de fundo gigante sangrado ───────────────────────────────
     if let Some(ref bg_text) = composition.background_text {
-        render_text_element(&mut canvas, &font, bg_text);
+        render_text_element(&mut canvas, &font, bg_text, seed);
     }
 
     if is_cancelled() {
@@ -597,7 +620,7 @@ where
         if is_cancelled() {
             return None;
         }
-        render_text_element(&mut canvas, &font, fg_text);
+        render_text_element(&mut canvas, &font, fg_text, seed);
     }
 
     if is_cancelled() {
@@ -673,7 +696,280 @@ fn blend_subject(canvas: &mut RgbaImage, subject: &RgbaImage, offset_x: i32, off
     }
 }
 
-fn render_text_element(canvas: &mut RgbaImage, font: &FontRef, elem: &TextElement) {
+/// Calcula uma semente determinística de 64 bits baseada no buffer de imagem do sujeito
+/// (ou no texto de fallback caso não haja imagem).
+pub fn compute_subject_seed(image: Option<&RgbaImage>, fallback_text: &str) -> u64 {
+    const FNV_OFFSET: u64 = 0xcbf29ce484222325;
+    const FNV_PRIME: u64 = 0x100000001b3;
+
+    let mut hash = FNV_OFFSET;
+    if let Some(img) = image {
+        let raw = img.as_raw();
+        // Amostragem determinística e de alta performance pelo buffer da imagem
+        let step = (raw.len() / 4096).max(1);
+        for &byte in raw.iter().step_by(step) {
+            hash ^= byte as u64;
+            hash = hash.wrapping_mul(FNV_PRIME);
+        }
+    } else {
+        for &byte in fallback_text.as_bytes() {
+            hash ^= byte as u64;
+            hash = hash.wrapping_mul(FNV_PRIME);
+        }
+    }
+    hash
+}
+
+/// Blita um sub-canvas rotacionado em torno de um ponto central alvo no canvas principal.
+fn blit_subcanvas(
+    canvas: &mut RgbaImage,
+    sub_canvas: &RgbaImage,
+    cx_target: f32,
+    cy_target: f32,
+    rotation_deg: i16,
+) {
+    let (cw, ch) = canvas.dimensions();
+    let (sub_w, sub_h) = sub_canvas.dimensions();
+    if sub_w == 0 || sub_h == 0 {
+        return;
+    }
+
+    if rotation_deg == 0 {
+        let half_w = sub_w as f32 / 2.0;
+        let half_h = sub_h as f32 / 2.0;
+        let start_x = (cx_target - half_w).round() as i32;
+        let start_y = (cy_target - half_h).round() as i32;
+
+        for sy in 0..sub_h {
+            let py = start_y + sy as i32;
+            if py < 0 || py >= ch as i32 {
+                continue;
+            }
+            for sx in 0..sub_w {
+                let px = start_x + sx as i32;
+                if px < 0 || px >= cw as i32 {
+                    continue;
+                }
+                let sp = sub_canvas.get_pixel(sx, sy);
+                if sp[3] > 0 {
+                    if sp[3] == 255 {
+                        canvas.put_pixel(px as u32, py as u32, *sp);
+                    } else {
+                        let cp = canvas.get_pixel(px as u32, py as u32);
+                        let alpha = sp[3] as f32 / 255.0;
+                        let inv_alpha = 1.0 - alpha;
+                        let r = (sp[0] as f32 * alpha + cp[0] as f32 * inv_alpha).round() as u8;
+                        let g = (sp[1] as f32 * alpha + cp[1] as f32 * inv_alpha).round() as u8;
+                        let b = (sp[2] as f32 * alpha + cp[2] as f32 * inv_alpha).round() as u8;
+                        canvas.put_pixel(px as u32, py as u32, Rgba([r, g, b, 255]));
+                    }
+                }
+            }
+        }
+        return;
+    }
+
+    let rad = (rotation_deg as f32).to_radians();
+    let cos_a = rad.cos();
+    let sin_a = rad.sin();
+    let half_w = sub_w as f32 / 2.0;
+    let half_h = sub_h as f32 / 2.0;
+    let radius = (half_w * half_w + half_h * half_h).sqrt();
+
+    let x0 = (cx_target - radius).max(0.0) as i32;
+    let x1 = (cx_target + radius).min(cw as f32 - 1.0) as i32;
+    let y0 = (cy_target - radius).max(0.0) as i32;
+    let y1 = (cy_target + radius).min(ch as f32 - 1.0) as i32;
+
+    for py in y0..=y1 {
+        for px in x0..=x1 {
+            let dx = px as f32 - cx_target;
+            let dy = py as f32 - cy_target;
+            let sx_f = half_w + (dx * cos_a + dy * sin_a);
+            let sy_f = half_h + (-dx * sin_a + dy * cos_a);
+
+            let sx = sx_f.round() as i32;
+            let sy = sy_f.round() as i32;
+
+            if sx >= 0 && sx < sub_w as i32 && sy >= 0 && sy < sub_h as i32 {
+                let sp = sub_canvas.get_pixel(sx as u32, sy as u32);
+                if sp[3] > 0 {
+                    if sp[3] == 255 {
+                        canvas.put_pixel(px as u32, py as u32, *sp);
+                    } else {
+                        let cp = canvas.get_pixel(px as u32, py as u32);
+                        let alpha = sp[3] as f32 / 255.0;
+                        let inv_alpha = 1.0 - alpha;
+                        let r = (sp[0] as f32 * alpha + cp[0] as f32 * inv_alpha).round() as u8;
+                        let g = (sp[1] as f32 * alpha + cp[1] as f32 * inv_alpha).round() as u8;
+                        let b = (sp[2] as f32 * alpha + cp[2] as f32 * inv_alpha).round() as u8;
+                        canvas.put_pixel(px as u32, py as u32, Rgba([r, g, b, 255]));
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Renderiza o texto com palavras recortadas individualmente (recortes punk / ransom note)
+fn render_words_cut(
+    canvas: &mut RgbaImage,
+    font: &FontRef,
+    elem: &TextElement,
+    lines: &[&str],
+    scaled_font: &ab_glyph::PxScaleFont<&FontRef>,
+    v_metrics: f32,
+    line_height: f32,
+    base_x: f32,
+    base_y: f32,
+    seed: u64,
+) {
+    let pad = elem.tarja_padding as f32;
+    let word_space = scaled_font.height() * 0.40;
+    let word_gap = word_space + (pad * 0.7);
+    let wavelength = if elem.wave_wavelength > 0.0 { elem.wave_wavelength } else { 200.0 };
+    let phase = ((seed % 1000) as f32) / 1000.0;
+
+    let mut global_word_idx = 0usize;
+
+    for (line_idx, line) in lines.iter().enumerate() {
+        let raw_words: Vec<&str> = line.split_whitespace().collect();
+        if raw_words.is_empty() {
+            continue;
+        }
+
+        // Mede a largura individual de cada palavra
+        let mut word_widths: Vec<f32> = Vec::with_capacity(raw_words.len());
+        let mut total_words_w = 0.0f32;
+
+        for w in &raw_words {
+            let mut w_w = 0.0f32;
+            for ch in w.chars() {
+                w_w += scaled_font.h_advance(font.glyph_id(ch));
+            }
+            word_widths.push(w_w);
+            total_words_w += w_w;
+        }
+        total_words_w += (raw_words.len().saturating_sub(1) as f32) * word_gap;
+
+        let line_start_x = if elem.center_x {
+            base_x - (total_words_w / 2.0)
+        } else {
+            base_x
+        };
+        let line_y = base_y + (line_idx as f32) * line_height;
+
+        let mut cursor_x = line_start_x;
+
+        for (w_idx, word) in raw_words.into_iter().enumerate() {
+            let w_w = word_widths[w_idx];
+            let word_cx = cursor_x + (w_w / 2.0);
+            let word_cy = line_y + (v_metrics / 2.0);
+
+            // Jitter determinístico angular por palavra
+            let rot = if elem.word_jitter_rotation != 0 {
+                let j_max = elem.word_jitter_rotation.abs() as i32;
+                let j_span = (j_max * 2 + 1) as u32;
+                let hash_rot = lcg_hash(seed as u32, global_word_idx as u32, 7331);
+                let jitter = (hash_rot % j_span) as i32 - j_max;
+                elem.rotation + (jitter as i16)
+            } else {
+                elem.rotation
+            };
+
+            // Jitter determinístico vertical de colagem analógica
+            let y_jitter = if elem.word_jitter_rotation != 0 {
+                let hash_y = lcg_hash(seed as u32, global_word_idx as u32, 1999);
+                ((hash_y % 7) as i32 - 3) as f32
+            } else {
+                0.0
+            };
+
+            // Ondulação senoidal na coordenada horizontal da palavra
+            let wave_y = if elem.wave_amplitude > 0.0 {
+                elem.wave_amplitude * (((word_cx / wavelength) + phase) * 2.0 * std::f32::consts::PI).sin()
+            } else {
+                0.0
+            };
+
+            let target_cx = word_cx;
+            let target_cy = word_cy + wave_y + y_jitter;
+
+            // Cria um sub-canvas para esta mini-tarja da palavra
+            let sub_w = (w_w + pad * 2.0).ceil().max(1.0) as u32;
+            let sub_h = (v_metrics + pad * 2.0).ceil().max(1.0) as u32;
+            let mut sub_canvas = RgbaImage::new(sub_w, sub_h);
+
+            // Preenche fundo de tarja para a palavra recortada
+            if let Some(tarja_color) = elem.bg_tarja {
+                match elem.tarja_effect {
+                    TarjaEffect::Solida => {
+                        for ty in 0..sub_h {
+                            for tx in 0..sub_w {
+                                sub_canvas.put_pixel(tx, ty, Rgba([tarja_color.r, tarja_color.g, tarja_color.b, 255]));
+                            }
+                        }
+                    }
+                    TarjaEffect::Xerox => {
+                        render_tarja_xerox(&mut sub_canvas, 0, 0, sub_w, sub_h, tarja_color);
+                    }
+                }
+
+                let border_finish = if elem.border_finish == TarjaBorderFinish::Nenhuma && elem.border_width > 0 {
+                    TarjaBorderFinish::Solida
+                } else {
+                    elem.border_finish
+                };
+                let border_col = elem.border_color.unwrap_or(elem.color);
+                let border_w = if border_finish != TarjaBorderFinish::Nenhuma && elem.border_width == 0 {
+                    3
+                } else {
+                    elem.border_width
+                };
+                draw_tarja_border(&mut sub_canvas, 0, 0, sub_w, sub_h, border_finish, border_w, border_col);
+            }
+
+            // Rasteriza os glifos da palavra dentro de seu sub-canvas
+            let mut glyph_cursor = pad;
+            for ch in word.chars() {
+                let glyph_id = font.glyph_id(ch);
+                let advance = scaled_font.h_advance(glyph_id);
+                let glyph = glyph_id.with_scale_and_position(
+                    scaled_font.scale,
+                    Point { x: glyph_cursor, y: pad + scaled_font.ascent() },
+                );
+                glyph_cursor += advance;
+
+                if let Some(outlined) = font.outline_glyph(glyph) {
+                    let bounds = outlined.px_bounds();
+                    outlined.draw(|x, y, c| {
+                        if c > 0.15 {
+                            let px = bounds.min.x as i32 + x as i32;
+                            let py = bounds.min.y as i32 + y as i32;
+                            if px >= 0 && px < sub_w as i32 && py >= 0 && py < sub_h as i32 {
+                                if elem.tarja_effect == TarjaEffect::Xerox {
+                                    if lcg_hash(px as u32, py as u32, 919) % 1000 < 30 {
+                                        return;
+                                    }
+                                }
+                                let col = elem.color;
+                                sub_canvas.put_pixel(px as u32, py as u32, Rgba([col.r, col.g, col.b, 255]));
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Blita no canvas principal com sua rotação própria
+            blit_subcanvas(canvas, &sub_canvas, target_cx, target_cy, rot);
+
+            cursor_x += w_w + word_gap;
+            global_word_idx += 1;
+        }
+    }
+}
+
+fn render_text_element(canvas: &mut RgbaImage, font: &FontRef, elem: &TextElement, seed: u64) {
     if elem.text.trim().is_empty() {
         return;
     }
@@ -727,6 +1023,37 @@ fn render_text_element(canvas: &mut RgbaImage, font: &FontRef, elem: &TextElemen
     let scaled_font = font.as_scaled(scale);
     let v_metrics = scaled_font.height();
     let line_height = v_metrics * 1.05;
+
+    // Converte pos_x e pos_y
+    let base_x = if elem.pos_x <= 1.0 {
+        elem.pos_x * cw as f32
+    } else {
+        elem.pos_x
+    };
+
+    let base_y = if elem.pos_y <= 1.0 {
+        elem.pos_y * ch as f32
+    } else {
+        elem.pos_y
+    };
+
+    // Se estiver configurado para corte individual de palavras ou com jitter angular por palavra
+    if elem.word_tarja_cut || elem.word_jitter_rotation != 0 {
+        render_words_cut(
+            canvas,
+            font,
+            elem,
+            &lines,
+            &scaled_font,
+            v_metrics,
+            line_height,
+            base_x,
+            base_y,
+            seed,
+        );
+        return;
+    }
+
     let mut line_records: Vec<(Vec<Glyph>, f32)> = Vec::with_capacity(lines.len());
     let mut max_line_width = 0.0f32;
 
@@ -754,19 +1081,6 @@ fn render_text_element(canvas: &mut RgbaImage, font: &FontRef, elem: &TextElemen
     let text_width = max_line_width;
     let text_height = v_metrics + (lines.len().saturating_sub(1) as f32) * line_height;
 
-    // Converte pos_x e pos_y
-    let base_x = if elem.pos_x <= 1.0 {
-        elem.pos_x * cw as f32
-    } else {
-        elem.pos_x
-    };
-
-    let base_y = if elem.pos_y <= 1.0 {
-        elem.pos_y * ch as f32
-    } else {
-        elem.pos_y
-    };
-
     let start_x = if elem.center_x {
         base_x - (text_width / 2.0)
     } else {
@@ -774,23 +1088,44 @@ fn render_text_element(canvas: &mut RgbaImage, font: &FontRef, elem: &TextElemen
     };
     let start_y = base_y;
 
-    if elem.rotation != 0 {
+    let wavelength = if elem.wave_wavelength > 0.0 { elem.wave_wavelength } else { 200.0 };
+    let phase = ((seed % 1000) as f32) / 1000.0;
+
+    // Modo com rotação global ou com ondulação não-linear contínua
+    if elem.rotation != 0 || elem.wave_amplitude > 0.0 {
         let pad = elem.tarja_padding as f32;
+        let wave_pad = elem.wave_amplitude * 2.0;
         let sub_w = (text_width + pad * 2.0).ceil().max(1.0) as u32;
-        let sub_h = (text_height + pad * 2.0).ceil().max(1.0) as u32;
+        let sub_h = (text_height + pad * 2.0 + wave_pad).ceil().max(1.0) as u32;
         let mut sub_canvas = RgbaImage::new(sub_w, sub_h);
 
+        let wave_y_center = pad + elem.wave_amplitude;
+
         if let Some(tarja_color) = elem.bg_tarja {
-            match elem.tarja_effect {
-                TarjaEffect::Solida => {
-                    for ty in 0..sub_h {
-                        for tx in 0..sub_w {
+            if elem.wave_amplitude > 0.0 {
+                // Desenha a tarja contínua com ondulação senoidal por coluna
+                for tx in 0..sub_w {
+                    let col_wave = elem.wave_amplitude * (((tx as f32 / wavelength) + phase) * 2.0 * std::f32::consts::PI).sin();
+                    let top_y = ((wave_y_center + col_wave - pad).max(0.0)).round() as u32;
+                    let bot_y = ((wave_y_center + col_wave + text_height + pad).min(sub_h as f32 - 1.0)).round() as u32;
+                    for ty in top_y..=bot_y {
+                        if ty < sub_h {
                             sub_canvas.put_pixel(tx, ty, Rgba([tarja_color.r, tarja_color.g, tarja_color.b, 255]));
                         }
                     }
                 }
-                TarjaEffect::Xerox => {
-                    render_tarja_xerox(&mut sub_canvas, 0, 0, sub_w, sub_h, tarja_color);
+            } else {
+                match elem.tarja_effect {
+                    TarjaEffect::Solida => {
+                        for ty in 0..sub_h {
+                            for tx in 0..sub_w {
+                                sub_canvas.put_pixel(tx, ty, Rgba([tarja_color.r, tarja_color.g, tarja_color.b, 255]));
+                            }
+                        }
+                    }
+                    TarjaEffect::Xerox => {
+                        render_tarja_xerox(&mut sub_canvas, 0, 0, sub_w, sub_h, tarja_color);
+                    }
                 }
             }
 
@@ -808,18 +1143,23 @@ fn render_text_element(canvas: &mut RgbaImage, font: &FontRef, elem: &TextElemen
             draw_tarja_border(&mut sub_canvas, 0, 0, sub_w, sub_h, border_finish, border_w, border_col);
         }
 
-        // Rasteriza cada glifo em sua respectiva linha no sub_canvas
+        // Rasteriza cada glifo em sua respectiva linha no sub_canvas (com deslocamento de onda se ativo)
         for (line_idx, (glyphs, line_width)) in line_records.into_iter().enumerate() {
             let line_start_x = if elem.center_x {
                 (sub_w as f32 - line_width) / 2.0
             } else {
                 pad
             };
-            let line_start_y = pad + (line_idx as f32) * line_height;
+            let line_start_y = wave_y_center + (line_idx as f32) * line_height;
 
             for mut glyph in glyphs {
                 glyph.position.x += line_start_x;
-                glyph.position.y += line_start_y + scaled_font.ascent();
+                let wave_y = if elem.wave_amplitude > 0.0 {
+                    elem.wave_amplitude * (((glyph.position.x / wavelength) + phase) * 2.0 * std::f32::consts::PI).sin()
+                } else {
+                    0.0
+                };
+                glyph.position.y += line_start_y + wave_y + scaled_font.ascent();
 
                 if let Some(outlined) = font.outline_glyph(glyph) {
                     let bounds = outlined.px_bounds();
@@ -842,7 +1182,6 @@ fn render_text_element(canvas: &mut RgbaImage, font: &FontRef, elem: &TextElemen
             }
         }
 
-        // Blit com rotação inversa em torno do ponto central da faixa
         let cx_target = if elem.center_x {
             base_x
         } else {
@@ -850,50 +1189,11 @@ fn render_text_element(canvas: &mut RgbaImage, font: &FontRef, elem: &TextElemen
         };
         let cy_target = base_y + text_height / 2.0;
 
-        let rad = (elem.rotation as f32).to_radians();
-        let cos_a = rad.cos();
-        let sin_a = rad.sin();
-        let half_w = sub_w as f32 / 2.0;
-        let half_h = sub_h as f32 / 2.0;
-        let radius = (half_w * half_w + half_h * half_h).sqrt();
-
-        let x0 = (cx_target - radius).max(0.0) as i32;
-        let x1 = (cx_target + radius).min(cw as f32 - 1.0) as i32;
-        let y0 = (cy_target - radius).max(0.0) as i32;
-        let y1 = (cy_target + radius).min(ch as f32 - 1.0) as i32;
-
-        for py in y0..=y1 {
-            for px in x0..=x1 {
-                let dx = px as f32 - cx_target;
-                let dy = py as f32 - cy_target;
-                let sx_f = half_w + (dx * cos_a + dy * sin_a);
-                let sy_f = half_h + (-dx * sin_a + dy * cos_a);
-
-                let sx = sx_f.round() as i32;
-                let sy = sy_f.round() as i32;
-
-                if sx >= 0 && sx < sub_w as i32 && sy >= 0 && sy < sub_h as i32 {
-                    let sp = sub_canvas.get_pixel(sx as u32, sy as u32);
-                    if sp[3] > 0 {
-                        if sp[3] == 255 {
-                            canvas.put_pixel(px as u32, py as u32, *sp);
-                        } else {
-                            let cp = canvas.get_pixel(px as u32, py as u32);
-                            let alpha = sp[3] as f32 / 255.0;
-                            let inv_alpha = 1.0 - alpha;
-                            let r = (sp[0] as f32 * alpha + cp[0] as f32 * inv_alpha).round() as u8;
-                            let g = (sp[1] as f32 * alpha + cp[1] as f32 * inv_alpha).round() as u8;
-                            let b = (sp[2] as f32 * alpha + cp[2] as f32 * inv_alpha).round() as u8;
-                            canvas.put_pixel(px as u32, py as u32, Rgba([r, g, b, 255]));
-                        }
-                    }
-                }
-            }
-        }
+        blit_subcanvas(canvas, &sub_canvas, cx_target, cy_target, elem.rotation);
         return;
     }
 
-    // Desenha tarja de fundo se configurada
+    // Modo rápido tradicional reto (sem rotação e sem ondulação)
     if let Some(tarja_color) = elem.bg_tarja {
         let pad = elem.tarja_padding as f32;
         let x0 = (start_x - pad).max(0.0) as u32;
@@ -1445,7 +1745,7 @@ fn render_damage_censura(canvas: &mut RgbaImage, font: &FontRef, pos_x: f32, pos
         tarja_effect: TarjaEffect::Solida,
         ..Default::default()
     };
-    render_text_element(canvas, font, &elem);
+    render_text_element(canvas, font, &elem, 0);
 }
 
 fn render_damage_pulica(canvas: &mut RgbaImage, font: &FontRef, pos_x: f32, pos_y: f32, scale: f32, cw: u32, ch: u32) {
@@ -1464,7 +1764,7 @@ fn render_damage_pulica(canvas: &mut RgbaImage, font: &FontRef, pos_x: f32, pos_
         tarja_effect: TarjaEffect::Solida,
         ..Default::default()
     };
-    render_text_element(canvas, font, &elem);
+    render_text_element(canvas, font, &elem, 0);
 
     let box_cx = if pos_x <= 1.0 { (pos_x * cw as f32) as i32 } else { pos_x as i32 };
     let box_cy = if pos_y <= 1.0 { (pos_y * ch as f32) as i32 } else { pos_y as i32 };

@@ -179,6 +179,9 @@ pub fn App() -> Element {
     let mut banner_border_width = use_signal(|| 3u32);
     let banner_border_color = use_signal(|| String::from("auto"));
     let mut banner_effect = use_signal(|| String::from("solida"));
+    let mut banner_wave_amp = use_signal(|| 0u32);
+    let mut banner_word_rot = use_signal(|| 0u32);
+    let mut banner_word_cut = use_signal(|| false);
     let mut banner_adapt_preset = use_signal(|| true);
     let mut banner_sem_faixa = use_signal(|| false);
 
@@ -293,6 +296,9 @@ pub fn App() -> Element {
             let b_bwidth = banner_border_width();
             let b_bcol = banner_border_color();
             let b_eff = banner_effect();
+            let b_wamp = banner_wave_amp();
+            let b_wrot = banner_word_rot();
+            let b_wcut = banner_word_cut();
             let b_adapt = banner_adapt_preset();
             let b_sem_faixa = banner_sem_faixa();
             let r_adapt = recorte_adapt_preset();
@@ -474,6 +480,10 @@ pub fn App() -> Element {
                         t.border_width = def_banner.border_width;
                         t.border_color = def_banner.border_color;
                         t.tarja_effect = def_banner.tarja_effect;
+                        t.word_jitter_rotation = def_banner.word_jitter_rotation;
+                        t.word_tarja_cut = def_banner.word_tarja_cut;
+                        t.wave_amplitude = def_banner.wave_amplitude;
+                        t.wave_wavelength = def_banner.wave_wavelength;
                     }
                 } else {
                     let parsed_fam = navalha_core::BannerFontFamily::parse(&b_fam).unwrap_or(navalha_core::BannerFontFamily::Impact);
@@ -510,6 +520,9 @@ pub fn App() -> Element {
                         if let Some(ef) = navalha_core::TarjaEffect::parse(&b_eff) {
                             t.tarja_effect = ef;
                         }
+                        t.wave_amplitude = b_wamp as f32;
+                        t.word_jitter_rotation = b_wrot as i16;
+                        t.word_tarja_cut = b_wcut || (b_wrot > 0);
                     }
                 }
 
@@ -738,6 +751,12 @@ pub fn App() -> Element {
         }
         if banner_effect() != "solida" {
             flags.push_str(&format!(" --banner-efeito \"{}\"", banner_effect()));
+        }
+        if banner_wave_amp() > 0 {
+            flags.push_str(&format!(" --onda-amp {}", banner_wave_amp()));
+        }
+        if banner_word_rot() > 0 {
+            flags.push_str(&format!(" --palavra-rot {}", banner_word_rot()));
         }
         flags
     };
@@ -1444,6 +1463,32 @@ pub fn App() -> Element {
                                                 value: "{banner_border_width}",
                                                 oninput: move |e| {
                                                     if let Ok(v) = e.value().parse::<u32>() { banner_border_width.set(v); }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    div { style: "display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;",
+                                        div {
+                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Ondulação ({banner_wave_amp}px)" }
+                                            input {
+                                                r#type: "range", min: "0", max: "30",
+                                                value: "{banner_wave_amp}",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() { banner_wave_amp.set(v); }
+                                                }
+                                            }
+                                        }
+                                        div {
+                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Jitter Palavras ({banner_word_rot}°)" }
+                                            input {
+                                                r#type: "range", min: "0", max: "20",
+                                                value: "{banner_word_rot}",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() {
+                                                        banner_word_rot.set(v);
+                                                        if v > 0 { banner_word_cut.set(true); }
+                                                    }
                                                 }
                                             }
                                         }
