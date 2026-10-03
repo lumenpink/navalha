@@ -140,6 +140,8 @@ navalha compor entrada.jpg \
   --sticker "anarchy:0.85:0.15:110:-10" \
   --texto-fundo "CAOS" \
   --tarja-baixo "NÃO HÁ PAZ SEM RESISTÊNCIA" \
+  --onda-amp 8.0 \
+  --palavra-rot 6 \
   --distorcao-vertical 1.6 \
   -o composicao.png
 ```
