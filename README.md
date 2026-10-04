@@ -56,7 +56,7 @@ Você também pode fornecer qualquer combinação arbitrária de cores via `--pa
 
 ---
 
-## ⚡ Estéticas Anti-Design Instantâneas (20 Presets Canônicos)
+## ⚡ Estéticas Anti-Design Instantâneas (22 Presets Canônicos)
 
 1. * **`punk-riot`**: Contraste brutal, dither de Atkinson, fundo vermelho navalha, frase maciça sangrada no fundo e tarja preta de choque com letras vazadas na base (Claudia Wonder).
 2. * **`navalha-sata`**: Xilogravura popular em linóleo, paleta carvão `#1A1412` e ouro cru `#D4883A`, contraste severo e textura cortante (Madame Satã).
@@ -78,6 +78,8 @@ Você também pode fornecer qualquer combinação arbitrária de cores via `--pa
 18. * **`mimeografo`**: Densidade de tinta invertida, Bayer 4x4, sangramento de matriz morfológico de 1px e paleta violeta/anilina sobre papel palha manilha (Keila Simpson).
 19. * **`xilogravura`**: Binarização adaptativa local de Sauvola (janela 15x15, k=0.35, R=128) e interferência de fibra direcional de corte de madeira sobre papel kraft queimado (Xica Manicongo).
 20. * **`glitch-crt`**: Sync jitter horizontal senoidal com saltos abruptos, aberração cromática R/B desacoplada (+-4px) e barra horizontal rolante de V-Hold com inversão total (Robeyoncé Lima).
+21. * **`punk-80-br`**: Subúrbio fabril do ABC Paulista, fitas K7 demo de garagem, Atkinson dither com unsharp agressivo 3.2x, sticker procedural de fita cassete e tríade asfalto/óxido (`#141414`, `#A62B2B`, `#E6E2D4`) (Marina Mathey).
+22. * **`anarco-zine`**: Imprensa libertária artesanal, retícula analógica Halftone 45° (5px), marcas determinísticas de grampos metálicos na lombada dobrada e sticker Ⓐ picotado sobre papel kraft (Jaqueline Gomes de Jesus).
 
 > 📖 **Memorial Completo & Teoria:** Leia nosso manifesto histórico aprofundado com as justificativas culturais e técnicas de cada preset em **[`navalha.2lp.in/doc`](https://navalha.2lp.in/doc)** (acessível diretamente pelo cabeçalho na aplicação web).
 
@@ -167,7 +169,7 @@ navalha poster foto.jpg --frase "RESISTÊNCIA" --estetica punk-riot --separar-ch
 A aplicação web roda **100% no navegador da usuária via WebAssembly**. Suas fotos jamais saem da sua máquina.
 
 * **🌐 Acesso Online Oficial:** [**https://navalha.2lp.in**](https://navalha.2lp.in)
-* **📖 Manifesto, Histórico & Especificações dos 20 Presets:** [**https://navalha.2lp.in/doc**](https://navalha.2lp.in/doc) (memorial visual e páginas dedicadas com rigor matemático, matrizes de dither, código de referência em Python/NumPy e shaders GLSL para reimplementação aberta de cada um dos 20 presets canônicos)
+* **📖 Manifesto, Histórico & Especificações dos 22 Presets:** [**https://navalha.2lp.in/doc**](https://navalha.2lp.in/doc) (memorial visual e páginas dedicadas com rigor matemático, matrizes de dither, código de referência em Python/NumPy e shaders GLSL para reimplementação aberta de cada um dos 22 presets canônicos)
 
 Para executar localmente em sua máquina:
 ```bash

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punk 80 BR — Especificação Técnica &amp; Algorítmica | NAVALHA</title>
+    <meta name="description" content="Especificação técnica e matemática detalhada do preset Punk 80 BR do Navalha para reimplementação agnóstica.">
+    <link rel="stylesheet" href="../../assets/style.css">
+    <style>
+        html, body {
+            height: auto !important;
+            min-height: 100% !important;
+            max-height: none !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+        .doc-container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 30px 20px 80px 20px;
+        }
+        .nav-breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .nav-breadcrumbs a {
+            color: #00f0ff;
+            text-decoration: none;
+        }
+        .nav-breadcrumbs a:hover {
+            text-decoration: underline;
+        }
+        .nav-breadcrumbs span {
+            color: #666;
+        }
+        .doc-hero-preset {
+            background-color: #141416;
+            border-left: 6px solid #e2f835;
+            border-top: 1px solid #333;
+            border-right: 1px solid #333;
+            border-bottom: 1px solid #333;
+            padding: 28px;
+            margin-bottom: 35px;
+            box-shadow: 6px 6px 0px #000;
+        }
+        .preset-badge-tag {
+            display: inline-block;
+            background-color: #e2f835;
+            color: #000000;
+            font-size: 12px;
+            font-weight: 900;
+            padding: 3px 8px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .preset-page-title {
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+        }
+        .preset-page-subtitle {
+            font-size: 15px;
+            color: #00f0ff;
+            letter-spacing: 1px;
+            margin: 0 0 16px 0;
+            text-transform: uppercase;
+        }
+        .quick-nav-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px dashed #333;
+        }
+        .quick-nav-btn {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 6px 12px;
+            background: #1c1c22;
+            color: #e2f835;
+            border: 1px solid #444;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .quick-nav-btn:hover {
+            background: #e2f835;
+            color: #000;
+        }
+        .doc-section {
+            margin-bottom: 45px;
+            background-color: #0f0f12;
+            border: 2px solid #222226;
+            padding: 32px;
+            box-shadow: 4px 4px 0px #000;
+        }
+        .doc-section h2 {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #e2f835;
+            margin-top: 0;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .doc-section h3 {
+            font-size: 18px;
+            font-weight: 800;
+            color: #ff0033;
+            margin: 26px 0 12px 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .doc-section p {
+            font-size: 15px;
+            line-height: 1.85;
+            color: #dcdad5;
+            margin-bottom: 16px;
+        }
+        .doc-section ul, .doc-section ol {
+            font-size: 15px;
+            line-height: 1.85;
+            color: #dcdad5;
+            margin-bottom: 18px;
+            padding-left: 24px;
+        }
+        .doc-section li {
+            margin-bottom: 8px;
+        }
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .palette-card {
+            background: #16161b;
+            border: 2px solid #333;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .palette-swatch {
+            height: 50px;
+            border: 1px solid #444;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.5);
+        }
+        .palette-meta {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .palette-meta strong {
+            color: #00f0ff;
+        }
+        .code-block-container {
+            position: relative;
+            margin: 20px 0;
+            background: #060608;
+            border: 1px solid #333;
+            border-left: 4px solid #00f0ff;
+        }
+        .code-block-header {
+            background: #111116;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+        }
+        .code-block {
+            margin: 0;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #aae0ff;
+            background: transparent;
+        }
+        .math-matrix-box {
+            background: #08080c;
+            border: 1px dashed #444;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #e2f835;
+            overflow-x: auto;
+        }
+        .formula-callout {
+            background: #121218;
+            border-left: 4px solid #ff0033;
+            padding: 12px 18px;
+            margin: 16px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            color: #ffffff;
+        }
+        .tribute-box {
+            background-color: #121216;
+            border-left: 4px solid #e2f835;
+            padding: 18px;
+            margin: 20px 0;
+        }
+        .tribute-name {
+            font-size: 16px;
+            font-weight: 900;
+            color: #e2f835;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .preview-flex {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #050507;
+            border: 2px solid #282830;
+            padding: 16px;
+            margin: 24px 0;
+        }
+        .preview-img {
+            max-width: 100%;
+            height: auto;
+            max-height: 560px;
+            border: 1px solid #222;
+        }
+        .preview-caption {
+            margin-top: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            color: #888;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="doc-container">
+        <nav class="nav-breadcrumbs">
+            <a href="../../">NAVALHA</a>
+            <span>/</span>
+            <a href="../#secao-presets">PRESETS</a>
+            <span>/</span>
+            <span style="color: #e2f835;">PUNK 80 BR</span>
+        </nav>
+
+        <header class="doc-hero-preset">
+            <span class="preset-badge-tag">PRESET #21</span>
+            <h1 class="preset-page-title">Punk 80 BR // ABC Paulista &amp; Fitas K7</h1>
+            <div class="preset-page-subtitle">Subúrbio Operário • Fitas K7 Demo • Alto Contraste • DIY Punk</div>
+            <p style="margin: 0; color: #aaa; font-size: 15px; line-height: 1.6;">
+                Estética crua inspirada no movimento punk do ABC Paulista (Santo André, São Bernardo, São Caetano) no início dos anos 80, no lendário festival <em>O Começo do Fim do Mundo</em> (1982) e na circulação underground de fitas cassete gravadas em garagens com encartes fotocopiados repetidamente.
+            </p>
+            <div class="quick-nav-bar">
+                <a href="#tributo" class="quick-nav-btn">Tributo Cultural</a>
+                <a href="#pipeline" class="quick-nav-btn">Pipeline Algorítmico</a>
+                <a href="#paleta" class="quick-nav-btn">Paleta de Cores</a>
+                <a href="#reimplementacao" class="quick-nav-btn">Código Agnóstico</a>
+            </div>
+        </header>
+
+        <!-- SEÇÃO: AMOSTRA VISUAL -->
+        <div class="preview-flex">
+            <img src="../../assets/exemplos/exemplo-punk-80-br.png" alt="Cartaz renderizado no preset Punk 80 BR" class="preview-img">
+            <div class="preview-caption">Renderização oficial do motor: Pôster no preset Punk 80 BR</div>
+        </div>
+
+        <!-- SEÇÃO 1: CONTEXTO HISTÓRICO & TRIBUTO -->
+        <section class="doc-section" id="tributo">
+            <h2>1. Contexto Cultural &amp; Tributo</h2>
+            <div class="tribute-box">
+                <div class="tribute-name">Tributo: Marina Mathey (Show TRAVA / Cena Independente)</div>
+                <p style="margin: 0; color: #ccc; font-size: 14px; line-height: 1.6;">
+                    Cantora, compositora, atriz e performer travesti. Seu espetáculo e disco autoral <em>TRAVA</em> canalizam a fúria visceral, a desobediência e a poesia eletrônica underground contra a hipocrisia e a transfobia. Artista multidisciplinar da cena marginal independente de São Paulo, Marina une atitude crua de garagem, sintetizadores estridentes e fita demo em um manifesto vivo de resistência trans.
+                </p>
+            </div>
+            <p>
+                O movimento punk no ABC Paulista nasceu nos bairros fabris metalúrgicos sob a poeira de carvão e a fumaça de chaminés industriais. Sem acesso a estúdios convencionais ou grandes gravadoras, jovens operários gravavam seus próprios ensaios em fitas K7 cassete de baixo custo, reproduzidas e passadas de mão em mão nas saídas de fábricas e estações de trem.
+            </p>
+            <p>
+                Os encartes das fitas eram compostos através de recorte manual com gilete, colagem com fita adesiva amarelada e cópias de cópias de fotocopiadoras cansadas, gerando um contraste de pretos chapados e brancos queimados, pontuados pelo vermelho óxido característico dos galpões metalúrgicos.
+            </p>
+        </section>
+
+        <!-- SEÇÃO 2: ESPECIFICAÇÃO TÉCNICA E MATEMÁTICA -->
+        <section class="doc-section" id="especificacao">
+            <h2>2. Especificação Técnica &amp; Matemática</h2>
+            <p>
+                O motor <code>navalha-core</code> processa o preset <strong>Punk 80 BR</strong> através dos seguintes parâmetros rígidos e determinísticos:
+            </p>
+
+            <ul>
+                <li><strong>Downsampling Espacial:</strong> Resolução física de <code>720px</code> (largura fixa mantendo a proporção original).</li>
+                <li><strong>Realce de Bordas (Unsharp Mask):</strong> Raio de convolução <code>r = 2</code>, força de corte <code>strength = 3.2</code> (destaque agressivo de contornos antes da retícula).</li>
+                <li><strong>Queima de Níveis:</strong> Ponto de sombra (shadow cutoff) em <code>0.15</code>, altas luzes (highlight cutoff) em <code>0.85</code>, gama <code>1.0</code>.</li>
+                <li><strong>Algoritmo de Dither:</strong> Difusão de erro clássica de <strong>Atkinson</strong> (preservando 75% da energia do erro para criar o grão pontilhado do xerox de encarte de cassete).</li>
+                <li><strong>Intervenção Física:</strong> Sticker procedural de fita cassete K7 (<code>StickerKind::Cassette</code>) e rasgo de papel (<code>DamageEffect::Rasgo</code>).</li>
+            </ul>
+
+            <div class="math-matrix-box">
+                // Matriz de Distribuição de Erro de Atkinson (Divisor: 8)<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;*&nbsp;,&nbsp;1/8&nbsp;,&nbsp;1/8&nbsp;]<br>
+                [&nbsp;1/8&nbsp;,&nbsp;1/8&nbsp;,&nbsp;1/8&nbsp;,&nbsp;&nbsp;0&nbsp;&nbsp;]<br>
+                [&nbsp;&nbsp;0&nbsp;&nbsp;,&nbsp;1/8&nbsp;,&nbsp;&nbsp;0&nbsp;&nbsp;,&nbsp;&nbsp;0&nbsp;&nbsp;]
+            </div>
+        </section>
+
+        <!-- SEÇÃO 3: PALETA DE CORES -->
+        <section class="doc-section" id="paleta">
+            <h2>3. Paleta de Cores Canônica</h2>
+            <p>
+                A paleta <code>Palette::punk_80_br()</code> é composta por 3 tons estritamente calibrados:
+            </p>
+
+            <div class="palette-grid">
+                <div class="palette-card">
+                    <div class="palette-swatch" style="background-color: #141414;"></div>
+                    <div class="palette-meta">
+                        <strong>Preto Asfalto</strong><br>
+                        HEX: #141414<br>
+                        RGB: (20, 20, 20)<br>
+                        Papel: Fundo e Piche
+                    </div>
+                </div>
+                <div class="palette-card">
+                    <div class="palette-swatch" style="background-color: #A62B2B;"></div>
+                    <div class="palette-meta">
+                        <strong>Vermelho Óxido</strong><br>
+                        HEX: #A62B2B<br>
+                        RGB: (166, 43, 43)<br>
+                        Papel: Ferrugem e Destaque
+                    </div>
+                </div>
+                <div class="palette-card">
+                    <div class="palette-swatch" style="background-color: #E6E2D4;"></div>
+                    <div class="palette-meta">
+                        <strong>Branco Papel K7</strong><br>
+                        HEX: #E6E2D4<br>
+                        RGB: (230, 226, 212)<br>
+                        Papel: Encarte Fotocopiado
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 4: DIAGRAMA DE PIPELINE -->
+        <section class="doc-section" id="pipeline">
+            <h2>4. Diagrama de Pipeline de Dados</h2>
+            <div class="code-block-container">
+                <div class="code-block-header">Fluxo Unidirecional Determinístico</div>
+                <pre class="code-block">
+[ Imagem de Entrada (RGB/RGBA) ]
+               │
+               ▼
+[ 1. Downsampling Físico: 720px (Lanczos3) ]
+               │
+               ▼
+[ 2. Unsharp Mask Agressivo (Raio 2, Força 3.2) ]
+               │
+               ▼
+[ 3. Queima de Níveis (Corte Sombra 0.15 / Luzes 0.85) ]
+               │
+               ▼
+[ 4. Difusão de Erro de Atkinson ]
+               │
+               ▼
+[ 5. Mapeamento Perceptual na Tríade Punk 80 BR ]
+               │
+               ▼
+[ 6. Prensagem de Tarjas, Sticker de Fita K7 e Danos ]
+               │
+               ▼
+[ Pôster Final Renderizado Bit-a-Bit Idêntico ]
+                </pre>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 5: GUIA DE REIMPLEMENTAÇÃO AGNÓSTICA -->
+        <section class="doc-section" id="reimplementacao">
+            <h2>5. Guia de Reimplementação Agnóstica</h2>
+            <p>
+                Código autocontido em <strong>Python 3 com NumPy e Pillow</strong> implementando o dither Atkinson na paleta Punk 80 BR:
+            </p>
+
+            <div class="code-block-container">
+                <div class="code-block-header">
+                    <span>reimplement_punk_80_br.py (Python 3 + NumPy)</span>
+                    <span style="color:#00f0ff;">LICENÇA: GPL-3.0 / MIT</span>
+                </div>
+                <pre class="code-block">
+import numpy as np
+from PIL import Image
+
+PALETTE = np.array([
+    [20, 20, 20],     # #141414 Preto Asfalto
+    [166, 43, 43],    # #A62B2B Vermelho Óxido
+    [230, 226, 212],  # #E6E2D4 Branco Papel K7
+], dtype=np.float32)
+
+def find_nearest_color(pixel):
+    dists = np.sum((PALETTE - pixel)**2, axis=1)
+    return PALETTE[np.argmin(dists)]
+
+def atkinson_dither(img_arr):
+    h, w, c = img_arr.shape
+    arr = img_arr.astype(np.float32)
+    for y in range(h):
+        for x in range(w):
+            old_p = arr[y, x].copy()
+            new_p = find_nearest_color(old_p)
+            arr[y, x] = new_p
+            err = (old_p - new_p) / 8.0
+            for dx, dy in [(1, 0), (2, 0), (-1, 1), (0, 1), (1, 1), (0, 2)]:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < w and 0 <= ny < h:
+                    arr[ny, nx] += err
+    return np.clip(arr, 0, 255).astype(np.uint8)
+
+def render_punk_80_br(input_path: str, output_path: str):
+    img = Image.open(input_path).convert('RGB')
+    w, h = img.size
+    img = img.resize((720, int(round(h * 720 / w))), Image.Resampling.LANCZOS)
+    arr = np.array(img)
+    dithered = atkinson_dither(arr)
+    Image.fromarray(dithered).save(output_path)
+                </pre>
+            </div>
+
+            <h3>Fragment Shader GLSL (Para Processamento em GPU em Tempo Real)</h3>
+            <div class="code-block-container">
+                <div class="code-block-header">punk_80_br_shader.glsl</div>
+                <pre class="code-block">
+// Fragment Shader Punk 80 BR
+precision mediump float;
+uniform sampler2D u_tex;
+varying vec2 v_uv;
+
+void main() {
+    vec3 c = texture2D(u_tex, v_uv).rgb;
+    float l = dot(c, vec3(0.299, 0.587, 0.114));
+    vec3 colAsfalto = vec3(0.078, 0.078, 0.078); // #141414
+    vec3 colOxido   = vec3(0.651, 0.169, 0.169); // #A62B2B
+    vec3 colPapel   = vec3(0.902, 0.886, 0.831); // #E6E2D4
+    
+    vec3 outCol = l < 0.35 ? colAsfalto : (l < 0.68 ? colOxido : colPapel);
+    gl_FragColor = vec4(outCol, 1.0);
+}
+                </pre>
+            </div>
+        </section>
+
+        <!-- RODAPÉ DE NAVEGAÇÃO -->
+        <footer style="margin-top: 50px; padding: 24px; background: #121216; border-top: 2px solid #333; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <a href="glitch-crt.html" style="color: #00f0ff; text-decoration: none; font-weight: 800; font-size: 14px;">← ANTERIOR: GLITCH CRT</a>
+            <a href="../#secao-presets" style="color: #fff; text-decoration: none; font-weight: 800; font-size: 14px; background: #222; padding: 6px 12px; border: 1px solid #444;">CATÁLOGO GERAL</a>
+            <a href="anarco-zine.html" style="color: #e2f835; text-decoration: none; font-weight: 800; font-size: 14px;">PRÓXIMO: ANARCO-ZINE →</a>
+        </footer>
+    </div>
+</body>
+</html>

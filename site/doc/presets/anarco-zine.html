@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anarco-Zine — Especificação Técnica &amp; Algorítmica | NAVALHA</title>
+    <meta name="description" content="Especificação técnica e matemática detalhada do preset Anarco-Zine do Navalha para reimplementação agnóstica.">
+    <link rel="stylesheet" href="../../assets/style.css">
+    <style>
+        html, body {
+            height: auto !important;
+            min-height: 100% !important;
+            max-height: none !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+        .doc-container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 30px 20px 80px 20px;
+        }
+        .nav-breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .nav-breadcrumbs a {
+            color: #00f0ff;
+            text-decoration: none;
+        }
+        .nav-breadcrumbs a:hover {
+            text-decoration: underline;
+        }
+        .nav-breadcrumbs span {
+            color: #666;
+        }
+        .doc-hero-preset {
+            background-color: #141416;
+            border-left: 6px solid #e2f835;
+            border-top: 1px solid #333;
+            border-right: 1px solid #333;
+            border-bottom: 1px solid #333;
+            padding: 28px;
+            margin-bottom: 35px;
+            box-shadow: 6px 6px 0px #000;
+        }
+        .preset-badge-tag {
+            display: inline-block;
+            background-color: #e2f835;
+            color: #000000;
+            font-size: 12px;
+            font-weight: 900;
+            padding: 3px 8px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .preset-page-title {
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+        }
+        .preset-page-subtitle {
+            font-size: 15px;
+            color: #00f0ff;
+            letter-spacing: 1px;
+            margin: 0 0 16px 0;
+            text-transform: uppercase;
+        }
+        .quick-nav-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px dashed #333;
+        }
+        .quick-nav-btn {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 6px 12px;
+            background: #1c1c22;
+            color: #e2f835;
+            border: 1px solid #444;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .quick-nav-btn:hover {
+            background: #e2f835;
+            color: #000;
+        }
+        .doc-section {
+            margin-bottom: 45px;
+            background-color: #0f0f12;
+            border: 2px solid #222226;
+            padding: 32px;
+            box-shadow: 4px 4px 0px #000;
+        }
+        .doc-section h2 {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #e2f835;
+            margin-top: 0;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .doc-section h3 {
+            font-size: 18px;
+            font-weight: 800;
+            color: #ff0033;
+            margin: 26px 0 12px 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .doc-section p {
+            font-size: 15px;
+            line-height: 1.85;
+            color: #dcdad5;
+            margin-bottom: 16px;
+        }
+        .doc-section ul, .doc-section ol {
+            font-size: 15px;
+            line-height: 1.85;
+            color: #dcdad5;
+            margin-bottom: 18px;
+            padding-left: 24px;
+        }
+        .doc-section li {
+            margin-bottom: 8px;
+        }
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .palette-card {
+            background: #16161b;
+            border: 2px solid #333;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .palette-swatch {
+            height: 50px;
+            border: 1px solid #444;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.5);
+        }
+        .palette-meta {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .palette-meta strong {
+            color: #00f0ff;
+        }
+        .code-block-container {
+            position: relative;
+            margin: 20px 0;
+            background: #060608;
+            border: 1px solid #333;
+            border-left: 4px solid #00f0ff;
+        }
+        .code-block-header {
+            background: #111116;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+        }
+        .code-block {
+            margin: 0;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #aae0ff;
+            background: transparent;
+        }
+        .math-matrix-box {
+            background: #08080c;
+            border: 1px dashed #444;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #e2f835;
+            overflow-x: auto;
+        }
+        .formula-callout {
+            background: #121218;
+            border-left: 4px solid #ff0033;
+            padding: 12px 18px;
+            margin: 16px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            color: #ffffff;
+        }
+        .tribute-box {
+            background-color: #121216;
+            border-left: 4px solid #e2f835;
+            padding: 18px;
+            margin: 20px 0;
+        }
+        .tribute-name {
+            font-size: 16px;
+            font-weight: 900;
+            color: #e2f835;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .preview-flex {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #050507;
+            border: 2px solid #282830;
+            padding: 16px;
+            margin: 24px 0;
+        }
+        .preview-img {
+            max-width: 100%;
+            height: auto;
+            max-height: 560px;
+            border: 1px solid #222;
+        }
+        .preview-caption {
+            margin-top: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            color: #888;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="doc-container">
+        <nav class="nav-breadcrumbs">
+            <a href="../../">NAVALHA</a>
+            <span>/</span>
+            <a href="../#secao-presets">PRESETS</a>
+            <span>/</span>
+            <span style="color: #e2f835;">ANARCO-ZINE</span>
+        </nav>
+
+        <header class="doc-hero-preset">
+            <span class="preset-badge-tag">PRESET #22</span>
+            <h1 class="preset-page-title">Anarco-Zine // Stencil de Guerrilha &amp; Grampos</h1>
+            <div class="preset-page-subtitle">Imprensa Libertária • Grampos Metálicos • Retícula Mecânica • DIY Guerrilha</div>
+            <p style="margin: 0; color: #aaa; font-size: 15px; line-height: 1.6;">
+                Estética visceral inspirada na imprensa libertária autogestionária, fanzines anarquistas artesanais grampeados na dobra e tipografia estêncil de protesto recortada com gilete em chapas de raio-x e cartolina.
+            </p>
+            <div class="quick-nav-bar">
+                <a href="#tributo" class="quick-nav-btn">Tributo Cultural</a>
+                <a href="#pipeline" class="quick-nav-btn">Pipeline Algorítmico</a>
+                <a href="#paleta" class="quick-nav-btn">Paleta de Cores</a>
+                <a href="#reimplementacao" class="quick-nav-btn">Código Agnóstico</a>
+            </div>
+        </header>
+
+        <!-- SEÇÃO: AMOSTRA VISUAL -->
+        <div class="preview-flex">
+            <img src="../../assets/exemplos/exemplo-anarco-zine.png" alt="Cartaz renderizado no preset Anarco-Zine" class="preview-img">
+            <div class="preview-caption">Renderização oficial do motor: Pôster no preset Anarco-Zine</div>
+        </div>
+
+        <!-- SEÇÃO 1: CONTEXTO HISTÓRICO & TRIBUTO -->
+        <section class="doc-section" id="tributo">
+            <h2>1. Contexto Cultural &amp; Tributo</h2>
+            <div class="tribute-box">
+                <div class="tribute-name">Tributo: Jaqueline Gomes de Jesus (Transfeminismo Negro &amp; Resistência Comunitária)</div>
+                <p style="margin: 0; color: #ccc; font-size: 14px; line-height: 1.6;">
+                    Professora universitária, psicóloga, escritora e militante histórica dos direitos humanos de pessoas trans e travestis no Brasil. Com atuação seminal na ABGLT e na ANTRA, Jaqueline é autora de obras teóricas, cartilhas, boletins e zines comunitários que articulam transfeminismo, negritude e emancipação coletiva através da circulação autogestionária da palavra impressa.
+                </p>
+            </div>
+            <p>
+                Os fanzines anarquistas são manifestações máximas da autonomia gráfica: produzidos inteiramente sem editores, censores ou financiamento comercial. Folhas A4 dobradas em A5, perfuradas e fixadas por dois grampos metálicos na lombada esquerda, distribuídas em manifestações e centros sociais autônomos.
+            </p>
+            <p>
+                A tipografia stencil (letras vazadas sustentadas por pontes mecânicas) surge da urgência de reproduzir cartazes e faixas de rua com spray e rolinho de tinta em segundos, antes da chegada da polícia.
+            </p>
+        </section>
+
+        <!-- SEÇÃO 2: ESPECIFICAÇÃO TÉCNICA E MATEMÁTICA -->
+        <section class="doc-section" id="especificacao">
+            <h2>2. Especificação Técnica &amp; Matemática</h2>
+            <p>
+                O motor <code>navalha-core</code> processa o preset <strong>Anarco-Zine</strong> através dos seguintes parâmetros:
+            </p>
+
+            <ul>
+                <li><strong>Downsampling Espacial:</strong> Resolução física de <code>640px</code> (simulando boletim de bolso A5).</li>
+                <li><strong>Retícula Mecânica (Halftone Screening):</strong> Retícula de meio-tom analógica com ângulo de <code>45°</code> e tamanho de célula <code>cell_size = 5px</code>, simulando retículas de chapa offset barata.</li>
+                <li><strong>Grampos Físicos de Fanzine:</strong> Injeção determinística de marcas de grampos metálicos (<code>DamageEffect::Grampo</code>) na borda esquerda simulando dobra de fanzine.</li>
+                <li><strong>Adesivo Anarquista:</strong> Sticker do símbolo da anarquia Ⓐ com acabamento de borda picotada (<code>StickerKind::Anarchy</code> com <code>StickerBorder::Picote</code>).</li>
+            </ul>
+
+            <div class="formula-callout">
+                // Equação da Retícula de Meio-Tom em 45 Graus:<br>
+                u = x · cos(45°) - y · sin(45°)<br>
+                v = x · sin(45°) + y · cos(45°)<br>
+                dist = hypot(mod(u, cell_size) - cell_size/2, mod(v, cell_size) - cell_size/2)<br>
+                ponto = dist &lt; (1.0 - luminancia) · (cell_size / 2 · √2)
+            </div>
+        </section>
+
+        <!-- SEÇÃO 3: PALETA DE CORES -->
+        <section class="doc-section" id="paleta">
+            <h2>3. Paleta de Cores Canônica</h2>
+            <p>
+                A paleta <code>Palette::anarco_zine()</code> combina as cores universais do anarcossindicalismo e fanzines libertários:
+            </p>
+
+            <div class="palette-grid">
+                <div class="palette-card">
+                    <div class="palette-swatch" style="background-color: #0A0A0A;"></div>
+                    <div class="palette-meta">
+                        <strong>Preto Anarquia</strong><br>
+                        HEX: #0A0A0A<br>
+                        RGB: (10, 10, 10)<br>
+                        Papel: Negação do Estado
+                    </div>
+                </div>
+                <div class="palette-card">
+                    <div class="palette-swatch" style="background-color: #D41C1C;"></div>
+                    <div class="palette-meta">
+                        <strong>Vermelho Fogo Libertário</strong><br>
+                        HEX: #D41C1C<br>
+                        RGB: (212, 28, 28)<br>
+                        Papel: Revolta e Solidariedade
+                    </div>
+                </div>
+                <div class="palette-card">
+                    <div class="palette-swatch" style="background-color: #D6CEBD;"></div>
+                    <div class="palette-meta">
+                        <strong>Papel Kraft / Fanzine</strong><br>
+                        HEX: #D6CEBD<br>
+                        RGB: (214, 206, 189)<br>
+                        Papel: Suporte Rústico DIY
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 4: DIAGRAMA DE PIPELINE -->
+        <section class="doc-section" id="pipeline">
+            <h2>4. Diagrama de Pipeline de Dados</h2>
+            <div class="code-block-container">
+                <div class="code-block-header">Fluxo Unidirecional Determinístico</div>
+                <pre class="code-block">
+[ Imagem de Entrada (RGB/RGBA) ]
+               │
+               ▼
+[ 1. Downsampling Físico: 640px (Lanczos3) ]
+               │
+               ▼
+[ 2. Unsharp Mask Tonal (Raio 1, Força 2.8) ]
+               │
+               ▼
+[ 3. Retícula de Meio-Tom 45° (Halftone 5px) ]
+               │
+               ▼
+[ 4. Mapeamento Estrito na Tríade Anarco-Zine ]
+               │
+               ▼
+[ 5. Prensagem de Tarjas, Grampos de Lombada e Sticker Ⓐ ]
+               │
+               ▼
+[ Pôster Final Renderizado Bit-a-Bit Idêntico ]
+                </pre>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 5: GUIA DE REIMPLEMENTAÇÃO AGNÓSTICA -->
+        <section class="doc-section" id="reimplementacao">
+            <h2>5. Guia de Reimplementação Agnóstica</h2>
+            <p>
+                Código autocontido em <strong>Python 3 com NumPy e Pillow</strong> implementando a retícula rotacionada de halftone na paleta Anarco-Zine:
+            </p>
+
+            <div class="code-block-container">
+                <div class="code-block-header">
+                    <span>reimplement_anarco_zine.py (Python 3 + NumPy)</span>
+                    <span style="color:#00f0ff;">LICENÇA: GPL-3.0 / MIT</span>
+                </div>
+                <pre class="code-block">
+import numpy as np
+from PIL import Image
+
+def halftone_45(gray_img, cell_size=5):
+    h, w = gray_img.shape
+    y_idx, x_idx = np.indices((h, w))
+    rad = np.radians(45.0)
+    cos_a, sin_a = np.cos(rad), np.sin(rad)
+    
+    u = x_idx * cos_a - y_idx * sin_a
+    v = x_idx * sin_a + y_idx * cos_a
+    
+    mod_u = np.mod(u, cell_size) - cell_size / 2.0
+    mod_v = np.mod(v, cell_size) - cell_size / 2.0
+    dist = np.hypot(mod_u, mod_v)
+    
+    lum = gray_img.astype(np.float32) / 255.0
+    max_r = (cell_size / 2.0) * np.sqrt(2.0)
+    dot_r = (1.0 - lum) * max_r
+    return np.where(dist < dot_r, 0, 255).astype(np.uint8)
+
+def render_anarco_zine(input_path: str, output_path: str):
+    img = Image.open(input_path).convert('L')
+    w, h = img.size
+    img = img.resize((640, int(round(h * 640 / w))), Image.Resampling.LANCZOS)
+    arr = np.array(img)
+    screened = halftone_45(arr, cell_size=5)
+    
+    h, w = screened.shape
+    poster = np.zeros((h, w, 3), dtype=np.uint8)
+    poster[:, :] = [214, 206, 189] # Kraft Fanzine
+    poster[screened == 0] = [10, 10, 10] # Preto Anarquia
+    Image.fromarray(poster).save(output_path)
+                </pre>
+            </div>
+
+            <h3>Fragment Shader GLSL (Para Processamento em GPU em Tempo Real)</h3>
+            <div class="code-block-container">
+                <div class="code-block-header">anarco_zine_shader.glsl</div>
+                <pre class="code-block">
+// Fragment Shader Anarco-Zine Halftone
+precision mediump float;
+uniform sampler2D u_tex;
+varying vec2 v_uv;
+
+void main() {
+    vec2 pos = v_uv * vec2(640.0, 880.0);
+    float angle = 0.785398; // 45 graus
+    mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+    vec2 rot_pos = rot * pos;
+    vec2 grid = fract(rot_pos / 5.0) - 0.5;
+    float dist = length(grid);
+    
+    float lum = dot(texture2D(u_tex, v_uv).rgb, vec3(0.299, 0.587, 0.114));
+    float dot_size = (1.0 - lum) * 0.707;
+    
+    vec3 colKraft = vec3(0.839, 0.808, 0.741); // #D6CEBD
+    vec3 colPreto = vec3(0.039, 0.039, 0.039); // #0A0A0A
+    
+    gl_FragColor = vec4(dist < dot_size ? colPreto : colKraft, 1.0);
+}
+                </pre>
+            </div>
+        </section>
+
+        <!-- RODAPÉ DE NAVEGAÇÃO -->
+        <footer style="margin-top: 50px; padding: 24px; background: #121216; border-top: 2px solid #333; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <a href="punk-80-br.html" style="color: #00f0ff; text-decoration: none; font-weight: 800; font-size: 14px;">← ANTERIOR: PUNK 80 BR</a>
+            <a href="../#secao-presets" style="color: #fff; text-decoration: none; font-weight: 800; font-size: 14px; background: #222; padding: 6px 12px; border: 1px solid #444;">CATÁLOGO GERAL</a>
+            <a href="punk-riot.html" style="color: #e2f835; text-decoration: none; font-weight: 800; font-size: 14px;">PRÓXIMO: PUNK RIOT →</a>
+        </footer>
+    </div>
+</body>
+</html>
