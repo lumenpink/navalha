@@ -174,6 +174,7 @@ pub enum DamageEffect {
     Pixo,
     Censura,
     Pulica,
+    Grampo,
 }
 
 impl DamageEffect {
@@ -188,6 +189,7 @@ impl DamageEffect {
             "pixo" => Some(Self::Pixo),
             "censura" => Some(Self::Censura),
             "pulica" | "puliça" => Some(Self::Pulica),
+            "grampo" | "grampos" | "staple" => Some(Self::Grampo),
             _ => None,
         }
     }
@@ -203,6 +205,7 @@ impl DamageEffect {
             Self::Pixo => "pixo",
             Self::Censura => "censura",
             Self::Pulica => "pulica",
+            Self::Grampo => "grampo",
         }
     }
 
@@ -217,6 +220,7 @@ impl DamageEffect {
             Self::Pixo => "🔤 Pixo",
             Self::Censura => "⬛ Censura",
             Self::Pulica => "🚨 Puliça",
+            Self::Grampo => "📎 Grampo",
         }
     }
 
@@ -231,6 +235,7 @@ impl DamageEffect {
             DamageEffect::Pixo,
             DamageEffect::Censura,
             DamageEffect::Pulica,
+            DamageEffect::Grampo,
         ]
     }
 }
@@ -267,6 +272,7 @@ impl DamageElement {
             DamageEffect::Pixo     => (0.20, 0.85),
             DamageEffect::Censura  => (0.50, 0.46),
             DamageEffect::Pulica   => (0.50, 0.72),
+            DamageEffect::Grampo   => (0.05, 0.25),
         };
         Self { kind, pos_x: px, pos_y: py, scale: 1.0 }
     }
@@ -325,6 +331,7 @@ pub enum StickerKind {
     Barcode,
     SafetyPin,
     SmileyAcid,
+    Cassette,
     Custom,
 }
 
@@ -339,6 +346,7 @@ impl StickerKind {
             "barcode" | "codigobarras" | "codigo-barras" => Some(Self::Barcode),
             "safetypin" | "alfinete" => Some(Self::SafetyPin),
             "smiley" | "acid" | "acid-smiley" => Some(Self::SmileyAcid),
+            "cassette" | "k7" | "fita" | "fitak7" => Some(Self::Cassette),
             "custom" | "personalizado" | "proprio" | "recorte-custom" => Some(Self::Custom),
             _ => None,
         }
@@ -354,6 +362,7 @@ impl StickerKind {
             Self::Barcode => "barcode",
             Self::SafetyPin => "safetypin",
             Self::SmileyAcid => "smiley",
+            Self::Cassette => "cassette",
             Self::Custom => "custom",
         }
     }
@@ -368,6 +377,7 @@ impl StickerKind {
             Self::Barcode => "📊 Barcode",
             Self::SafetyPin => "🧷 Alfinete",
             Self::SmileyAcid => "☻ Acid Smile",
+            Self::Cassette => "📼 Fita K7",
             Self::Custom => "★ Recorte Próprio",
         }
     }
@@ -382,6 +392,7 @@ impl StickerKind {
             StickerKind::Barcode,
             StickerKind::SafetyPin,
             StickerKind::SmileyAcid,
+            StickerKind::Cassette,
             StickerKind::Custom,
         ]
     }
@@ -1797,6 +1808,47 @@ fn render_damage_pulica(canvas: &mut RgbaImage, font: &FontRef, pos_x: f32, pos_
     }
 }
 
+fn render_damage_grampo(canvas: &mut RgbaImage, cx: i32, cy: i32, scale: f32) {
+    let s = scale;
+    let staple_len = (38.0 * s) as i32;
+    let staple_thick = (3.0 * s).max(2.0) as i32;
+    let puncture_r = (3.0 * s).max(2.0) as i32;
+
+    let shadow_col = Rgba([15, 15, 15, 230]);
+    let hole_col = Rgba([8, 8, 10, 255]);
+    let metal_base = Rgba([135, 138, 145, 255]);
+    let metal_highlight = Rgba([225, 228, 235, 255]);
+    let rust = Rgba([115, 55, 30, 160]);
+
+    let half_len = staple_len / 2;
+    let x0 = cx - half_len;
+    let x1 = cx + half_len;
+    let y = cy;
+
+    // Furos de perfuração do papel onde o grampo penetra
+    draw_filled_circle(canvas, x0, y, puncture_r + 1, shadow_col);
+    draw_filled_circle(canvas, x0, y, puncture_r, hole_col);
+    draw_filled_circle(canvas, x1, y, puncture_r + 1, shadow_col);
+    draw_filled_circle(canvas, x1, y, puncture_r, hole_col);
+
+    // Pequenas manchas de oxidação/ferrugem ao redor dos furos
+    draw_filled_circle(canvas, x0 - 1, y + 2, puncture_r, rust);
+    draw_filled_circle(canvas, x1 + 1, y + 2, puncture_r, rust);
+
+    // Sombra do grampo metálico
+    for dy in 1..=staple_thick {
+        draw_rough_line(canvas, x0, y + dy + 1, x1, y + dy + 1, shadow_col);
+    }
+
+    // Corpo metálico do grampo
+    for dy in 0..staple_thick {
+        draw_rough_line(canvas, x0, y + dy, x1, y + dy, metal_base);
+    }
+
+    // Linha de brilho metálico na parte superior do grampo
+    draw_rough_line(canvas, x0 + 1, y, x1 - 1, y, metal_highlight);
+}
+
 /// Renderiza um DamageElement com posição e escala customizáveis.
 ///
 /// Posição 0.0–1.0 = relativo ao canvas. Escala 1.0 = tamanho padrão.
@@ -1821,6 +1873,7 @@ fn render_damage_element(
         DamageEffect::Pixo    => render_damage_pixo(canvas, cx, cy, scale),
         DamageEffect::Censura => render_damage_censura(canvas, font, elem.pos_x, elem.pos_y, scale),
         DamageEffect::Pulica  => render_damage_pulica(canvas, font, elem.pos_x, elem.pos_y, scale, cw, ch),
+        DamageEffect::Grampo  => render_damage_grampo(canvas, cx, cy, scale),
     }
 }
 
@@ -1890,6 +1943,7 @@ pub fn render_sticker(kind: StickerKind, size: u32, font: &FontRef) -> RgbaImage
         StickerKind::Barcode => render_sticker_barcode(size),
         StickerKind::SafetyPin => render_sticker_safetypin(size),
         StickerKind::SmileyAcid => render_sticker_smiley(size),
+        StickerKind::Cassette => render_sticker_cassette(size),
         StickerKind::Custom => render_sticker_custom_placeholder(size),
     }
 }
@@ -2148,6 +2202,92 @@ fn render_sticker_smiley(size: u32) -> RgbaImage {
     for i in 0..pts.len() - 1 {
         draw_rough_line(&mut img, pts[i].0, pts[i].1, pts[i + 1].0, pts[i + 1].1, black);
     }
+
+    img
+}
+
+fn render_sticker_cassette(size: u32) -> RgbaImage {
+    let mut img = RgbaImage::new(size, size);
+    let cx = size as i32 / 2;
+    let cy = size as i32 / 2;
+
+    let w = (size as f32 * 0.90) as i32;
+    let h = (size as f32 * 0.58) as i32;
+    let x0 = cx - w / 2;
+    let x1 = cx + w / 2;
+    let y0 = cy - h / 2;
+    let y1 = cy + h / 2;
+
+    let shell_dark = Rgba([25, 25, 28, 255]);
+    let shell_rim = Rgba([50, 50, 55, 255]);
+    let label_bg = Rgba([225, 220, 205, 255]);
+    let label_stripe = Rgba([180, 30, 30, 255]);
+    let window_bg = Rgba([12, 12, 16, 255]);
+    let spool_col = Rgba([240, 240, 240, 255]);
+    let tape_brown = Rgba([75, 45, 25, 255]);
+    let screw_col = Rgba([180, 185, 195, 255]);
+
+    // Carcaça plástica principal da fita
+    draw_filled_rect(&mut img, x0, y0, x1, y1, shell_dark);
+    // Borda chanfrada externa
+    draw_rough_line(&mut img, x0, y0, x1, y0, shell_rim);
+    draw_rough_line(&mut img, x0, y1, x1, y1, shell_rim);
+    draw_rough_line(&mut img, x0, y0, x0, y1, shell_rim);
+    draw_rough_line(&mut img, x1, y0, x1, y1, shell_rim);
+
+    // Parafusos nos quatro cantos
+    for &(sx, sy) in &[
+        (x0 + 5, y0 + 5),
+        (x1 - 5, y0 + 5),
+        (x0 + 5, y1 - 5),
+        (x1 - 5, y1 - 5),
+    ] {
+        draw_filled_circle(&mut img, sx, sy, 2, screw_col);
+    }
+
+    // Área do rótulo adesivo da fita
+    let label_x0 = x0 + (w as f32 * 0.08) as i32;
+    let label_x1 = x1 - (w as f32 * 0.08) as i32;
+    let label_y0 = y0 + (h as f32 * 0.12) as i32;
+    let label_y1 = y1 - (h as f32 * 0.22) as i32;
+    draw_filled_rect(&mut img, label_x0, label_y0, label_x1, label_y1, label_bg);
+
+    // Faixa colorida superior no rótulo
+    draw_filled_rect(&mut img, label_x0, label_y0, label_x1, label_y0 + (h as f32 * 0.10) as i32, label_stripe);
+
+    // Janela transparente central da fita
+    let win_w = (w as f32 * 0.52) as i32;
+    let win_h = (h as f32 * 0.40) as i32;
+    let win_x0 = cx - win_w / 2;
+    let win_x1 = cx + win_w / 2;
+    let win_y0 = cy - win_h / 2;
+    let win_y1 = cy + win_h / 2;
+    draw_filled_rect(&mut img, win_x0, win_y0, win_x1, win_y1, window_bg);
+
+    // Fita magnética visível na janela
+    let spool_dist = (win_w as f32 * 0.28) as i32;
+    let spool_r = (win_h as f32 * 0.32) as i32;
+
+    // Bobinas de fita magnética marrom ao redor dos carretéis
+    draw_filled_circle(&mut img, cx - spool_dist, cy, spool_r + 4, tape_brown);
+    draw_filled_circle(&mut img, cx + spool_dist, cy, spool_r + 3, tape_brown);
+    // Linha de fita magnética correndo entre os carretéis na base
+    draw_filled_rect(&mut img, cx - spool_dist, cy + spool_r - 1, cx + spool_dist, cy + spool_r + 2, tape_brown);
+
+    // Carretéis dentados brancos (engrenagens da fita)
+    draw_filled_circle(&mut img, cx - spool_dist, cy, spool_r, spool_col);
+    draw_filled_circle(&mut img, cx + spool_dist, cy, spool_r, spool_col);
+    // Orifício central do eixo
+    draw_filled_circle(&mut img, cx - spool_dist, cy, (spool_r as f32 * 0.45) as i32, window_bg);
+    draw_filled_circle(&mut img, cx + spool_dist, cy, (spool_r as f32 * 0.45) as i32, window_bg);
+
+    // Área do cabeçote na base (corte trapezoidal característico da fita K7)
+    let head_w = (w as f32 * 0.46) as i32;
+    let head_x0 = cx - head_w / 2;
+    let head_x1 = cx + head_w / 2;
+    draw_filled_rect(&mut img, head_x0, y1 - 3, head_x1, y1 + 1, shell_rim);
+    draw_filled_circle(&mut img, head_x0 + 4, y1 - 2, 2, screw_col);
+    draw_filled_circle(&mut img, head_x1 - 4, y1 - 2, 2, screw_col);
 
     img
 }

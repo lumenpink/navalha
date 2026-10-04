@@ -414,6 +414,28 @@ impl Palette {
         )
     }
 
+    pub fn punk_80_br() -> Self {
+        Self::new(
+            "Punk 80 BR // ABC Paulista & K7 (Marina Mathey)",
+            vec![
+                RgbColor::new(20, 20, 20),      // #141414 Preto asfalto / piche fabril
+                RgbColor::new(166, 43, 43),     // #A62B2B Vermelho óxido / ferrugem
+                RgbColor::new(230, 226, 212),   // #E6E2D4 Branco papel K7 gasto
+            ],
+        )
+    }
+
+    pub fn anarco_zine() -> Self {
+        Self::new(
+            "Anarco-Zine // Stencil & Grampos (Jaqueline Gomes de Jesus)",
+            vec![
+                RgbColor::new(10, 10, 10),      // #0A0A0A Preto anarquia puro
+                RgbColor::new(212, 28, 28),     // #D41C1C Vermelho fogo libertário
+                RgbColor::new(214, 206, 189),   // #D6CEBD Papel kraft / jornal artesanal
+            ],
+        )
+    }
+
     pub fn all_presets() -> Vec<Self> {
         vec![
             Self::classic_punk(),
@@ -436,6 +458,8 @@ impl Palette {
             Self::mimeografo(),
             Self::xilogravura(),
             Self::glitch_crt(),
+            Self::punk_80_br(),
+            Self::anarco_zine(),
         ]
     }
 
@@ -463,6 +487,8 @@ impl Palette {
             "mimeografo" | "mimeo" | "anilina" | "keilasimpson" | "keila" => Some(Self::mimeografo()),
             "xilogravura" | "xilo" | "cordel" | "xicamanicongo" => Some(Self::xilogravura()),
             "glitchcrt" | "glitch" | "vhs" | "robeyonce" | "robeyoncelima" => Some(Self::glitch_crt()),
+            "punk80br" | "punk80" | "abc" | "k7" | "marinamathey" | "marina" => Some(Self::punk_80_br()),
+            "anarcozine" | "anarco" | "zine" | "stencil" | "jaqueline" | "jaquelinejesus" | "jaquelinegomesdejesus" => Some(Self::anarco_zine()),
             _ => None,
         }
     }

@@ -2,7 +2,7 @@ use crate::dither::DitherAlgorithm;
 use crate::guillotine::GuillotineConfig;
 use crate::palette::{Palette, RgbColor};
 use crate::prep::PrepConfig;
-use crate::press::{BannerFontFamily, DamageEffect, DamageElement, PosterComposition, PunkOverlayConfig, TarjaBorderFinish, TarjaEffect, TextElement};
+use crate::press::{BannerFontFamily, DamageEffect, DamageElement, PosterComposition, PunkOverlayConfig, StickerBorder, StickerElement, StickerKind, TarjaBorderFinish, TarjaEffect, TextElement};
 use crate::scale::ScaleFactor;
 use serde::{Deserialize, Serialize};
 
@@ -28,6 +28,8 @@ pub enum AestheticPreset {
     Mimeografo,
     Xilogravura,
     GlitchCrt,
+    Punk80Br,
+    AnarcoZine,
 }
 
 impl AestheticPreset {
@@ -53,6 +55,8 @@ impl AestheticPreset {
             Self::Mimeografo,
             Self::Xilogravura,
             Self::GlitchCrt,
+            Self::Punk80Br,
+            Self::AnarcoZine,
         ]
     }
 
@@ -78,6 +82,8 @@ impl AestheticPreset {
             Self::Mimeografo => "mimeografo",
             Self::Xilogravura => "xilogravura",
             Self::GlitchCrt => "glitch-crt",
+            Self::Punk80Br => "punk-80-br",
+            Self::AnarcoZine => "anarco-zine",
         }
     }
 
@@ -103,6 +109,8 @@ impl AestheticPreset {
             Self::Mimeografo => "Mimeógrafo / Violeta Anilina & Álcool (Keila Simpson)",
             Self::Xilogravura => "Xilogravura / Talhe em Madeira & Cordel (Xica Manicongo)",
             Self::GlitchCrt => "Glitch CRT / Sinal Pirata & Aberração Cromática (Robeyoncé Lima)",
+            Self::Punk80Br => "Punk 80 BR / ABC Paulista & Fitas K7 (Marina Mathey)",
+            Self::AnarcoZine => "Anarco-Zine / Stencil de Guerrilha & Grampos (Jaqueline Gomes de Jesus)",
         }
     }
 
@@ -129,6 +137,8 @@ impl AestheticPreset {
             "mimeografo" | "mimeo" | "anilina" | "keilasimpson" | "keila" => Some(Self::Mimeografo),
             "xilogravura" | "xilo" | "cordel" | "xicamanicongo" => Some(Self::Xilogravura),
             "glitchcrt" | "glitch" | "crt" | "robeyonce" | "robeyoncelima" => Some(Self::GlitchCrt),
+            "punk80br" | "punk80" | "abc" | "k7" | "marinamathey" | "marina" => Some(Self::Punk80Br),
+            "anarcozine" | "anarco" | "zine" | "stencil" | "jaqueline" | "jaquelinejesus" | "jaquelinegomesdejesus" => Some(Self::AnarcoZine),
             _ => None,
         }
     }
@@ -526,6 +536,48 @@ impl AestheticPreset {
                 border_finish: TarjaBorderFinish::Solida,
                 border_width: 3,
                 border_color: Some(RgbColor::new(255, 204, 0)),
+                word_jitter_rotation: 5,
+                word_tarja_cut: true,
+                ..Default::default()
+            },
+            Self::Punk80Br => TextElement {
+                text: phrase_upper,
+                font_size: 50.0,
+                stretch_x: 1.0,
+                stretch_y: 1.6,
+                color: RgbColor::new(230, 226, 212),
+                bg_tarja: Some(RgbColor::new(20, 20, 20)),
+                tarja_padding: 12,
+                pos_x: 0.5,
+                pos_y: 0.88,
+                center_x: true,
+                rotation: -3,
+                tarja_effect: TarjaEffect::Solida,
+                font_family: BannerFontFamily::Impact,
+                border_finish: TarjaBorderFinish::FitaDurex,
+                border_width: 3,
+                border_color: Some(RgbColor::new(166, 43, 43)),
+                word_jitter_rotation: 6,
+                word_tarja_cut: true,
+                ..Default::default()
+            },
+            Self::AnarcoZine => TextElement {
+                text: phrase_upper,
+                font_size: 52.0,
+                stretch_x: 1.0,
+                stretch_y: 1.5,
+                color: RgbColor::new(214, 206, 189),
+                bg_tarja: Some(RgbColor::new(10, 10, 10)),
+                tarja_padding: 14,
+                pos_x: 0.5,
+                pos_y: 0.86,
+                center_x: true,
+                rotation: 2,
+                tarja_effect: TarjaEffect::Solida,
+                font_family: BannerFontFamily::Impact,
+                border_finish: TarjaBorderFinish::Picote,
+                border_width: 3,
+                border_color: Some(RgbColor::new(212, 28, 28)),
                 word_jitter_rotation: 5,
                 word_tarja_cut: true,
                 ..Default::default()
@@ -1759,6 +1811,150 @@ impl AestheticPreset {
                         blade_scratches: false,
                         registration_marks: true,
                         vector_color: RgbColor::new(255, 255, 255),
+                    },
+                };
+
+                (guillotine, prep, dither, palette, scale, comp)
+            }
+
+            Self::Punk80Br => {
+                let palette = Palette::punk_80_br();
+                let guillotine = GuillotineConfig {
+                    auto_threshold: false,
+                    enabled: true,
+                    threshold: 0.86,
+                    invert: true,
+                    background_fill: None,
+                };
+                let prep = PrepConfig {
+                    rotation: 0,
+                    zoom: 1.0,
+                    target_width: Some(720),
+                    unsharp_strength: 3.2,
+                    unsharp_radius: 2,
+                    levels_shadow_cutoff: 0.15,
+                    levels_highlight_cutoff: 0.85,
+                    levels_gamma: 1.0,
+                };
+                let dither = DitherAlgorithm::Atkinson;
+                let scale = ScaleFactor::TwoX;
+
+                let comp = PosterComposition {
+                    stickers: vec![
+                        StickerElement::new(StickerKind::Cassette, 0.82, 0.22, 110, -8, false)
+                            .with_border(StickerBorder::DieCutBranco, 3),
+                    ],
+                    subject_offset_x: 0,
+                    subject_offset_y: 0,
+                    palette: Some(palette.clone()),
+                    canvas_width: 800,
+                    canvas_height: 1100,
+                    background_color: RgbColor::new(20, 20, 20),
+                    background_text: Some(TextElement {
+                        text: phrase_upper.clone(),
+                        font_size: 96.0,
+                        stretch_x: 1.2,
+                        stretch_y: 2.1,
+                        color: RgbColor::new(166, 43, 43),
+                        bg_tarja: None,
+                        tarja_padding: 0,
+                        pos_x: 0.5,
+                        pos_y: 0.14,
+                        center_x: true,
+                        rotation: 0,
+                        tarja_effect: TarjaEffect::Solida,
+                        ..Default::default()
+                    }),
+                    foreground_texts: vec![self.default_banner_element(&phrase_upper)],
+                    overlay: PunkOverlayConfig {
+                        damage_elements: vec![
+                            DamageElement {
+                                kind: DamageEffect::Rasgo,
+                                pos_x: 0.15,
+                                pos_y: 0.35,
+                                scale: 0.8,
+                            },
+                        ],
+                        damages: Vec::new(),
+                        crop_frame: true,
+                        blade_scratches: true,
+                        registration_marks: true,
+                        vector_color: RgbColor::new(230, 226, 212),
+                    },
+                };
+
+                (guillotine, prep, dither, palette, scale, comp)
+            }
+
+            Self::AnarcoZine => {
+                let palette = Palette::anarco_zine();
+                let guillotine = GuillotineConfig {
+                    auto_threshold: false,
+                    enabled: true,
+                    threshold: 0.84,
+                    invert: true,
+                    background_fill: None,
+                };
+                let prep = PrepConfig {
+                    rotation: 0,
+                    zoom: 1.0,
+                    target_width: Some(640),
+                    unsharp_strength: 2.8,
+                    unsharp_radius: 1,
+                    levels_shadow_cutoff: 0.12,
+                    levels_highlight_cutoff: 0.88,
+                    levels_gamma: 1.0,
+                };
+                let dither = DitherAlgorithm::Halftone { angle_deg: 45, cell_size: 5 };
+                let scale = ScaleFactor::TwoX;
+
+                let comp = PosterComposition {
+                    stickers: vec![
+                        StickerElement::new(StickerKind::Anarchy, 0.18, 0.18, 90, 12, false)
+                            .with_border(StickerBorder::Picote, 4),
+                    ],
+                    subject_offset_x: 0,
+                    subject_offset_y: 0,
+                    palette: Some(palette.clone()),
+                    canvas_width: 800,
+                    canvas_height: 1100,
+                    background_color: RgbColor::new(214, 206, 189),
+                    background_text: Some(TextElement {
+                        text: phrase_upper.clone(),
+                        font_size: 94.0,
+                        stretch_x: 1.1,
+                        stretch_y: 2.0,
+                        color: RgbColor::new(10, 10, 10),
+                        bg_tarja: None,
+                        tarja_padding: 0,
+                        pos_x: 0.5,
+                        pos_y: 0.14,
+                        center_x: true,
+                        rotation: 0,
+                        tarja_effect: TarjaEffect::Solida,
+                        ..Default::default()
+                    }),
+                    foreground_texts: vec![self.default_banner_element(&phrase_upper)],
+                    overlay: PunkOverlayConfig {
+                        damage_elements: vec![
+                            DamageElement {
+                                kind: DamageEffect::Grampo,
+                                pos_x: 0.04,
+                                pos_y: 0.20,
+                                scale: 1.1,
+                            },
+                            DamageElement {
+                                kind: DamageEffect::Grampo,
+                                pos_x: 0.04,
+                                pos_y: 0.80,
+                                scale: 1.1,
+                            },
+                        ],
+                        damages: Vec::new(),
+                        crop_frame: true,
+                        blade_scratches: false,
+                        registration_marks: true,
+                        vector_color: RgbColor::new(10, 10, 10),
                     },
                 };
 

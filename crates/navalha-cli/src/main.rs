@@ -44,7 +44,7 @@ enum Commands {
         #[arg(long = "frase-superior", aliases = ["texto-topo", "faixa-superior"])]
         frase_superior: Option<String>,
 
-        /// Estética anti-design: punk-riot, navalha-sata, xerox-podre, viagem-solitaria, lapa-noturna, teatro-operario, risografia, fanzine-digital, asfalto-alerta, vga256, cga, old-mac-pop-art, ascii-art, tabloide-popular, brutalismo, trash-polka, atari-gaming, mimeografo, xilogravura, glitch-crt
+        /// Estética anti-design: punk-riot, navalha-sata, xerox-podre, viagem-solitaria, lapa-noturna, teatro-operario, risografia, fanzine-digital, asfalto-alerta, vga256, cga, old-mac-pop-art, ascii-art, tabloide-popular, brutalismo, trash-polka, atari-gaming, mimeografo, xilogravura, glitch-crt, punk-80-br, anarco-zine
         #[arg(short, long, default_value = "punk-riot")]
         estetica: String,
 

@@ -548,8 +548,8 @@ mod tests {
     }
 
     #[test]
-    fn test_all_twenty_presets_count() {
-        assert_eq!(AestheticPreset::all().len(), 20, "O motor deve fornecer exatamente 20 presets intercalados");
+    fn test_all_presets_count() {
+        assert_eq!(AestheticPreset::all().len(), 22, "O motor deve fornecer exatamente 22 presets canônicos");
         for preset in AestheticPreset::all() {
             assert!(AestheticPreset::parse(preset.id()).is_some(), "Preset {} deve ser re-parseável pelo seu ID", preset.id());
         }
@@ -1205,6 +1205,8 @@ mod tests {
             AestheticPreset::TrashPolka,
             AestheticPreset::TabloidePopular,
             AestheticPreset::AsfaltoAlerta,
+            AestheticPreset::Punk80Br,
+            AestheticPreset::AnarcoZine,
         ] {
             let b = preset.default_banner_element("PROTESTO PUNK");
             assert!(b.word_tarja_cut, "Preset {:?} deve ter word_tarja_cut ativo", preset);
@@ -1266,6 +1268,45 @@ mod tests {
         img_diff.put_pixel(50, 50, image::Rgba([0, 0, 0, 255]));
         let poster_diff = render_poster(&comp, Some(&img_diff));
         assert_ne!(poster1.as_raw(), poster_diff.as_raw(), "Imagens de entrada distintas geram sementes distintas");
+    }
+
+    #[test]
+    fn test_punk80br_and_anarcozine_presets() {
+        // Validação Punk 80 BR
+        let p80 = AestheticPreset::Punk80Br;
+        assert_eq!(p80.id(), "punk-80-br");
+        assert!(AestheticPreset::parse("punk-80-br").is_some());
+        assert!(AestheticPreset::parse("k7").is_some());
+        assert!(AestheticPreset::parse("marinamathey").is_some());
+
+        let (_g80, _pr80, dt80, pal80, _sc80, comp80) = p80.build_pipeline_and_composition("BOTAS E GRAVURAS");
+        assert_eq!(dt80, DitherAlgorithm::Atkinson);
+        assert_eq!(pal80.colors.len(), 3);
+        assert!(comp80.stickers.iter().any(|s| s.kind == StickerKind::Cassette));
+        assert!(comp80.overlay.damage_elements.iter().any(|d| d.kind == DamageEffect::Rasgo));
+
+        // Validação Anarco-Zine
+        let az = AestheticPreset::AnarcoZine;
+        assert_eq!(az.id(), "anarco-zine");
+        assert!(AestheticPreset::parse("anarco-zine").is_some());
+        assert!(AestheticPreset::parse("stencil").is_some());
+        assert!(AestheticPreset::parse("jaquelinegomesdejesus").is_some());
+
+        let (_gaz, _praz, dtaz, palaz, _scav, compaz) = az.build_pipeline_and_composition("REBELDIA LIBERTÁRIA");
+        assert!(matches!(dtaz, DitherAlgorithm::Halftone { .. }));
+        assert_eq!(palaz.colors.len(), 3);
+        assert!(compaz.stickers.iter().any(|s| s.kind == StickerKind::Anarchy));
+        assert!(compaz.overlay.damage_elements.iter().any(|d| d.kind == DamageEffect::Grampo));
+
+        // Teste de determinismo de renderização
+        let test_img = create_test_image(80, 80);
+        let poster_p80_1 = render_poster(&comp80, Some(&test_img));
+        let poster_p80_2 = render_poster(&comp80, Some(&test_img));
+        assert_eq!(poster_p80_1.as_raw(), poster_p80_2.as_raw(), "Punk80Br deve ser 100% determinístico");
+
+        let poster_az_1 = render_poster(&compaz, Some(&test_img));
+        let poster_az_2 = render_poster(&compaz, Some(&test_img));
+        assert_eq!(poster_az_1.as_raw(), poster_az_2.as_raw(), "AnarcoZine deve ser 100% determinístico");
     }
 }
 

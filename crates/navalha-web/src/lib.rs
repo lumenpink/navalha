@@ -973,6 +973,8 @@ pub fn App() -> Element {
         "mimeografo"       => "BAYER 4x4 // 640PX // VIOLETA ANILINA & SANGRAMENTO",
         "xilogravura"      => "SAUVOLA 15x15 // 720PX // TALHE EM MADEIRA & KRAFT",
         "glitch-crt"       => "SYNC JITTER // 640PX // SPLIT CROMÁTICO & V-HOLD",
+        "punk-80-br"       => "ATKINSON // 720PX // ABC PAULISTA & FITAS K7",
+        "anarco-zine"      => "HALFTONE 45° // 640PX // STENCIL & GRAMPOS FANZINE",
         _                  => "MOTOR ANTI-DESIGN // DETERMINÍSTICO // 800x1100",
     };
 
@@ -1522,6 +1524,8 @@ pub fn App() -> Element {
                                     option { value: "mimeografo",       "18. MIMEÓGRAFO // Keila Simpson" }
                                     option { value: "xilogravura",      "19. XILOGRAVURA // Xica Manicongo" }
                                     option { value: "glitch-crt",       "20. GLITCH CRT // Robeyoncé Lima" }
+                                    option { value: "punk-80-br",       "21. PUNK 80 BR // Marina Mathey" }
+                                    option { value: "anarco-zine",      "22. ANARCO-ZINE // Jaqueline Gomes de Jesus" }
                                 }
                                 div { class: "preset-badge-summary",
                                     span { class: "preset-summary-tag", "⚡ {preset_summary}" }
