@@ -435,6 +435,155 @@ html:has(.navalha-app), body:has(.navalha-app) {
     font-weight: 900;
 }
 
+/* ==========================================================================
+   Tactile Slider Stepper Controls & Reset
+   ========================================================================== */
+.stepper-slider-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 6px;
+    width: 100%;
+}
+
+.stepper-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.72rem;
+    color: #bbb;
+    text-transform: uppercase;
+}
+
+.stepper-title {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.btn-stepper-reset {
+    background: #111;
+    color: #888;
+    border: 1px solid #444;
+    padding: 2px 6px;
+    font-size: 9px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    text-transform: uppercase;
+    transition: all 0.1s ease;
+    border-radius: 0;
+}
+
+.btn-stepper-reset:hover {
+    background: #ff0033;
+    color: #fff;
+    border-color: #fff;
+}
+
+.stepper-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.btn-stepper {
+    background: #22222a;
+    color: #fff;
+    border: 1px solid #444;
+    min-width: 30px;
+    height: 28px;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    transition: background 0.1s ease;
+}
+
+.btn-stepper:hover {
+    background: #ff0033;
+    border-color: #fff;
+}
+
+.btn-stepper:active {
+    background: #ff3366;
+    transform: scale(0.95);
+}
+
+.btn-stepper:disabled,
+.btn-stepper-reset:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    background: #181818;
+    border-color: #333;
+    color: #555;
+    pointer-events: none;
+}
+
+/* Preset Aesthetic Lock when banner_adapt_preset is active */
+.controls-locked-by-preset {
+    opacity: 0.45;
+    filter: grayscale(0.85);
+    pointer-events: none;
+    user-select: none;
+    transition: opacity 0.2s ease, filter 0.2s ease;
+    position: relative;
+}
+
+.preset-sync-notice {
+    background: rgba(255, 0, 51, 0.08);
+    border: 1px dashed rgba(255, 0, 51, 0.5);
+    color: #ff3366;
+    font-size: 0.68rem;
+    font-weight: bold;
+    padding: 6px 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    margin-bottom: 8px;
+}
+
+.btn-reset-preset {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #111116;
+    color: #e2f835;
+    border: 1px solid #e2f835;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s ease;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.btn-reset-preset:hover {
+    background: #e2f835;
+    color: #000;
+    border-color: #fff;
+    box-shadow: 0 0 10px rgba(226, 248, 53, 0.4);
+}
+
+.btn-reset-preset:active {
+    transform: scale(0.98);
+}
+
 .text-input-punk {
     background-color: #000;
     border: 2px solid #555;
@@ -884,12 +1033,176 @@ html:has(.navalha-app), body:has(.navalha-app) {
 }
 
 /* ========================================================
-   REGRAS DE RESPONSIVIDADE MOBILE (< 900px & < 480px)
+   REGRAS DE FORMULÁRIO RESPONSIVO E CONTROLES TÁCTEIS
+   ======================================================== */
+.form-row-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.form-row-3col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+/* Sliders com área de toque ampliada e feedback táctil */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    background: #1e1e26;
+    border: 1px solid #444455;
+    outline: none;
+    margin: 8px 0;
+    cursor: pointer;
+    touch-action: pan-y;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: #ff0033;
+    border: 2px solid #ffffff;
+    cursor: pointer;
+    box-shadow: 2px 2px 0px #000000;
+    transition: transform 0.1s ease, background 0.1s ease;
+}
+
+input[type="range"]:active::-webkit-slider-thumb {
+    background: #e2f835;
+    border-color: #000000;
+    transform: scale(1.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: #ff0033;
+    border: 2px solid #ffffff;
+    cursor: pointer;
+    box-shadow: 2px 2px 0px #000000;
+}
+
+/* Carrossel Horizontal Deslizante de Presets */
+.preset-carousel-container {
+    width: 100%;
+    overflow: hidden;
+    margin-top: 6px;
+    margin-bottom: 10px;
+}
+
+.preset-carousel-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 2px 8px 2px;
+}
+
+.preset-carousel-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.preset-carousel-scroll::-webkit-scrollbar-track {
+    background: #111116;
+}
+
+.preset-carousel-scroll::-webkit-scrollbar-thumb {
+    background: #ff0033;
+}
+
+.preset-chip {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    min-width: 125px;
+    padding: 8px 10px;
+    background: #18181f;
+    border: 2px solid #33333e;
+    color: #e5e5ea;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    box-shadow: 2px 2px 0px #000;
+    transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.preset-chip:hover {
+    border-color: #e2f835;
+    color: #ffffff;
+}
+
+.preset-chip.active {
+    background: #e2f835;
+    color: #000000;
+    border-color: #ff0033;
+    box-shadow: 3px 3px 0px #ff0033;
+    transform: translateY(-1px);
+}
+
+.preset-chip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+.preset-chip-num {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    opacity: 0.75;
+}
+
+.preset-chip.active .preset-chip-num {
+    color: #000000;
+    opacity: 1;
+}
+
+.preset-chip-name {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+.preset-chip.active .preset-chip-name {
+    color: #000000;
+}
+
+.preset-chip-dots {
+    display: flex;
+    gap: 3px;
+}
+
+.preset-color-dot {
+    width: 10px;
+    height: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    display: inline-block;
+}
+
+/* ========================================================
+   REGRAS DE RESPONSIVIDADE MOBILE (< 900px & < 600px)
    ======================================================== */
 @media (max-width: 900px) {
     .navalha-header {
-        padding: 8px 12px;
+        padding: 6px 12px;
         gap: 8px;
+        min-height: 42px;
     }
 
     .header-manifesto {
@@ -914,36 +1227,10 @@ html:has(.navalha-app), body:has(.navalha-app) {
         font-size: 10px;
     }
 
-    /* Alternador de visão mobile no topo */
-    .mobile-view-toggle {
-        display: flex;
-        gap: 6px;
-        padding: 6px 10px;
-        background: #0d0d10;
-        border-bottom: 2px solid #ff0033;
-        flex-shrink: 0;
-        z-index: 40;
-    }
-
-    .mobile-toggle-btn {
-        flex: 1;
-        padding: 10px 8px;
-        font-size: 12px;
-        font-weight: 900;
-        background: #18181f;
-        color: #888899;
-        border: 2px solid #333;
-        cursor: pointer;
-        text-align: center;
-        font-family: inherit;
-        letter-spacing: 0.8px;
-    }
-
-    .mobile-toggle-btn.active {
-        background: #e2f835;
-        color: #000;
-        border-color: #000;
-        box-shadow: 2px 2px 0 #ff0033;
+    /* Oculta barras redundantes no mobile */
+    .mobile-view-toggle,
+    .export-box {
+        display: none !important;
     }
 
     .navalha-workspace {
@@ -951,45 +1238,187 @@ html:has(.navalha-app), body:has(.navalha-app) {
         flex: 1;
         min-height: 0;
         overflow: hidden;
+        position: relative;
     }
 
-    /* Alternância total de visualização */
-    .panel-controls.mobile-hidden,
-    .panel-preview.mobile-hidden {
-        display: none !important;
+    /* Mini-preview compacto no topo durante edição */
+    .panel-preview.mobile-compact {
+        order: -1;
+        display: flex !important;
+        flex-direction: column;
+        flex: 0 0 clamp(165px, 28dvh, 235px);
+        max-height: clamp(165px, 28dvh, 235px);
+        width: 100%;
+        background: #09090c;
+        border-bottom: 2px solid #ff0033;
+        padding: 4px 8px;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        z-index: 20;
+        overflow: hidden;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
     }
 
+    .mobile-compact-bar {
+        width: 100%;
+        max-width: 480px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+        flex-shrink: 0;
+    }
+
+    .mobile-compact-label {
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        color: #e2f835;
+        text-transform: uppercase;
+    }
+
+    .mobile-compact-actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    .btn-compact-opt {
+        background: #18181f;
+        color: #dcdad5;
+        border: 1px solid #444;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 3px 8px;
+        cursor: pointer;
+        font-family: inherit;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-compact-opt.active {
+        background: #e2f835;
+        color: #000;
+        border-color: #000;
+        box-shadow: 1px 1px 0 #ff0033;
+    }
+
+    .panel-preview.mobile-compact .canvas-wrapper {
+        height: calc(100% - 24px);
+        max-height: 100%;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .panel-preview.mobile-compact .poster-display {
+        height: 100%;
+        max-height: 100%;
+        width: auto;
+        object-fit: contain;
+        aspect-ratio: 800 / 1100;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.85);
+        border: 1px solid #333339;
+        cursor: pointer;
+    }
+
+    /* Barra recolhida do preview */
+    .panel-preview.mobile-collapsed {
+        order: -1;
+        display: flex !important;
+        flex: 0 0 auto;
+        width: 100%;
+        padding: 0;
+        background: #121216;
+        border-bottom: 2px solid #ff0033;
+        z-index: 20;
+    }
+
+    .mobile-collapsed-bar {
+        width: 100%;
+    }
+
+    .btn-expand-bar {
+        width: 100%;
+        padding: 8px 12px;
+        background: #181822;
+        color: #e2f835;
+        border: none;
+        font-size: 11px;
+        font-weight: 900;
+        font-family: inherit;
+        cursor: pointer;
+        letter-spacing: 1px;
+        text-align: center;
+    }
+
+    /* Preview em tela cheia */
+    .panel-preview.mobile-fullscreen {
+        display: flex !important;
+        flex: 1;
+        width: 100%;
+        height: 100%;
+        padding: 8px 10px calc(68px + env(safe-area-inset-bottom, 0px)) 10px;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        background: #09090c;
+    }
+
+    .panel-preview.mobile-fullscreen .canvas-wrapper {
+        max-height: calc(100dvh - 125px);
+        max-width: 96vw;
+        width: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .panel-preview.mobile-fullscreen .poster-display {
+        max-height: calc(100dvh - 135px);
+        width: auto;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    /* Controles roláveis abaixo do preview */
     .panel-controls {
         width: 100%;
         flex: 1;
         min-height: 0;
         border-right: none;
-        padding: 10px 10px 68px 10px;
+        padding: 6px 10px calc(72px + env(safe-area-inset-bottom, 0px)) 10px;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
-    .panel-preview {
-        width: 100%;
-        flex: 1;
-        min-height: 0;
-        padding: 10px 10px 68px 10px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+    .panel-controls.mobile-hidden {
+        display: none !important;
+    }
+
+    /* Abas de controle fixadas (sticky) */
+    .controls-tab-bar {
+        position: sticky;
+        top: 0;
+        z-index: 15;
+        background: #0d0d10;
+        padding-top: 4px;
+        padding-bottom: 6px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
     }
 
     .mobile-preview-actions {
         display: flex;
         gap: 8px;
         width: 100%;
-        max-width: 400px;
+        max-width: 480px;
         margin-bottom: 8px;
         z-index: 10;
         flex-shrink: 0;
     }
 
-    .btn-download-sm, .btn-gilete-sm {
+    .btn-download-sm {
         flex: 1;
         background: #e2f835;
         color: #000;
@@ -1006,28 +1435,9 @@ html:has(.navalha-app), body:has(.navalha-app) {
         justify-content: center;
     }
 
-    .btn-download-sm:hover, .btn-gilete-sm:hover {
+    .btn-download-sm:hover {
         background: #ff0033;
         color: #fff;
-    }
-
-    .canvas-wrapper {
-        max-height: calc(100dvh - 190px);
-        max-width: 95vw;
-    }
-
-    .poster-display {
-        max-height: calc(100dvh - 200px);
-        max-width: 100%;
-    }
-
-    .preset-selector-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 5px;
-    }
-
-    .texto-extra-controls {
-        grid-template-columns: 1fr;
     }
 
     /* Previne zoom agressivo no Safari/iOS */
@@ -1036,7 +1446,7 @@ html:has(.navalha-app), body:has(.navalha-app) {
     }
 
     /* Touch targets adequados (mínimo 44px) */
-    .btn-preset, .btn-download-primary, .btn-download-secondary, .btn-gilete, .btn-gilete-secondary, .tab-btn, .mobile-toggle-btn {
+    .btn-preset, .btn-download-primary, .btn-download-secondary, .btn-gilete, .btn-gilete-secondary, .tab-btn {
         min-height: 44px;
     }
 
@@ -1047,13 +1457,14 @@ html:has(.navalha-app), body:has(.navalha-app) {
         bottom: 0;
         left: 0;
         right: 0;
-        height: 56px;
-        background: rgba(14, 14, 16, 0.98);
+        height: calc(56px + env(safe-area-inset-bottom, 0px));
+        background: rgba(14, 14, 18, 0.98);
         border-top: 2px solid #ff0033;
-        padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px));
+        padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 0px)) 10px;
         gap: 8px;
         z-index: 999;
-        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.8);
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px);
     }
 
     .dock-btn {
@@ -1091,22 +1502,18 @@ html:has(.navalha-app), body:has(.navalha-app) {
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
+    .form-row-2col,
+    .form-row-3col {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 8px;
+    }
+
     .logo-title {
         font-size: 18px;
         letter-spacing: 2px;
-    }
-
-    .preset-selector-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .canvas-wrapper {
-        max-height: calc(100dvh - 180px);
-    }
-
-    .poster-display {
-        max-height: calc(100dvh - 190px);
     }
 }
 

@@ -136,6 +136,33 @@ fn trigger_download(href: &str, filename: &str) {
     }
 }
 
+fn preset_short_name(preset: AestheticPreset) -> &'static str {
+    match preset {
+        AestheticPreset::PunkRiot => "Punk Riot",
+        AestheticPreset::NavalhaSata => "Navalha Satã",
+        AestheticPreset::XeroxPodre => "Xerox Podre",
+        AestheticPreset::ViagemSolitaria => "Viagem Solitária",
+        AestheticPreset::LapaNoturna => "Lapa Noturna",
+        AestheticPreset::TeatroOperario => "Teatro Operário",
+        AestheticPreset::Risografia => "Risografia",
+        AestheticPreset::FanzineDigital => "Fanzine Digital",
+        AestheticPreset::AsfaltoAlerta => "Asfalto & Ouro",
+        AestheticPreset::Vga256 => "VGA 256",
+        AestheticPreset::Cga => "CGA 1981",
+        AestheticPreset::OldMacPopArt => "Old Mac Pop Art",
+        AestheticPreset::AsciiArt => "ASCII Art",
+        AestheticPreset::TabloidePopular => "Tablóide Popular",
+        AestheticPreset::Brutalismo => "Brutalismo",
+        AestheticPreset::TrashPolka => "Trash Polka",
+        AestheticPreset::AtariGaming => "Atari Gaming",
+        AestheticPreset::Mimeografo => "Mimeógrafo",
+        AestheticPreset::Xilogravura => "Xilogravura",
+        AestheticPreset::GlitchCrt => "Glitch CRT",
+        AestheticPreset::Punk80Br => "Punk 80 BR",
+        AestheticPreset::AnarcoZine => "Anarco-Zine",
+    }
+}
+
 #[component]
 pub fn App() -> Element {
     // Imagem base decodificada
@@ -160,8 +187,9 @@ pub fn App() -> Element {
     // Abas do painel de controle ("poster", "intervencao", "ajustes")
     let mut active_tab = use_signal(|| String::from("poster"));
 
-    // Alternador de visão mobile ("controls", "preview")
+    // Alternador de visão mobile ("controls", "preview") e colapso de preview
     let mut mobile_view = use_signal(|| String::from("controls"));
+    let mut preview_collapsed = use_signal(|| false);
 
     // Controles principais do Pôster Relâmpago
     let mut phrase = use_signal(|| String::from("EU SOBREVIVO AO MUNDO"));
@@ -1153,24 +1181,59 @@ pub fn App() -> Element {
                                             label { r#for: "recorte-inverter-cb", style: "font-size: 0.75rem; color: #aaa; cursor: pointer;", "Inverter Silhueta" }
                                         }
                                     }
-                                    div { style: "display: flex; align-items: center; gap: 8px; margin-top: 8px;",
-                                        span { style: "font-size: 0.72rem; min-width: 95px; opacity: 0.8;", "LIMIAR CORTE:" }
-                                        input {
-                                            r#type: "range",
-                                            min: "10",
-                                            max: "98",
-                                            step: "1",
-                                            value: "{recorte_threshold}",
-                                            class: "slider-punk-zoom",
-                                            style: "flex: 1;",
-                                            oninput: move |e| {
-                                                if let Ok(v) = e.value().parse::<u32>() {
+                                    div { class: "stepper-slider-box", style: "margin-top: 8px;",
+                                        div { class: "stepper-header-row",
+                                            span { class: "stepper-title", "LIMIAR CORTE: {recorte_threshold}%" }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper-reset",
+                                                onclick: move |_| {
                                                     recorte_adapt_preset.set(false);
-                                                    recorte_threshold.set(v);
-                                                }
+                                                    recorte_threshold.set(85);
+                                                },
+                                                "↺ PADRÃO (85%)"
                                             }
                                         }
-                                        span { style: "font-size: 0.75rem; min-width: 40px; text-align: right; font-weight: bold;", "{recorte_threshold}%" }
+                                        div { class: "stepper-row",
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper",
+                                                onclick: move |_| {
+                                                    let curr = recorte_threshold();
+                                                    if curr > 10 {
+                                                        recorte_adapt_preset.set(false);
+                                                        recorte_threshold.set(curr.saturating_sub(5).max(10));
+                                                    }
+                                                },
+                                                "−"
+                                            }
+                                            input {
+                                                r#type: "range",
+                                                min: "10",
+                                                max: "98",
+                                                step: "1",
+                                                value: "{recorte_threshold}",
+                                                class: "slider-punk-zoom",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() {
+                                                        recorte_adapt_preset.set(false);
+                                                        recorte_threshold.set(v);
+                                                    }
+                                                }
+                                            }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper",
+                                                onclick: move |_| {
+                                                    let curr = recorte_threshold();
+                                                    if curr < 98 {
+                                                        recorte_adapt_preset.set(false);
+                                                        recorte_threshold.set((curr + 5).min(98));
+                                                    }
+                                                },
+                                                "+"
+                                            }
+                                        }
                                     }
                                 }
 
@@ -1246,8 +1309,17 @@ pub fn App() -> Element {
                                         }
                                     }
                                     div { style: "display: flex; flex-direction: column; gap: 8px; margin-top: 8px;",
-                                        div { style: "display: flex; align-items: center; gap: 8px;",
-                                            span { style: "font-size: 0.75rem; min-width: 55px; opacity: 0.8;", "EIXO X:" }
+                                        div { style: "display: flex; align-items: center; gap: 6px;",
+                                            span { style: "font-size: 0.72rem; min-width: 48px; opacity: 0.8;", "EIXO X:" }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper",
+                                                onclick: move |_| {
+                                                    let curr = image_pos_x();
+                                                    if curr > 0 { image_pos_x.set(curr.saturating_sub(5)); }
+                                                },
+                                                "−"
+                                            }
                                             input {
                                                 r#type: "range",
                                                 min: "0",
@@ -1260,10 +1332,28 @@ pub fn App() -> Element {
                                                     if let Ok(v) = e.value().parse::<u32>() { image_pos_x.set(v); }
                                                 }
                                             }
-                                            span { style: "font-size: 0.75rem; min-width: 40px; text-align: right; font-weight: bold;", "{image_pos_x}%" }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper",
+                                                onclick: move |_| {
+                                                    let curr = image_pos_x();
+                                                    if curr < 100 { image_pos_x.set((curr + 5).min(100)); }
+                                                },
+                                                "+"
+                                            }
+                                            span { style: "font-size: 0.75rem; min-width: 36px; text-align: right; font-weight: bold;", "{image_pos_x}%" }
                                         }
-                                        div { style: "display: flex; align-items: center; gap: 8px;",
-                                            span { style: "font-size: 0.75rem; min-width: 55px; opacity: 0.8;", "EIXO Y:" }
+                                        div { style: "display: flex; align-items: center; gap: 6px;",
+                                            span { style: "font-size: 0.72rem; min-width: 48px; opacity: 0.8;", "EIXO Y:" }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper",
+                                                onclick: move |_| {
+                                                    let curr = image_pos_y();
+                                                    if curr > 0 { image_pos_y.set(curr.saturating_sub(5)); }
+                                                },
+                                                "−"
+                                            }
                                             input {
                                                 r#type: "range",
                                                 min: "0",
@@ -1276,7 +1366,16 @@ pub fn App() -> Element {
                                                     if let Ok(v) = e.value().parse::<u32>() { image_pos_y.set(v); }
                                                 }
                                             }
-                                            span { style: "font-size: 0.75rem; min-width: 40px; text-align: right; font-weight: bold;", "{image_pos_y}%" }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper",
+                                                onclick: move |_| {
+                                                    let curr = image_pos_y();
+                                                    if curr < 100 { image_pos_y.set((curr + 5).min(100)); }
+                                                },
+                                                "+"
+                                            }
+                                            span { style: "font-size: 0.75rem; min-width: 36px; text-align: right; font-weight: bold;", "{image_pos_y}%" }
                                         }
                                     }
                                 }
@@ -1324,6 +1423,134 @@ pub fn App() -> Element {
                                         }
                                     }
 
+                                    // Posicionamento e inclinação no canvas (sempre editáveis)
+                                    div { class: "form-row-3col",
+                                        div {
+                                            div { class: "stepper-slider-box",
+                                                div { class: "stepper-header-row",
+                                                    span { class: "stepper-title", "Posição X: {banner_pos_x}%" }
+                                                    button {
+                                                        r#type: "button",
+                                                        class: "btn-stepper-reset",
+                                                        onclick: move |_| banner_pos_x.set(50),
+                                                        "↺ 50%"
+                                                    }
+                                                }
+                                                div { class: "stepper-row",
+                                                    button {
+                                                        r#type: "button",
+                                                        class: "btn-stepper",
+                                                        onclick: move |_| {
+                                                            let curr = banner_pos_x();
+                                                            if curr > 0 { banner_pos_x.set(curr.saturating_sub(5)); }
+                                                        },
+                                                        "−"
+                                                    }
+                                                    input {
+                                                        r#type: "range", min: "0", max: "100",
+                                                        value: "{banner_pos_x}",
+                                                        class: "slider-punk-zoom",
+                                                        oninput: move |e| {
+                                                            if let Ok(v) = e.value().parse::<u32>() { banner_pos_x.set(v); }
+                                                        }
+                                                    }
+                                                    button {
+                                                        r#type: "button",
+                                                        class: "btn-stepper",
+                                                        onclick: move |_| {
+                                                            let curr = banner_pos_x();
+                                                            if curr < 100 { banner_pos_x.set((curr + 5).min(100)); }
+                                                        },
+                                                        "+"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        div {
+                                            div { class: "stepper-slider-box",
+                                                div { class: "stepper-header-row",
+                                                    span { class: "stepper-title", "Posição Y: {banner_pos_y}%" }
+                                                    button {
+                                                        r#type: "button",
+                                                        class: "btn-stepper-reset",
+                                                        onclick: move |_| banner_pos_y.set(85),
+                                                        "↺ 85%"
+                                                    }
+                                                }
+                                                div { class: "stepper-row",
+                                                    button {
+                                                        r#type: "button",
+                                                        class: "btn-stepper",
+                                                        onclick: move |_| {
+                                                            let curr = banner_pos_y();
+                                                            if curr > 0 { banner_pos_y.set(curr.saturating_sub(5)); }
+                                                        },
+                                                        "−"
+                                                    }
+                                                    input {
+                                                        r#type: "range", min: "0", max: "100",
+                                                        value: "{banner_pos_y}",
+                                                        class: "slider-punk-zoom",
+                                                        oninput: move |e| {
+                                                            if let Ok(v) = e.value().parse::<u32>() { banner_pos_y.set(v); }
+                                                        }
+                                                    }
+                                                    button {
+                                                        r#type: "button",
+                                                        class: "btn-stepper",
+                                                        onclick: move |_| {
+                                                            let curr = banner_pos_y();
+                                                            if curr < 100 { banner_pos_y.set((curr + 5).min(100)); }
+                                                        },
+                                                        "+"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        div {
+                                            div { class: "stepper-slider-box",
+                                                div { class: "stepper-header-row",
+                                                    span { class: "stepper-title", "Inclinação: {banner_rotation}°" }
+                                                    button {
+                                                        r#type: "button",
+                                                        class: "btn-stepper-reset",
+                                                        onclick: move |_| banner_rotation.set(0),
+                                                        "↺ 0°"
+                                                    }
+                                                }
+                                                div { class: "stepper-row",
+                                                    button {
+                                                        r#type: "button",
+                                                        class: "btn-stepper",
+                                                        onclick: move |_| {
+                                                            let curr = banner_rotation();
+                                                            if curr > -45 { banner_rotation.set((curr - 5).max(-45)); }
+                                                        },
+                                                        "−"
+                                                    }
+                                                    input {
+                                                        r#type: "range", min: "-45", max: "45",
+                                                        value: "{banner_rotation}",
+                                                        class: "slider-punk-zoom",
+                                                        oninput: move |e| {
+                                                            if let Ok(v) = e.value().parse::<i16>() { banner_rotation.set(v); }
+                                                        }
+                                                    }
+                                                    button {
+                                                        r#type: "button",
+                                                        class: "btn-stepper",
+                                                        onclick: move |_| {
+                                                            let curr = banner_rotation();
+                                                            if curr < 45 { banner_rotation.set((curr + 5).min(45)); }
+                                                        },
+                                                        "+"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Sincronização estética com o preset ativo
                                     div { style: "display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: rgba(255, 0, 51, 0.1); border: 1px dashed #ff0033;",
                                         input {
                                             r#type: "checkbox",
@@ -1334,162 +1561,294 @@ pub fn App() -> Element {
                                         label { r#for: "banner-adapt-preset-cb", style: "font-size: 0.72rem; color: #ff3366; font-weight: bold; cursor: pointer; text-transform: uppercase;", "⚡ Modo Adequado ao Preset Ativo (Sincronizar Cores, Fontes e Bordas)" }
                                     }
 
-                                    div { style: "display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px;",
-                                        div {
-                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Família Tipográfica" }
-                                            select {
-                                                class: "select-preset-punk",
-                                                value: "{banner_font_family}",
-                                                onchange: move |e| banner_font_family.set(e.value()),
-                                                option { value: "impact", "IMPACT // Bebas" }
-                                                option { value: "monospace", "MONO // Terminal" }
-                                                option { value: "serif", "SERIF // Jornal" }
-                                                option { value: "sans", "SANS // Moderna" }
-                                            }
-                                        }
-                                        div {
-                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Tamanho ({banner_font_size}px)" }
-                                            input {
-                                                r#type: "range", min: "20", max: "96",
-                                                value: "{banner_font_size}",
-                                                oninput: move |e| {
-                                                    if let Ok(v) = e.value().parse::<u32>() { banner_font_size.set(v); }
-                                                }
-                                            }
+                                    if banner_adapt_preset() {
+                                        div { class: "preset-sync-notice",
+                                            "🔒 ESTÉTICA SINCRONIZADA AO PRESET (DESMARQUE ACIMA PARA PERSONALIZAR CORES, FONTES E BORDAS)"
                                         }
                                     }
 
-                                    div { style: "margin-top: 4px; display: flex; align-items: center; gap: 6px;",
-                                        input {
-                                            r#type: "checkbox",
-                                            id: "banner-auto-fit-cb",
-                                            checked: "{banner_auto_fit}",
-                                            onchange: move |e| banner_auto_fit.set(e.checked()),
+                                    // Controles estéticos (desativados quando sincronizados ao preset)
+                                    div { class: if banner_adapt_preset() { "controls-locked-by-preset" } else { "" },
+                                        div { class: "form-row-2col",
+                                            div {
+                                                label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Família Tipográfica" }
+                                                select {
+                                                    class: "select-preset-punk",
+                                                    disabled: "{banner_adapt_preset}",
+                                                    value: "{banner_font_family}",
+                                                    onchange: move |e| banner_font_family.set(e.value()),
+                                                    option { value: "impact", "IMPACT // Bebas" }
+                                                    option { value: "monospace", "MONO // Terminal" }
+                                                    option { value: "serif", "SERIF // Jornal" }
+                                                    option { value: "sans", "SANS // Moderna" }
+                                                }
+                                            }
+                                            div {
+                                                div { class: "stepper-slider-box",
+                                                    div { class: "stepper-header-row",
+                                                        span { class: "stepper-title", "Tamanho: {banner_font_size}px" }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper-reset",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            onclick: move |_| banner_font_size.set(48),
+                                                            "↺ 48px"
+                                                        }
+                                                    }
+                                                    div { class: "stepper-row",
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            onclick: move |_| {
+                                                                let curr = banner_font_size();
+                                                                if curr > 20 { banner_font_size.set(curr.saturating_sub(4).max(20)); }
+                                                            },
+                                                            "−"
+                                                        }
+                                                        input {
+                                                            r#type: "range", min: "20", max: "96",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            value: "{banner_font_size}",
+                                                            class: "slider-punk-zoom",
+                                                            oninput: move |e| {
+                                                                if let Ok(v) = e.value().parse::<u32>() { banner_font_size.set(v); }
+                                                            }
+                                                        }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            onclick: move |_| {
+                                                                let curr = banner_font_size();
+                                                                if curr < 96 { banner_font_size.set((curr + 4).min(96)); }
+                                                            },
+                                                            "+"
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
-                                        label { r#for: "banner-auto-fit-cb", style: "font-size: 0.72rem; color: #ccc; cursor: pointer;", "Reduzir fonte automaticamente se exceder a faixa (auto-fit)" }
-                                    }
 
-                                    div { style: "display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 6px;",
-                                        div {
-                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Posição X ({banner_pos_x}%)" }
+                                        div { style: "margin-top: 4px; display: flex; align-items: center; gap: 6px;",
                                             input {
-                                                r#type: "range", min: "0", max: "100",
-                                                value: "{banner_pos_x}",
-                                                oninput: move |e| {
-                                                    if let Ok(v) = e.value().parse::<u32>() { banner_pos_x.set(v); }
-                                                }
+                                                r#type: "checkbox",
+                                                id: "banner-auto-fit-cb",
+                                                disabled: "{banner_adapt_preset}",
+                                                checked: "{banner_auto_fit}",
+                                                onchange: move |e| banner_auto_fit.set(e.checked()),
                                             }
+                                            label { r#for: "banner-auto-fit-cb", style: "font-size: 0.72rem; color: #ccc; cursor: pointer;", "Reduzir fonte automaticamente se exceder a faixa (auto-fit)" }
                                         }
-                                        div {
-                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Posição Y ({banner_pos_y}%)" }
-                                            input {
-                                                r#type: "range", min: "0", max: "100",
-                                                value: "{banner_pos_y}",
-                                                oninput: move |e| {
-                                                    if let Ok(v) = e.value().parse::<u32>() { banner_pos_y.set(v); }
-                                                }
-                                            }
-                                        }
-                                        div {
-                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Inclinação ({banner_rotation}°)" }
-                                            input {
-                                                r#type: "range", min: "-45", max: "45",
-                                                value: "{banner_rotation}",
-                                                oninput: move |e| {
-                                                    if let Ok(v) = e.value().parse::<i16>() { banner_rotation.set(v); }
-                                                }
-                                            }
-                                        }
-                                    }
 
-                                    div { style: "display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 6px;",
-                                        div {
-                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Cor do Texto" }
-                                            select {
-                                                class: "select-preset-punk",
-                                                value: "{banner_fg_color}",
-                                                onchange: move |e| banner_fg_color.set(e.value()),
-                                                option { value: "auto", "AUTO // Preset" }
-                                                option { value: "white", "BRANCO // #FFFFFF" }
-                                                option { value: "black", "PRETO // #000000" }
-                                                option { value: "yellow", "AMARELO // #FFEE00" }
-                                                option { value: "red", "VERMELHO // #FF0033" }
-                                                option { value: "cyan", "CIANO // #00FFFF" }
-                                                option { value: "green", "VERDE // #00FF66" }
+                                        div { class: "form-row-3col", style: "margin-top: 6px;",
+                                            div {
+                                                label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Cor do Texto" }
+                                                select {
+                                                    class: "select-preset-punk",
+                                                    disabled: "{banner_adapt_preset}",
+                                                    value: "{banner_fg_color}",
+                                                    onchange: move |e| banner_fg_color.set(e.value()),
+                                                    option { value: "auto", "AUTO // Preset" }
+                                                    option { value: "white", "BRANCO // #FFFFFF" }
+                                                    option { value: "black", "PRETO // #000000" }
+                                                    option { value: "yellow", "AMARELO // #FFEE00" }
+                                                    option { value: "red", "VERMELHO // #FF0033" }
+                                                    option { value: "cyan", "CIANO // #00FFFF" }
+                                                    option { value: "green", "VERDE // #00FF66" }
+                                                }
                                             }
-                                        }
-                                        div {
-                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Fundo da Tarja" }
-                                            select {
-                                                class: "select-preset-punk",
-                                                value: "{banner_bg_color}",
-                                                onchange: move |e| banner_bg_color.set(e.value()),
-                                                option { value: "auto", "AUTO // Preset" }
-                                                option { value: "black", "PRETO // #000000" }
-                                                option { value: "white", "BRANCO // #FFFFFF" }
-                                                option { value: "red", "VERMELHO // #FF0033" }
-                                                option { value: "yellow", "AMARELO // #FFEE00" }
-                                                option { value: "none", "SEM FUNDO // Transparente" }
+                                            div {
+                                                label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Fundo da Tarja" }
+                                                select {
+                                                    class: "select-preset-punk",
+                                                    disabled: "{banner_adapt_preset}",
+                                                    value: "{banner_bg_color}",
+                                                    onchange: move |e| banner_bg_color.set(e.value()),
+                                                    option { value: "auto", "AUTO // Preset" }
+                                                    option { value: "black", "PRETO // #000000" }
+                                                    option { value: "white", "BRANCO // #FFFFFF" }
+                                                    option { value: "red", "VERMELHO // #FF0033" }
+                                                    option { value: "yellow", "AMARELO // #FFEE00" }
+                                                    option { value: "none", "SEM FUNDO // Transparente" }
+                                                }
                                             }
-                                        }
-                                        div {
-                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Acabamento" }
-                                            select {
-                                                class: "select-preset-punk",
-                                                value: "{banner_effect}",
-                                                onchange: move |e| banner_effect.set(e.value()),
-                                                option { value: "solida", "SÓLIDA" }
-                                                option { value: "xerox", "XEROX // Toner" }
-                                            }
-                                        }
-                                    }
-
-                                    div { style: "display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;",
-                                        div {
-                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Estilo de Borda" }
-                                            select {
-                                                class: "select-preset-punk",
-                                                value: "{banner_border_finish}",
-                                                onchange: move |e| banner_border_finish.set(e.value()),
-                                                option { value: "nenhuma", "NENHUMA" }
-                                                option { value: "solida", "SÓLIDA" }
-                                                option { value: "tracejada", "TRACEJADA" }
-                                                option { value: "picote", "PICOTE // Serrilhado" }
-                                                option { value: "durex", "FITA DUREX // Adesiva" }
-                                            }
-                                        }
-                                        div {
-                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Espessura Borda ({banner_border_width}px)" }
-                                            input {
-                                                r#type: "range", min: "1", max: "12",
-                                                value: "{banner_border_width}",
-                                                oninput: move |e| {
-                                                    if let Ok(v) = e.value().parse::<u32>() { banner_border_width.set(v); }
+                                            div {
+                                                label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Acabamento" }
+                                                select {
+                                                    class: "select-preset-punk",
+                                                    disabled: "{banner_adapt_preset}",
+                                                    value: "{banner_effect}",
+                                                    onchange: move |e| banner_effect.set(e.value()),
+                                                    option { value: "solida", "SÓLIDA" }
+                                                    option { value: "xerox", "XEROX // Toner" }
                                                 }
                                             }
                                         }
-                                    }
 
-                                    div { style: "display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;",
-                                        div {
-                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Ondulação ({banner_wave_amp}px)" }
-                                            input {
-                                                r#type: "range", min: "0", max: "30",
-                                                value: "{banner_wave_amp}",
-                                                oninput: move |e| {
-                                                    if let Ok(v) = e.value().parse::<u32>() { banner_wave_amp.set(v); }
+                                        div { class: "form-row-2col", style: "margin-top: 6px;",
+                                            div {
+                                                label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Estilo de Borda" }
+                                                select {
+                                                    class: "select-preset-punk",
+                                                    disabled: "{banner_adapt_preset}",
+                                                    value: "{banner_border_finish}",
+                                                    onchange: move |e| banner_border_finish.set(e.value()),
+                                                    option { value: "nenhuma", "NENHUMA" }
+                                                    option { value: "solida", "SÓLIDA" }
+                                                    option { value: "tracejada", "TRACEJADA" }
+                                                    option { value: "picote", "PICOTE // Serrilhado" }
+                                                    option { value: "durex", "FITA DUREX // Adesiva" }
+                                                }
+                                            }
+                                            div {
+                                                div { class: "stepper-slider-box",
+                                                    div { class: "stepper-header-row",
+                                                        span { class: "stepper-title", "Espessura Borda: {banner_border_width}px" }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper-reset",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            onclick: move |_| banner_border_width.set(3),
+                                                            "↺ 3px"
+                                                        }
+                                                    }
+                                                    div { class: "stepper-row",
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            onclick: move |_| {
+                                                                let curr = banner_border_width();
+                                                                if curr > 1 { banner_border_width.set(curr.saturating_sub(1)); }
+                                                            },
+                                                            "−"
+                                                        }
+                                                        input {
+                                                            r#type: "range", min: "1", max: "12",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            value: "{banner_border_width}",
+                                                            class: "slider-punk-zoom",
+                                                            oninput: move |e| {
+                                                                if let Ok(v) = e.value().parse::<u32>() { banner_border_width.set(v); }
+                                                            }
+                                                        }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            onclick: move |_| {
+                                                                let curr = banner_border_width();
+                                                                if curr < 12 { banner_border_width.set(curr + 1); }
+                                                            },
+                                                            "+"
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
-                                        div {
-                                            label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Jitter Palavras ({banner_word_rot}°)" }
-                                            input {
-                                                r#type: "range", min: "0", max: "20",
-                                                value: "{banner_word_rot}",
-                                                oninput: move |e| {
-                                                    if let Ok(v) = e.value().parse::<u32>() {
-                                                        banner_word_rot.set(v);
-                                                        if v > 0 { banner_word_cut.set(true); }
+
+                                        div { class: "form-row-2col", style: "margin-top: 6px;",
+                                            div {
+                                                div { class: "stepper-slider-box",
+                                                    div { class: "stepper-header-row",
+                                                        span { class: "stepper-title", "Ondulação: {banner_wave_amp}px" }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper-reset",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            onclick: move |_| banner_wave_amp.set(0),
+                                                            "↺ 0px"
+                                                        }
+                                                    }
+                                                    div { class: "stepper-row",
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            onclick: move |_| {
+                                                                let curr = banner_wave_amp();
+                                                                if curr > 0 { banner_wave_amp.set(curr.saturating_sub(2)); }
+                                                            },
+                                                            "−"
+                                                        }
+                                                        input {
+                                                            r#type: "range", min: "0", max: "30",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            value: "{banner_wave_amp}",
+                                                            class: "slider-punk-zoom",
+                                                            oninput: move |e| {
+                                                                if let Ok(v) = e.value().parse::<u32>() { banner_wave_amp.set(v); }
+                                                            }
+                                                        }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            onclick: move |_| {
+                                                                let curr = banner_wave_amp();
+                                                                if curr < 30 { banner_wave_amp.set((curr + 2).min(30)); }
+                                                            },
+                                                            "+"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            div {
+                                                div { class: "stepper-slider-box",
+                                                    div { class: "stepper-header-row",
+                                                        span { class: "stepper-title", "Jitter Palavras: {banner_word_rot}°" }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper-reset",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            onclick: move |_| {
+                                                                banner_word_rot.set(0);
+                                                                banner_word_cut.set(false);
+                                                            },
+                                                            "↺ 0°"
+                                                        }
+                                                    }
+                                                    div { class: "stepper-row",
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            onclick: move |_| {
+                                                                let curr = banner_word_rot();
+                                                                if curr > 0 {
+                                                                    let next = curr.saturating_sub(2);
+                                                                    banner_word_rot.set(next);
+                                                                    if next == 0 { banner_word_cut.set(false); }
+                                                                }
+                                                            },
+                                                            "−"
+                                                        }
+                                                        input {
+                                                            r#type: "range", min: "0", max: "20",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            value: "{banner_word_rot}",
+                                                            class: "slider-punk-zoom",
+                                                            oninput: move |e| {
+                                                                if let Ok(v) = e.value().parse::<u32>() {
+                                                                    banner_word_rot.set(v);
+                                                                    if v > 0 { banner_word_cut.set(true); } else { banner_word_cut.set(false); }
+                                                                }
+                                                            }
+                                                        }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            onclick: move |_| {
+                                                                let curr = banner_word_rot();
+                                                                if curr < 20 {
+                                                                    banner_word_rot.set((curr + 2).min(20));
+                                                                    banner_word_cut.set(true);
+                                                                }
+                                                            },
+                                                            "+"
+                                                        }
                                                     }
                                                 }
                                             }
@@ -1499,7 +1858,44 @@ pub fn App() -> Element {
                             }
 
                             div { class: "control-box",
-                                label { class: "section-tag", "3. ESTÉTICA ANTI-DESIGN" }
+                                label { class: "section-tag", "3. ESTÉTICA ANTI-DESIGN (22 PRESETS CANÔNICOS)" }
+                                div { class: "preset-carousel-container",
+                                    div { class: "preset-carousel-scroll",
+                                        {AestheticPreset::all().iter().enumerate().map(|(idx, p)| {
+                                            let pid = p.id().to_string();
+                                            let is_sel = aesthetic_id() == pid;
+                                            let pal = Palette::find_preset(p.id()).unwrap_or_else(Palette::classic_punk);
+                                            let colors = pal.colors.clone();
+                                            let num = format!("{:02}", idx + 1);
+                                            let short_title = preset_short_name(*p);
+                                            let p_target = pid.clone();
+                                            rsx! {
+                                                button {
+                                                    key: "{pid}",
+                                                    r#type: "button",
+                                                    class: if is_sel { "preset-chip active" } else { "preset-chip" },
+                                                    onclick: move |_| aesthetic_id.set(p_target.clone()),
+                                                    div { class: "preset-chip-header",
+                                                        span { class: "preset-chip-num", "{num}" }
+                                                        div { class: "preset-chip-dots",
+                                                            {colors.iter().take(3).map(|c| {
+                                                                let hex = c.to_hex();
+                                                                rsx! {
+                                                                    span {
+                                                                        key: "{hex}",
+                                                                        class: "preset-color-dot",
+                                                                        style: "background-color: {hex};",
+                                                                    }
+                                                                }
+                                                            })}
+                                                        }
+                                                    }
+                                                    span { class: "preset-chip-name", "{short_title}" }
+                                                }
+                                            }
+                                        })}
+                                    }
+                                }
                                 select {
                                     class: "select-preset-punk",
                                     value: "{aesthetic_id}",
@@ -1529,6 +1925,41 @@ pub fn App() -> Element {
                                 }
                                 div { class: "preset-badge-summary",
                                     span { class: "preset-summary-tag", "⚡ {preset_summary}" }
+                                }
+                                button {
+                                    r#type: "button",
+                                    class: "btn-reset-preset",
+                                    onclick: move |_| {
+                                        banner_adapt_preset.set(true);
+                                        banner_sem_faixa.set(false);
+                                        recorte_adapt_preset.set(true);
+                                        recorte_ativo.set(true);
+                                        recorte_threshold.set(85);
+                                        recorte_inverter.set(true);
+                                        image_zoom.set(100);
+                                        image_pos_x.set(50);
+                                        image_pos_y.set(50);
+                                        rotation_deg.set(0);
+                                        banner_pos_x.set(50);
+                                        banner_pos_y.set(85);
+                                        banner_rotation.set(0);
+                                        banner_font_size.set(48);
+                                        banner_font_family.set(String::from("impact"));
+                                        banner_fg_color.set(String::from("auto"));
+                                        banner_bg_color.set(String::from("auto"));
+                                        banner_effect.set(String::from("solida"));
+                                        banner_border_finish.set(String::from("nenhuma"));
+                                        banner_border_width.set(3);
+                                        banner_wave_amp.set(0);
+                                        banner_word_rot.set(0);
+                                        dither_override.set(String::from("auto"));
+                                        palette_override.set(String::from("auto"));
+                                        show_advanced.set(false);
+                                        threshold_slider.set(85);
+                                        unsharp_slider.set(22);
+                                        stretch_y_slider.set(15);
+                                    },
+                                    "↺ RESTAURAR PADRÃO DO PRESET"
                                 }
                             }
                         } else if active_tab() == "intervencao" {
@@ -1595,54 +2026,135 @@ pub fn App() -> Element {
                                                          100u32)
                                                     });
                                                 let (px100, py100, sc100) = params;
-                                                let dmg_sel2 = dmg_sel.clone();
-                                                let dmg_sel3 = dmg_sel.clone();
-                                                let dmg_sel4 = dmg_sel.clone();
-                                                let dmg_sel5 = dmg_sel.clone();
+                                                let d_x_minus = dmg_sel.clone();
+                                                let d_x_input = dmg_sel.clone();
+                                                let d_x_plus = dmg_sel.clone();
+                                                let d_y_minus = dmg_sel.clone();
+                                                let d_y_input = dmg_sel.clone();
+                                                let d_y_plus = dmg_sel.clone();
+                                                let d_sc_minus = dmg_sel.clone();
+                                                let d_sc_input = dmg_sel.clone();
+                                                let d_sc_plus = dmg_sel.clone();
+                                                let d_reset = dmg_sel.clone();
                                                 rsx! {
                                                     div { class: "item-ajuste-sliders",
                                                         div { class: "slider-group",
                                                             label { "POSIÇÃO X: {px100}%" }
-                                                            input {
-                                                                r#type: "range", min: "0", max: "100",
-                                                                value: "{px100}",
-                                                                oninput: move |e| {
-                                                                    if let Ok(v) = e.value().parse::<u32>() {
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
                                                                         let mut map = damage_params();
-                                                                        let entry = map.entry(dmg_sel2.clone()).or_insert((50, 50, 100));
-                                                                        entry.0 = v;
+                                                                        let entry = map.entry(d_x_minus.clone()).or_insert((50, 50, 100));
+                                                                        entry.0 = entry.0.saturating_sub(5);
                                                                         damage_params.set(map);
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "0", max: "100",
+                                                                    value: "{px100}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() {
+                                                                            let mut map = damage_params();
+                                                                            let entry = map.entry(d_x_input.clone()).or_insert((50, 50, 100));
+                                                                            entry.0 = v;
+                                                                            damage_params.set(map);
+                                                                        }
                                                                     }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
+                                                                        let mut map = damage_params();
+                                                                        let entry = map.entry(d_x_plus.clone()).or_insert((50, 50, 100));
+                                                                        entry.0 = (entry.0 + 5).min(100);
+                                                                        damage_params.set(map);
+                                                                    },
+                                                                    "+"
                                                                 }
                                                             }
                                                         }
                                                         div { class: "slider-group",
                                                             label { "POSIÇÃO Y: {py100}%" }
-                                                            input {
-                                                                r#type: "range", min: "0", max: "100",
-                                                                value: "{py100}",
-                                                                oninput: move |e| {
-                                                                    if let Ok(v) = e.value().parse::<u32>() {
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
                                                                         let mut map = damage_params();
-                                                                        let entry = map.entry(dmg_sel3.clone()).or_insert((50, 50, 100));
-                                                                        entry.1 = v;
+                                                                        let entry = map.entry(d_y_minus.clone()).or_insert((50, 50, 100));
+                                                                        entry.1 = entry.1.saturating_sub(5);
                                                                         damage_params.set(map);
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "0", max: "100",
+                                                                    value: "{py100}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() {
+                                                                            let mut map = damage_params();
+                                                                            let entry = map.entry(d_y_input.clone()).or_insert((50, 50, 100));
+                                                                            entry.1 = v;
+                                                                            damage_params.set(map);
+                                                                        }
                                                                     }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
+                                                                        let mut map = damage_params();
+                                                                        let entry = map.entry(d_y_plus.clone()).or_insert((50, 50, 100));
+                                                                        entry.1 = (entry.1 + 5).min(100);
+                                                                        damage_params.set(map);
+                                                                    },
+                                                                    "+"
                                                                 }
                                                             }
                                                         }
                                                         div { class: "slider-group",
                                                             label { "ESCALA: {sc100}% ({sc100 as f32 / 100.0:.1}x)" }
-                                                            input {
-                                                                r#type: "range", min: "25", max: "400",
-                                                                value: "{sc100}",
-                                                                oninput: move |e| {
-                                                                    if let Ok(v) = e.value().parse::<u32>() {
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
                                                                         let mut map = damage_params();
-                                                                        let entry = map.entry(dmg_sel4.clone()).or_insert((50, 50, 100));
-                                                                        entry.2 = v;
+                                                                        let entry = map.entry(d_sc_minus.clone()).or_insert((50, 50, 100));
+                                                                        entry.2 = entry.2.saturating_sub(10).max(25);
                                                                         damage_params.set(map);
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "25", max: "400",
+                                                                    value: "{sc100}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() {
+                                                                            let mut map = damage_params();
+                                                                            let entry = map.entry(d_sc_input.clone()).or_insert((50, 50, 100));
+                                                                            entry.2 = v;
+                                                                            damage_params.set(map);
+                                                                        }
                                                                     }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
+                                                                        let mut map = damage_params();
+                                                                        let entry = map.entry(d_sc_plus.clone()).or_insert((50, 50, 100));
+                                                                        entry.2 = (entry.2 + 10).min(400);
+                                                                        damage_params.set(map);
+                                                                    },
+                                                                    "+"
                                                                 }
                                                             }
                                                         }
@@ -1651,7 +2163,7 @@ pub fn App() -> Element {
                                                             style: "margin-top:4px;",
                                                             onclick: move |_| {
                                                                 let mut map = damage_params();
-                                                                map.remove(&dmg_sel5);
+                                                                map.remove(&d_reset);
                                                                 damage_params.set(map);
                                                             },
                                                             "↺ RESETAR POSIÇÃO"
@@ -1751,73 +2263,183 @@ pub fn App() -> Element {
                                                     .unwrap_or((50u32, 50u32, 100u32, 0i32));
                                                 let (b_style, b_width) = sticker_borders().get(&stk_sel).cloned()
                                                     .unwrap_or_else(|| (String::from("diecut"), 4u32));
-                                                let ss2 = stk_sel.clone();
-                                                let ss3 = stk_sel.clone();
-                                                let ss4 = stk_sel.clone();
-                                                let ss5 = stk_sel.clone();
-                                                let ss6 = stk_sel.clone();
-                                                let ss7 = stk_sel.clone();
-                                                let ss8 = stk_sel.clone();
-                                                let ss9 = stk_sel.clone();
+                                                let s_x_minus = stk_sel.clone();
+                                                let s_x_input = stk_sel.clone();
+                                                let s_x_plus = stk_sel.clone();
+                                                let s_y_minus = stk_sel.clone();
+                                                let s_y_input = stk_sel.clone();
+                                                let s_y_plus = stk_sel.clone();
+                                                let s_sz_minus = stk_sel.clone();
+                                                let s_sz_input = stk_sel.clone();
+                                                let s_sz_plus = stk_sel.clone();
+                                                let s_rot_minus = stk_sel.clone();
+                                                let s_rot_input = stk_sel.clone();
+                                                let s_rot_plus = stk_sel.clone();
+                                                let s_style = stk_sel.clone();
+                                                let s_bw_minus = stk_sel.clone();
+                                                let s_bw_input = stk_sel.clone();
+                                                let s_bw_plus = stk_sel.clone();
+                                                let s_reset_p = stk_sel.clone();
+                                                let s_reset_b = stk_sel.clone();
                                                 rsx! {
                                                     div { class: "item-ajuste-sliders",
                                                         div { class: "slider-group",
                                                             label { "POSIÇÃO X: {px100}%" }
-                                                            input {
-                                                                r#type: "range", min: "0", max: "100",
-                                                                value: "{px100}",
-                                                                oninput: move |e| {
-                                                                    if let Ok(v) = e.value().parse::<u32>() {
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
                                                                         let mut map = sticker_params();
-                                                                        let entry = map.entry(ss2.clone()).or_insert((50,50,100,0));
-                                                                        entry.0 = v;
+                                                                        let entry = map.entry(s_x_minus.clone()).or_insert((50,50,100,0));
+                                                                        entry.0 = entry.0.saturating_sub(5);
                                                                         sticker_params.set(map);
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "0", max: "100",
+                                                                    value: "{px100}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() {
+                                                                            let mut map = sticker_params();
+                                                                            let entry = map.entry(s_x_input.clone()).or_insert((50,50,100,0));
+                                                                            entry.0 = v;
+                                                                            sticker_params.set(map);
+                                                                        }
                                                                     }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
+                                                                        let mut map = sticker_params();
+                                                                        let entry = map.entry(s_x_plus.clone()).or_insert((50,50,100,0));
+                                                                        entry.0 = (entry.0 + 5).min(100);
+                                                                        sticker_params.set(map);
+                                                                    },
+                                                                    "+"
                                                                 }
                                                             }
                                                         }
                                                         div { class: "slider-group",
                                                             label { "POSIÇÃO Y: {py100}%" }
-                                                            input {
-                                                                r#type: "range", min: "0", max: "100",
-                                                                value: "{py100}",
-                                                                oninput: move |e| {
-                                                                    if let Ok(v) = e.value().parse::<u32>() {
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
                                                                         let mut map = sticker_params();
-                                                                        let entry = map.entry(ss3.clone()).or_insert((50,50,100,0));
-                                                                        entry.1 = v;
+                                                                        let entry = map.entry(s_y_minus.clone()).or_insert((50,50,100,0));
+                                                                        entry.1 = entry.1.saturating_sub(5);
                                                                         sticker_params.set(map);
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "0", max: "100",
+                                                                    value: "{py100}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() {
+                                                                            let mut map = sticker_params();
+                                                                            let entry = map.entry(s_y_input.clone()).or_insert((50,50,100,0));
+                                                                            entry.1 = v;
+                                                                            sticker_params.set(map);
+                                                                        }
                                                                     }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
+                                                                        let mut map = sticker_params();
+                                                                        let entry = map.entry(s_y_plus.clone()).or_insert((50,50,100,0));
+                                                                        entry.1 = (entry.1 + 5).min(100);
+                                                                        sticker_params.set(map);
+                                                                    },
+                                                                    "+"
                                                                 }
                                                             }
                                                         }
                                                         div { class: "slider-group",
                                                             label { "TAMANHO: {sz}px" }
-                                                            input {
-                                                                r#type: "range", min: "40", max: "240",
-                                                                value: "{sz}",
-                                                                oninput: move |e| {
-                                                                    if let Ok(v) = e.value().parse::<u32>() {
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
                                                                         let mut map = sticker_params();
-                                                                        let entry = map.entry(ss4.clone()).or_insert((50,50,100,0));
-                                                                        entry.2 = v;
+                                                                        let entry = map.entry(s_sz_minus.clone()).or_insert((50,50,100,0));
+                                                                        entry.2 = entry.2.saturating_sub(10).max(40);
                                                                         sticker_params.set(map);
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "40", max: "240",
+                                                                    value: "{sz}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() {
+                                                                            let mut map = sticker_params();
+                                                                            let entry = map.entry(s_sz_input.clone()).or_insert((50,50,100,0));
+                                                                            entry.2 = v;
+                                                                            sticker_params.set(map);
+                                                                        }
                                                                     }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
+                                                                        let mut map = sticker_params();
+                                                                        let entry = map.entry(s_sz_plus.clone()).or_insert((50,50,100,0));
+                                                                        entry.2 = (entry.2 + 10).min(240);
+                                                                        sticker_params.set(map);
+                                                                    },
+                                                                    "+"
                                                                 }
                                                             }
                                                         }
                                                         div { class: "slider-group",
                                                             label { "ROTAÇÃO: {rot}°" }
-                                                            input {
-                                                                r#type: "range", min: "-180", max: "180",
-                                                                value: "{rot}",
-                                                                oninput: move |e| {
-                                                                    if let Ok(v) = e.value().parse::<i32>() {
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
                                                                         let mut map = sticker_params();
-                                                                        let entry = map.entry(ss5.clone()).or_insert((50,50,100,0));
-                                                                        entry.3 = v;
+                                                                        let entry = map.entry(s_rot_minus.clone()).or_insert((50,50,100,0));
+                                                                        entry.3 = (entry.3 - 15).max(-180);
                                                                         sticker_params.set(map);
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "-180", max: "180",
+                                                                    value: "{rot}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<i32>() {
+                                                                            let mut map = sticker_params();
+                                                                            let entry = map.entry(s_rot_input.clone()).or_insert((50,50,100,0));
+                                                                            entry.3 = v;
+                                                                            sticker_params.set(map);
+                                                                        }
                                                                     }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
+                                                                        let mut map = sticker_params();
+                                                                        let entry = map.entry(s_rot_plus.clone()).or_insert((50,50,100,0));
+                                                                        entry.3 = (entry.3 + 15).min(180);
+                                                                        sticker_params.set(map);
+                                                                    },
+                                                                    "+"
                                                                 }
                                                             }
                                                         }
@@ -1828,7 +2450,7 @@ pub fn App() -> Element {
                                                                 value: "{b_style}",
                                                                 onchange: move |e| {
                                                                     let mut map = sticker_borders();
-                                                                    let entry = map.entry(ss7.clone()).or_insert((String::from("diecut"), 4));
+                                                                    let entry = map.entry(s_style.clone()).or_insert((String::from("diecut"), 4));
                                                                     entry.0 = e.value();
                                                                     sticker_borders.set(map);
                                                                 },
@@ -1842,16 +2464,41 @@ pub fn App() -> Element {
                                                         if b_style != "nenhuma" {
                                                             div { class: "slider-group",
                                                                 label { "LARGURA DA BORDA: {b_width}px" }
-                                                                input {
-                                                                    r#type: "range", min: "1", max: "16",
-                                                                    value: "{b_width}",
-                                                                    oninput: move |e| {
-                                                                        if let Ok(v) = e.value().parse::<u32>() {
+                                                                div { class: "stepper-row",
+                                                                    button {
+                                                                        r#type: "button",
+                                                                        class: "btn-stepper",
+                                                                        onclick: move |_| {
                                                                             let mut map = sticker_borders();
-                                                                            let entry = map.entry(ss8.clone()).or_insert((String::from("diecut"), 4));
-                                                                            entry.1 = v;
+                                                                            let entry = map.entry(s_bw_minus.clone()).or_insert((String::from("diecut"), 4));
+                                                                            entry.1 = entry.1.saturating_sub(1).max(1);
                                                                             sticker_borders.set(map);
+                                                                        },
+                                                                        "−"
+                                                                    }
+                                                                    input {
+                                                                        r#type: "range", min: "1", max: "16",
+                                                                        value: "{b_width}",
+                                                                        class: "slider-punk-zoom",
+                                                                        oninput: move |e| {
+                                                                            if let Ok(v) = e.value().parse::<u32>() {
+                                                                                let mut map = sticker_borders();
+                                                                                let entry = map.entry(s_bw_input.clone()).or_insert((String::from("diecut"), 4));
+                                                                                entry.1 = v;
+                                                                                sticker_borders.set(map);
+                                                                            }
                                                                         }
+                                                                    }
+                                                                    button {
+                                                                        r#type: "button",
+                                                                        class: "btn-stepper",
+                                                                        onclick: move |_| {
+                                                                            let mut map = sticker_borders();
+                                                                            let entry = map.entry(s_bw_plus.clone()).or_insert((String::from("diecut"), 4));
+                                                                            entry.1 = (entry.1 + 1).min(16);
+                                                                            sticker_borders.set(map);
+                                                                        },
+                                                                        "+"
                                                                     }
                                                                 }
                                                             }
@@ -1861,10 +2508,10 @@ pub fn App() -> Element {
                                                             style: "margin-top:4px;",
                                                             onclick: move |_| {
                                                                 let mut map = sticker_params();
-                                                                map.remove(&ss6);
+                                                                map.remove(&s_reset_p);
                                                                 sticker_params.set(map);
                                                                 let mut bmap = sticker_borders();
-                                                                bmap.remove(&ss9);
+                                                                bmap.remove(&s_reset_b);
                                                                 sticker_borders.set(bmap);
                                                             },
                                                             "↺ RESETAR AJUSTES"
@@ -1891,32 +2538,119 @@ pub fn App() -> Element {
 
                                     div { class: "texto-extra-sliders",
                                         div { class: "slider-group",
-                                            label { "POSIÇÃO X: {form_pos_x}%" }
-                                            input {
-                                                r#type: "range", min: "0", max: "100",
-                                                value: "{form_pos_x}",
-                                                oninput: move |e| {
-                                                    if let Ok(v) = e.value().parse::<u32>() { form_pos_x.set(v); }
+                                            div { class: "stepper-header-row",
+                                                span { class: "stepper-title", "POSIÇÃO X: {form_pos_x}%" }
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper-reset",
+                                                    onclick: move |_| form_pos_x.set(50),
+                                                    "↺ 50%"
+                                                }
+                                            }
+                                            div { class: "stepper-row",
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper",
+                                                    onclick: move |_| {
+                                                        let curr = form_pos_x();
+                                                        if curr > 0 { form_pos_x.set(curr.saturating_sub(5)); }
+                                                    },
+                                                    "−"
+                                                }
+                                                input {
+                                                    r#type: "range", min: "0", max: "100",
+                                                    value: "{form_pos_x}",
+                                                    class: "slider-punk-zoom",
+                                                    oninput: move |e| {
+                                                        if let Ok(v) = e.value().parse::<u32>() { form_pos_x.set(v); }
+                                                    }
+                                                }
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper",
+                                                    onclick: move |_| {
+                                                        let curr = form_pos_x();
+                                                        if curr < 100 { form_pos_x.set((curr + 5).min(100)); }
+                                                    },
+                                                    "+"
                                                 }
                                             }
                                         }
                                         div { class: "slider-group",
-                                            label { "POSIÇÃO Y: {form_pos_y}%" }
-                                            input {
-                                                r#type: "range", min: "0", max: "100",
-                                                value: "{form_pos_y}",
-                                                oninput: move |e| {
-                                                    if let Ok(v) = e.value().parse::<u32>() { form_pos_y.set(v); }
+                                            div { class: "stepper-header-row",
+                                                span { class: "stepper-title", "POSIÇÃO Y: {form_pos_y}%" }
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper-reset",
+                                                    onclick: move |_| form_pos_y.set(50),
+                                                    "↺ 50%"
+                                                }
+                                            }
+                                            div { class: "stepper-row",
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper",
+                                                    onclick: move |_| {
+                                                        let curr = form_pos_y();
+                                                        if curr > 0 { form_pos_y.set(curr.saturating_sub(5)); }
+                                                    },
+                                                    "−"
+                                                }
+                                                input {
+                                                    r#type: "range", min: "0", max: "100",
+                                                    value: "{form_pos_y}",
+                                                    class: "slider-punk-zoom",
+                                                    oninput: move |e| {
+                                                        if let Ok(v) = e.value().parse::<u32>() { form_pos_y.set(v); }
+                                                    }
+                                                }
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper",
+                                                    onclick: move |_| {
+                                                        let curr = form_pos_y();
+                                                        if curr < 100 { form_pos_y.set((curr + 5).min(100)); }
+                                                    },
+                                                    "+"
                                                 }
                                             }
                                         }
                                         div { class: "slider-group",
-                                            label { "TAMANHO: {form_tamanho}px" }
-                                            input {
-                                                r#type: "range", min: "20", max: "120",
-                                                value: "{form_tamanho}",
-                                                oninput: move |e| {
-                                                    if let Ok(v) = e.value().parse::<u32>() { form_tamanho.set(v); }
+                                            div { class: "stepper-header-row",
+                                                span { class: "stepper-title", "TAMANHO: {form_tamanho}px" }
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper-reset",
+                                                    onclick: move |_| form_tamanho.set(48),
+                                                    "↺ 48px"
+                                                }
+                                            }
+                                            div { class: "stepper-row",
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper",
+                                                    onclick: move |_| {
+                                                        let curr = form_tamanho();
+                                                        if curr > 20 { form_tamanho.set(curr.saturating_sub(4).max(20)); }
+                                                    },
+                                                    "−"
+                                                }
+                                                input {
+                                                    r#type: "range", min: "20", max: "120",
+                                                    value: "{form_tamanho}",
+                                                    class: "slider-punk-zoom",
+                                                    oninput: move |e| {
+                                                        if let Ok(v) = e.value().parse::<u32>() { form_tamanho.set(v); }
+                                                    }
+                                                }
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper",
+                                                    onclick: move |_| {
+                                                        let curr = form_tamanho();
+                                                        if curr < 120 { form_tamanho.set((curr + 4).min(120)); }
+                                                    },
+                                                    "+"
                                                 }
                                             }
                                         }
@@ -2063,46 +2797,133 @@ pub fn App() -> Element {
                                 }
 
                                 div { class: "slider-group",
-                                    label { "CORTE GUILHOTINA: {threshold_slider}%" }
-                                    input {
-                                        r#type: "range",
-                                        min: "30",
-                                        max: "99",
-                                        value: "{threshold_slider}",
-                                        oninput: move |e| {
-                                            if let Ok(v) = e.value().parse::<u32>() {
-                                                threshold_slider.set(v);
+                                    div { class: "stepper-header-row",
+                                        span { class: "stepper-title", "CORTE GUILHOTINA: {threshold_slider}%" }
+                                        button {
+                                            r#type: "button",
+                                            class: "btn-stepper-reset",
+                                            onclick: move |_| threshold_slider.set(85),
+                                            "↺ 85%"
+                                        }
+                                    }
+                                    div { class: "stepper-row",
+                                        button {
+                                            r#type: "button",
+                                            class: "btn-stepper",
+                                            onclick: move |_| {
+                                                let curr = threshold_slider();
+                                                if curr > 30 { threshold_slider.set(curr.saturating_sub(2).max(30)); }
+                                            },
+                                            "−"
+                                        }
+                                        input {
+                                            r#type: "range",
+                                            min: "30",
+                                            max: "99",
+                                            value: "{threshold_slider}",
+                                            class: "slider-punk-zoom",
+                                            oninput: move |e| {
+                                                if let Ok(v) = e.value().parse::<u32>() {
+                                                    threshold_slider.set(v);
+                                                }
                                             }
+                                        }
+                                        button {
+                                            r#type: "button",
+                                            class: "btn-stepper",
+                                            onclick: move |_| {
+                                                let curr = threshold_slider();
+                                                if curr < 99 { threshold_slider.set((curr + 2).min(99)); }
+                                            },
+                                            "+"
                                         }
                                     }
                                 }
 
                                 div { class: "slider-group",
-                                    label { "NITIDEZ UNSHARP: {unsharp_display}" }
-                                    input {
-                                        r#type: "range",
-                                        min: "0",
-                                        max: "50",
-                                        value: "{unsharp_slider}",
-                                        oninput: move |e| {
-                                            if let Ok(v) = e.value().parse::<u32>() {
-                                                unsharp_slider.set(v);
+                                    div { class: "stepper-header-row",
+                                        span { class: "stepper-title", "NITIDEZ UNSHARP: {unsharp_display}" }
+                                        button {
+                                            r#type: "button",
+                                            class: "btn-stepper-reset",
+                                            onclick: move |_| unsharp_slider.set(22),
+                                            "↺ 2.2x"
+                                        }
+                                    }
+                                    div { class: "stepper-row",
+                                        button {
+                                            r#type: "button",
+                                            class: "btn-stepper",
+                                            onclick: move |_| {
+                                                let curr = unsharp_slider();
+                                                if curr > 0 { unsharp_slider.set(curr.saturating_sub(2)); }
+                                            },
+                                            "−"
+                                        }
+                                        input {
+                                            r#type: "range",
+                                            min: "0",
+                                            max: "50",
+                                            value: "{unsharp_slider}",
+                                            class: "slider-punk-zoom",
+                                            oninput: move |e| {
+                                                if let Ok(v) = e.value().parse::<u32>() {
+                                                    unsharp_slider.set(v);
+                                                }
                                             }
+                                        }
+                                        button {
+                                            r#type: "button",
+                                            class: "btn-stepper",
+                                            onclick: move |_| {
+                                                let curr = unsharp_slider();
+                                                if curr < 50 { unsharp_slider.set((curr + 2).min(50)); }
+                                            },
+                                            "+"
                                         }
                                     }
                                 }
 
                                 div { class: "slider-group",
-                                    label { "DISTORÇÃO TIPOGRAFIA: {stretch_y_display}" }
-                                    input {
-                                        r#type: "range",
-                                        min: "10",
-                                        max: "30",
-                                        value: "{stretch_y_slider}",
-                                        oninput: move |e| {
-                                            if let Ok(v) = e.value().parse::<u32>() {
-                                                stretch_y_slider.set(v);
+                                    div { class: "stepper-header-row",
+                                        span { class: "stepper-title", "DISTORÇÃO TIPOGRAFIA: {stretch_y_display}" }
+                                        button {
+                                            r#type: "button",
+                                            class: "btn-stepper-reset",
+                                            onclick: move |_| stretch_y_slider.set(15),
+                                            "↺ 1.5x"
+                                        }
+                                    }
+                                    div { class: "stepper-row",
+                                        button {
+                                            r#type: "button",
+                                            class: "btn-stepper",
+                                            onclick: move |_| {
+                                                let curr = stretch_y_slider();
+                                                if curr > 10 { stretch_y_slider.set(curr.saturating_sub(1).max(10)); }
+                                            },
+                                            "−"
+                                        }
+                                        input {
+                                            r#type: "range",
+                                            min: "10",
+                                            max: "30",
+                                            value: "{stretch_y_slider}",
+                                            class: "slider-punk-zoom",
+                                            oninput: move |e| {
+                                                if let Ok(v) = e.value().parse::<u32>() {
+                                                    stretch_y_slider.set(v);
+                                                }
                                             }
+                                        }
+                                        button {
+                                            r#type: "button",
+                                            class: "btn-stepper",
+                                            onclick: move |_| {
+                                                let curr = stretch_y_slider();
+                                                if curr < 30 { stretch_y_slider.set((curr + 1).min(30)); }
+                                            },
+                                            "+"
                                         }
                                     }
                                 }
@@ -2152,41 +2973,83 @@ pub fn App() -> Element {
                     }
                 }
 
-                // Área do Canvas à direita
+                // Área do Canvas à direita (no mobile compactada no topo em modo controls, ou fullscreen)
                 section {
-                    class: if mobile_view() == "controls" { "panel-preview mobile-hidden" } else { "panel-preview" },
+                    class: if mobile_view() == "controls" && preview_collapsed() {
+                        "panel-preview mobile-collapsed"
+                    } else if mobile_view() == "controls" {
+                        "panel-preview mobile-compact"
+                    } else {
+                        "panel-preview mobile-fullscreen"
+                    },
 
-                    // Ações de preview no mobile
-                    div { class: "mobile-preview-actions",
-                        button {
-                            class: "btn-edit-action",
-                            onclick: move |_| mobile_view.set("controls".into()),
-                            "⚡ VOLTAR AOS CONTROLES"
-                        }
-                        button {
-                            class: "btn-download-sm",
-                            onclick: download_png_preview,
-                            "💾 BAIXAR PÔSTER (PNG)"
-                        }
-                    }
-
-                    div { class: "canvas-wrapper",
-                        if is_processing() {
-                            div {
-                                class: "processing-indicator",
-                                "[ RENDERIZANDO... ]"
+                    if mobile_view() == "controls" && preview_collapsed() {
+                        div { class: "mobile-collapsed-bar",
+                            button {
+                                class: "btn-expand-bar",
+                                onclick: move |_| preview_collapsed.set(false),
+                                "👁️ MOSTRAR CARTAZ AO VIVO (EXPANDIR) ▼"
                             }
                         }
-                        if rendered_png_uri().is_empty() {
-                            div {
-                                style: "color: #ff0033; font-family: monospace; font-size: 0.9rem; padding: 40px; text-align: center;",
-                                "[ INICIANDO MOTOR... ]"
+                    } else {
+                        // Barra superior do preview compacto no mobile
+                        if mobile_view() == "controls" {
+                            div { class: "mobile-compact-bar",
+                                span { class: "mobile-compact-label", "👁️ CARTAZ AO VIVO" }
+                                div { class: "mobile-compact-actions",
+                                    button {
+                                        class: "btn-compact-opt",
+                                        onclick: move |_| preview_collapsed.set(true),
+                                        title: "Ocultar preview para ganhar espaço",
+                                        "▲ OCULTAR"
+                                    }
+                                    button {
+                                        class: "btn-compact-opt active",
+                                        onclick: move |_| mobile_view.set("preview".into()),
+                                        title: "Expandir para tela cheia",
+                                        "⤢ AMPLIAR"
+                                    }
+                                }
                             }
                         } else {
-                            img {
-                                class: if is_processing() { "poster-display dim" } else { "poster-display" },
-                                src: "{rendered_png_uri}",
-                                alt: "Pôster Navalha gerado em tempo real",
+                            // Ações de preview no mobile fullscreen
+                            div { class: "mobile-preview-actions",
+                                button {
+                                    class: "btn-edit-action",
+                                    onclick: move |_| mobile_view.set("controls".into()),
+                                    "⚡ VOLTAR AOS CONTROLES"
+                                }
+                                button {
+                                    class: "btn-download-sm",
+                                    onclick: download_png_preview,
+                                    "💾 BAIXAR PÔSTER (PNG)"
+                                }
+                            }
+                        }
+
+                        div { class: "canvas-wrapper",
+                            if is_processing() {
+                                div {
+                                    class: "processing-indicator",
+                                    "[ RENDERIZANDO... ]"
+                                }
+                            }
+                            if rendered_png_uri().is_empty() {
+                                div {
+                                    style: "color: #ff0033; font-family: monospace; font-size: 0.9rem; padding: 40px; text-align: center;",
+                                    "[ INICIANDO MOTOR... ]"
+                                }
+                            } else {
+                                img {
+                                    class: if is_processing() { "poster-display dim" } else { "poster-display" },
+                                    src: "{rendered_png_uri}",
+                                    alt: "Pôster Navalha gerado em tempo real",
+                                    onclick: move |_| {
+                                        if mobile_view() == "controls" {
+                                            mobile_view.set("preview".into());
+                                        }
+                                    },
+                                }
                             }
                         }
                     }
@@ -2199,13 +3062,13 @@ pub fn App() -> Element {
                     button {
                         class: "dock-btn secondary",
                         onclick: move |_| mobile_view.set("preview".into()),
-                        "👁️ VER CARTAZ"
+                        "⤢ TELA CHEIA"
                     }
                 } else {
                     button {
                         class: "dock-btn secondary",
                         onclick: move |_| mobile_view.set("controls".into()),
-                        "⚡ EDITAR PÔSTER"
+                        "⚡ VOLTAR A EDITAR"
                     }
                 }
                 button {
