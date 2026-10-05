@@ -296,6 +296,99 @@ pub fn generate_poster_svg(composition: &PosterComposition, image_base64_png: Op
         svg.push_str("  </g>\n");
     }
 
+    // Camada 6: Intervenção manual e desenho livre
+    for stroke in &composition.manual_drawings {
+        let col = stroke.color.to_hex();
+        let sw = stroke.width;
+        match stroke.tool {
+            crate::press::DrawingTool::Freehand => {
+                if stroke.points.len() == 1 {
+                    let p = stroke.points[0];
+                    let cx = if p.0 <= 1.0 { p.0 * w as f32 } else { p.0 };
+                    let cy = if p.1 <= 1.0 { p.1 * h as f32 } else { p.1 };
+                    let r = (sw / 2.0).max(1.0);
+                    svg.push_str(&format!(
+                        r#"  <circle cx="{cx:.1}" cy="{cy:.1}" r="{r:.1}" fill="{col}" />
+"#
+                    ));
+                } else if stroke.points.len() > 1 {
+                    let pts: Vec<String> = stroke.points.iter().map(|p| {
+                        let px = if p.0 <= 1.0 { p.0 * w as f32 } else { p.0 };
+                        let py = if p.1 <= 1.0 { p.1 * h as f32 } else { p.1 };
+                        format!("{px:.1},{py:.1}")
+                    }).collect();
+                    let pts_str = pts.join(" ");
+                    svg.push_str(&format!(
+                        r#"  <polyline points="{pts_str}" fill="none" stroke="{col}" stroke-width="{sw}" stroke-linecap="round" stroke-linejoin="round" />
+"#
+                    ));
+                }
+            }
+            crate::press::DrawingTool::Line => {
+                if stroke.points.len() >= 2 {
+                    let p0 = stroke.points[0];
+                    let p1 = stroke.points[1];
+                    let x0 = if p0.0 <= 1.0 { p0.0 * w as f32 } else { p0.0 };
+                    let y0 = if p0.1 <= 1.0 { p0.1 * h as f32 } else { p0.1 };
+                    let x1 = if p1.0 <= 1.0 { p1.0 * w as f32 } else { p1.0 };
+                    let y1 = if p1.1 <= 1.0 { p1.1 * h as f32 } else { p1.1 };
+                    svg.push_str(&format!(
+                        r#"  <line x1="{x0:.1}" y1="{y0:.1}" x2="{x1:.1}" y2="{y1:.1}" stroke="{col}" stroke-width="{sw}" stroke-linecap="round" />
+"#
+                    ));
+                }
+            }
+            crate::press::DrawingTool::Cross => {
+                if !stroke.points.is_empty() {
+                    let p0 = stroke.points[0];
+                    let p1 = stroke.points.get(1).copied().unwrap_or(p0);
+                    let mut x0 = if p0.0 <= 1.0 { p0.0 * w as f32 } else { p0.0 };
+                    let mut y0 = if p0.1 <= 1.0 { p0.1 * h as f32 } else { p0.1 };
+                    let mut x1 = if p1.0 <= 1.0 { p1.0 * w as f32 } else { p1.0 };
+                    let mut y1 = if p1.1 <= 1.0 { p1.1 * h as f32 } else { p1.1 };
+                    if (x1 - x0).abs() < 5.0 && (y1 - y0).abs() < 5.0 {
+                        let sz = (sw * 4.0).max(18.0);
+                        x0 -= sz;
+                        y0 -= sz;
+                        x1 += sz;
+                        y1 += sz;
+                    }
+                    svg.push_str(&format!(
+                        r#"  <line x1="{x0:.1}" y1="{y0:.1}" x2="{x1:.1}" y2="{y1:.1}" stroke="{col}" stroke-width="{sw}" stroke-linecap="round" />
+  <line x1="{x0:.1}" y1="{y1:.1}" x2="{x1:.1}" y2="{y0:.1}" stroke="{col}" stroke-width="{sw}" stroke-linecap="round" />
+"#
+                    ));
+                }
+            }
+            crate::press::DrawingTool::Arrow => {
+                if stroke.points.len() >= 2 {
+                    let p0 = stroke.points[0];
+                    let p1 = stroke.points[1];
+                    let x0 = if p0.0 <= 1.0 { p0.0 * w as f32 } else { p0.0 };
+                    let y0 = if p0.1 <= 1.0 { p0.1 * h as f32 } else { p0.1 };
+                    let x1 = if p1.0 <= 1.0 { p1.0 * w as f32 } else { p1.0 };
+                    let y1 = if p1.1 <= 1.0 { p1.1 * h as f32 } else { p1.1 };
+                    let dx = x1 - x0;
+                    let dy = y1 - y0;
+                    let angle = dy.atan2(dx);
+                    let wing_len = (sw * 3.5).max(16.0);
+                    let a1 = angle + std::f32::consts::PI - (std::f32::consts::PI / 6.0);
+                    let a2 = angle + std::f32::consts::PI + (std::f32::consts::PI / 6.0);
+                    let wx1 = x1 + wing_len * a1.cos();
+                    let wy1 = y1 + wing_len * a1.sin();
+                    let wx2 = x1 + wing_len * a2.cos();
+                    let wy2 = y1 + wing_len * a2.sin();
+                    svg.push_str(&format!(
+                        r#"  <line x1="{x0:.1}" y1="{y0:.1}" x2="{x1:.1}" y2="{y1:.1}" stroke="{col}" stroke-width="{sw}" stroke-linecap="round" />
+  <line x1="{x1:.1}" y1="{y1:.1}" x2="{wx1:.1}" y2="{wy1:.1}" stroke="{col}" stroke-width="{sw}" stroke-linecap="round" />
+  <line x1="{x1:.1}" y1="{y1:.1}" x2="{wx2:.1}" y2="{wy2:.1}" stroke="{col}" stroke-width="{sw}" stroke-linecap="round" />
+"#
+                    ));
+                }
+            }
+        }
+    }
+
     svg.push_str("</svg>\n");
     svg
 }

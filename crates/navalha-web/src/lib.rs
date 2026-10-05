@@ -13,8 +13,9 @@ use dioxus::prelude::*;
 use gloo_timers::future::TimeoutFuture;
 use image::{ImageFormat, ImageReader, Rgba, RgbaImage};
 use navalha_core::{
-    generate_poster_svg, AestheticPreset, DamageEffect, DamageElement,
-    DitherAlgorithm, Palette, ScaleFactor, StickerBorder, StickerElement, StickerKind, TarjaEffect,
+    generate_poster_svg, AestheticPreset, DamageEffect, DamageElement, DitherAlgorithm,
+    DrawingTool, ManualDrawingStroke, Palette, RgbColor, ScaleFactor, StickerBorder,
+    StickerElement, StickerKind, TarjaEffect,
 };
 use navalha_core::plates::{generate_plates_pdf, separate_plates, PlateSeparationConfig};
 use std::io::Cursor;
@@ -25,6 +26,23 @@ use web_sys::{HtmlAnchorElement, HtmlInputElement};
 pub fn start() {
     console_error_panic_hook::set_once();
     dioxus::launch(App);
+}
+
+fn get_norm_coords(evt: &PointerEvent) -> Option<(f32, f32)> {
+    let doc = web_sys::window()?.document()?;
+    let el = doc.get_element_by_id("manual-drawing-overlay")?;
+    let rect = el.get_bounding_client_rect();
+    let rw = rect.width();
+    let rh = rect.height();
+    if rw > 0.0 && rh > 0.0 {
+        let cx = evt.client_coordinates().x;
+        let cy = evt.client_coordinates().y;
+        let nx = ((cx - rect.left()) / rw).clamp(0.0, 1.0) as f32;
+        let ny = ((cy - rect.top()) / rh).clamp(0.0, 1.0) as f32;
+        Some((nx, ny))
+    } else {
+        None
+    }
 }
 
 fn create_default_graphic(w: u32, h: u32) -> RgbaImage {
@@ -295,6 +313,14 @@ pub fn App() -> Element {
     // Sticker selecionado no subpainel de ajuste
     let mut selected_sticker = use_signal(|| Option::<String>::None);
 
+    // Intervenção manual e desenho livre no canvas (Issue #7)
+    let mut drawing_active = use_signal(|| false);
+    let mut drawing_tool = use_signal(|| String::from("freehand"));
+    let mut drawing_color = use_signal(|| String::from("#000000"));
+    let mut drawing_width = use_signal(|| 4u32);
+    let mut manual_drawings = use_signal(|| Vec::<ManualDrawingStroke>::new());
+    let mut in_progress_stroke = use_signal(|| Option::<ManualDrawingStroke>::None);
+
     // Feedback de cópia
     let mut copy_status = use_signal(|| String::from("COPIAR COMANDO"));
 
@@ -312,6 +338,7 @@ pub fn App() -> Element {
         let cache_ref = subject_cache.clone();
         use_effect(move || {
             // Rastreamento explícito de todos os sinais que alteram a estética do pôster
+            let m_drawings = manual_drawings();
             let raw = raw_image();
             let phr = phrase();
             let phr_top = phrase_top();
@@ -438,6 +465,9 @@ pub fn App() -> Element {
 
                 // Semente determinística fixada na foto original bruta (Ticket #19)
                 comp.custom_seed = Some(navalha_core::compute_subject_seed(Some(&raw), &phr));
+
+                // Camada 6: Intervenção manual e desenho livre (Issue #7)
+                comp.manual_drawings = m_drawings;
 
                 // Injeta danos com posição e escala customizáveis
                 for d_str in damages.iter() {
@@ -3579,6 +3609,147 @@ pub fn App() -> Element {
                                     }
                                 }
                             }
+
+                            div { class: "control-box",
+                                label { class: "section-tag", "7. INTERVENÇÃO MANUAL & DESENHO NO CANVAS" }
+                                div { class: "manual-drawing-controls",
+                                    button {
+                                        class: if drawing_active() { "btn-edit-action active" } else { "btn-edit-action" },
+                                        style: "width: 100%; margin-bottom: 8px; font-weight: 900;",
+                                        onclick: move |_| {
+                                            let curr = drawing_active();
+                                            drawing_active.set(!curr);
+                                        },
+                                        if drawing_active() { "✏️ MODO DESENHO ATIVO [CLIQUE/ARRASTE NO CARTAZ]" } else { "✏️ ATIVAR DESENHO MANUAL NO CANVAS" }
+                                    }
+
+                                    if drawing_active() {
+                                        div { class: "drawing-tool-selector", style: "display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px;",
+                                            button {
+                                                class: if drawing_tool() == "freehand" { "btn-edit-action active" } else { "btn-edit-action" },
+                                                style: "font-size: 0.75rem; padding: 6px 2px;",
+                                                onclick: move |_| drawing_tool.set("freehand".into()),
+                                                "✏️ Livre"
+                                            }
+                                            button {
+                                                class: if drawing_tool() == "cross" { "btn-edit-action active" } else { "btn-edit-action" },
+                                                style: "font-size: 0.75rem; padding: 6px 2px;",
+                                                onclick: move |_| drawing_tool.set("cross".into()),
+                                                "❌ Cruz"
+                                            }
+                                            button {
+                                                class: if drawing_tool() == "arrow" { "btn-edit-action active" } else { "btn-edit-action" },
+                                                style: "font-size: 0.75rem; padding: 6px 2px;",
+                                                onclick: move |_| drawing_tool.set("arrow".into()),
+                                                "➡️ Seta"
+                                            }
+                                            button {
+                                                class: if drawing_tool() == "line" { "btn-edit-action active" } else { "btn-edit-action" },
+                                                style: "font-size: 0.75rem; padding: 6px 2px;",
+                                                onclick: move |_| drawing_tool.set("line".into()),
+                                                "📏 Reta"
+                                            }
+                                        }
+
+                                        // Seletor de cores e amostras
+                                        div { class: "drawing-colors-row", style: "display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;",
+                                            span { style: "font-size: 0.75rem; font-weight: bold; color: #888;", "COR:" }
+                                            for (hex_val, label_col) in [
+                                                ("#000000", "Preto"),
+                                                ("#ffffff", "Branco"),
+                                                ("#ff0033", "Vermelho"),
+                                                ("#ffee00", "Amarelo"),
+                                                ("#00f0ff", "Ciano"),
+                                                ("#ff0055", "Magenta"),
+                                            ] {
+                                                button {
+                                                    r#type: "button",
+                                                    class: if drawing_color() == hex_val { "swatch-btn selected" } else { "swatch-btn" },
+                                                    style: format!("background-color: {}; width: 24px; height: 24px; border: 2px solid {}; cursor: pointer;", hex_val, if drawing_color() == hex_val { "#fff" } else { "#333" }),
+                                                    title: label_col,
+                                                    onclick: move |_| drawing_color.set(hex_val.into()),
+                                                }
+                                            }
+                                            input {
+                                                r#type: "color",
+                                                value: "{drawing_color}",
+                                                style: "width: 32px; height: 26px; border: 1px solid #444; background: none; cursor: pointer; padding: 0;",
+                                                title: "Cor personalizada",
+                                                oninput: move |e| drawing_color.set(e.value()),
+                                            }
+                                        }
+
+                                        // Controle de espessura (stepper + slider)
+                                        div { class: "slider-group", style: "margin-bottom: 8px;",
+                                            div { class: "stepper-header-row",
+                                                span { class: "stepper-title", "ESPESSURA: {drawing_width}px" }
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper-reset",
+                                                    onclick: move |_| drawing_width.set(4),
+                                                    "↺ 4px"
+                                                }
+                                            }
+                                            div { class: "stepper-row",
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper",
+                                                    onclick: move |_| {
+                                                        let curr = drawing_width();
+                                                        if curr > 1 { drawing_width.set(curr.saturating_sub(1).max(1)); }
+                                                    },
+                                                    "−"
+                                                }
+                                                input {
+                                                    r#type: "range", min: "1", max: "30",
+                                                    value: "{drawing_width}",
+                                                    class: "slider-punk-zoom",
+                                                    oninput: move |e| {
+                                                        if let Ok(v) = e.value().parse::<u32>() { drawing_width.set(v); }
+                                                    }
+                                                }
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper",
+                                                    onclick: move |_| {
+                                                        let curr = drawing_width();
+                                                        if curr < 30 { drawing_width.set((curr + 1).min(30)); }
+                                                    },
+                                                    "+"
+                                                }
+                                            }
+                                        }
+
+                                        // Botões de Ação (Desfazer, Limpar) e Contador
+                                        div { style: "display: flex; gap: 6px; align-items: center; justify-content: space-between; margin-top: 6px;",
+                                            div { style: "display: flex; gap: 6px;",
+                                                button {
+                                                    class: "btn-edit-action",
+                                                    disabled: manual_drawings().is_empty(),
+                                                    onclick: move |_| {
+                                                        let mut list = manual_drawings();
+                                                        list.pop();
+                                                        manual_drawings.set(list);
+                                                    },
+                                                    "↩️ DESFAZER"
+                                                }
+                                                button {
+                                                    class: "btn-edit-action",
+                                                    style: "color: #ff0033;",
+                                                    disabled: manual_drawings().is_empty(),
+                                                    onclick: move |_| {
+                                                        manual_drawings.set(Vec::new());
+                                                    },
+                                                    "🗑️ LIMPAR"
+                                                }
+                                            }
+                                            span { style: "font-size: 0.75rem; color: #888; font-family: monospace;",
+                                                "{manual_drawings().len()} traço(s)"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         } else {
                             // Aba de Ajustes Finos
                             div { class: "advanced-panel",
@@ -3836,15 +4007,183 @@ pub fn App() -> Element {
                                     "[ INICIANDO MOTOR... ]"
                                 }
                             } else {
-                                img {
-                                    class: if is_processing() { "poster-display dim" } else { "poster-display" },
-                                    src: "{rendered_png_uri}",
-                                    alt: "Pôster Navalha gerado em tempo real",
-                                    onclick: move |_| {
-                                        if mobile_view() == "controls" {
-                                            mobile_view.set("preview".into());
+                                div {
+                                    class: "poster-container",
+                                    img {
+                                        class: if is_processing() { "poster-display dim" } else { "poster-display" },
+                                        src: "{rendered_png_uri}",
+                                        alt: "Pôster Navalha gerado em tempo real",
+                                        onclick: move |_| {
+                                            if !drawing_active() && mobile_view() == "controls" {
+                                                mobile_view.set("preview".into());
+                                            }
+                                        },
+                                    }
+                                    svg {
+                                        id: "manual-drawing-overlay",
+                                        class: if drawing_active() { "drawing-overlay active" } else { "drawing-overlay" },
+                                        view_box: "0 0 800 1100",
+                                        onpointerdown: move |evt| {
+                                            if drawing_active() {
+                                                if let Some((nx, ny)) = get_norm_coords(&evt) {
+                                                    let tool = DrawingTool::parse(&drawing_tool()).unwrap_or(DrawingTool::Freehand);
+                                                    let col = RgbColor::parse_color_str(&drawing_color()).unwrap_or(RgbColor::new(0, 0, 0));
+                                                    let width = drawing_width() as f32;
+                                                    in_progress_stroke.set(Some(ManualDrawingStroke::new(
+                                                        tool,
+                                                        vec![(nx, ny)],
+                                                        col,
+                                                        width,
+                                                    )));
+                                                }
+                                            }
+                                        },
+                                        onpointermove: move |evt| {
+                                            if let Some(mut stroke) = in_progress_stroke() {
+                                                if let Some((nx, ny)) = get_norm_coords(&evt) {
+                                                    match stroke.tool {
+                                                        DrawingTool::Freehand => {
+                                                            if let Some(last) = stroke.points.last() {
+                                                                let dx = nx - last.0;
+                                                                let dy = ny - last.1;
+                                                                if (dx * dx + dy * dy).sqrt() > 0.002 {
+                                                                    stroke.points.push((nx, ny));
+                                                                    in_progress_stroke.set(Some(stroke));
+                                                                }
+                                                            }
+                                                        }
+                                                        DrawingTool::Line | DrawingTool::Cross | DrawingTool::Arrow => {
+                                                            if stroke.points.len() == 1 {
+                                                                stroke.points.push((nx, ny));
+                                                            } else if stroke.points.len() >= 2 {
+                                                                stroke.points[1] = (nx, ny);
+                                                            }
+                                                            in_progress_stroke.set(Some(stroke));
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        onpointerup: move |_| {
+                                            if let Some(stroke) = in_progress_stroke() {
+                                                in_progress_stroke.set(None);
+                                                if !stroke.points.is_empty() {
+                                                    let mut list = manual_drawings();
+                                                    list.push(stroke);
+                                                    manual_drawings.set(list);
+                                                }
+                                            }
+                                        },
+                                        onpointerleave: move |_| {
+                                            if let Some(stroke) = in_progress_stroke() {
+                                                in_progress_stroke.set(None);
+                                                if !stroke.points.is_empty() {
+                                                    let mut list = manual_drawings();
+                                                    list.push(stroke);
+                                                    manual_drawings.set(list);
+                                                }
+                                            }
+                                        },
+                                        if let Some(ref stroke) = in_progress_stroke() {
+                                            {
+                                                let col = stroke.color.to_hex();
+                                                let sw = stroke.width;
+                                                match stroke.tool {
+                                                    DrawingTool::Freehand => {
+                                                        if stroke.points.len() == 1 {
+                                                            let p = stroke.points[0];
+                                                            let cx = p.0 * 800.0;
+                                                            let cy = p.1 * 1100.0;
+                                                            let r = (sw / 2.0).max(1.0);
+                                                            rsx! {
+                                                                circle { cx: "{cx}", cy: "{cy}", r: "{r}", fill: "{col}" }
+                                                            }
+                                                        } else {
+                                                            let pts: Vec<String> = stroke.points.iter().map(|p| {
+                                                                format!("{:.1},{:.1}", p.0 * 800.0, p.1 * 1100.0)
+                                                            }).collect();
+                                                            let pts_str = pts.join(" ");
+                                                            rsx! {
+                                                                polyline {
+                                                                    points: "{pts_str}",
+                                                                    fill: "none",
+                                                                    stroke: "{col}",
+                                                                    stroke_width: "{sw}",
+                                                                    stroke_linecap: "round",
+                                                                    stroke_linejoin: "round",
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    DrawingTool::Line => {
+                                                        if stroke.points.len() >= 2 {
+                                                            let p0 = stroke.points[0];
+                                                            let p1 = stroke.points[1];
+                                                            let x0 = p0.0 * 800.0;
+                                                            let y0 = p0.1 * 1100.0;
+                                                            let x1 = p1.0 * 800.0;
+                                                            let y1 = p1.1 * 1100.0;
+                                                            rsx! {
+                                                                line {
+                                                                    x1: "{x0}", y1: "{y0}", x2: "{x1}", y2: "{y1}",
+                                                                    stroke: "{col}", stroke_width: "{sw}", stroke_linecap: "round"
+                                                                }
+                                                            }
+                                                        } else {
+                                                            rsx! {}
+                                                        }
+                                                    }
+                                                    DrawingTool::Cross => {
+                                                        if !stroke.points.is_empty() {
+                                                            let p0 = stroke.points[0];
+                                                            let p1 = stroke.points.get(1).copied().unwrap_or(p0);
+                                                            let mut x0 = p0.0 * 800.0;
+                                                            let mut y0 = p0.1 * 1100.0;
+                                                            let mut x1 = p1.0 * 800.0;
+                                                            let mut y1 = p1.1 * 1100.0;
+                                                            if (x1 - x0).abs() < 5.0 && (y1 - y0).abs() < 5.0 {
+                                                                let sz = (sw * 4.0).max(18.0);
+                                                                x0 -= sz; y0 -= sz; x1 += sz; y1 += sz;
+                                                            }
+                                                            rsx! {
+                                                                line { x1: "{x0}", y1: "{y0}", x2: "{x1}", y2: "{y1}", stroke: "{col}", stroke_width: "{sw}", stroke_linecap: "round" }
+                                                                line { x1: "{x0}", y1: "{y1}", x2: "{x1}", y2: "{y0}", stroke: "{col}", stroke_width: "{sw}", stroke_linecap: "round" }
+                                                            }
+                                                        } else {
+                                                            rsx! {}
+                                                        }
+                                                    }
+                                                    DrawingTool::Arrow => {
+                                                        if stroke.points.len() >= 2 {
+                                                            let p0 = stroke.points[0];
+                                                            let p1 = stroke.points[1];
+                                                            let x0 = p0.0 * 800.0;
+                                                            let y0 = p0.1 * 1100.0;
+                                                            let x1 = p1.0 * 800.0;
+                                                            let y1 = p1.1 * 1100.0;
+                                                            let dx = x1 - x0;
+                                                            let dy = y1 - y0;
+                                                            let angle = dy.atan2(dx);
+                                                            let wing_len = (sw * 3.5).max(16.0);
+                                                            let a1 = angle + std::f32::consts::PI - (std::f32::consts::PI / 6.0);
+                                                            let a2 = angle + std::f32::consts::PI + (std::f32::consts::PI / 6.0);
+                                                            let wx1 = x1 + wing_len * a1.cos();
+                                                            let wy1 = y1 + wing_len * a1.sin();
+                                                            let wx2 = x1 + wing_len * a2.cos();
+                                                            let wy2 = y1 + wing_len * a2.sin();
+                                                            rsx! {
+                                                                line { x1: "{x0}", y1: "{y0}", x2: "{x1}", y2: "{y1}", stroke: "{col}", stroke_width: "{sw}", stroke_linecap: "round" }
+                                                                line { x1: "{x1}", y1: "{y1}", x2: "{wx1}", y2: "{wy1}", stroke: "{col}", stroke_width: "{sw}", stroke_linecap: "round" }
+                                                                line { x1: "{x1}", y1: "{y1}", x2: "{wx2}", y2: "{wy2}", stroke: "{col}", stroke_width: "{sw}", stroke_linecap: "round" }
+                                                            }
+                                                        } else {
+                                                            rsx! {}
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
-                                    },
+                                    }
                                 }
                             }
                         }

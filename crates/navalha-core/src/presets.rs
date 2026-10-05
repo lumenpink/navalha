@@ -663,6 +663,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -726,6 +727,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -775,6 +777,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::OneX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -838,6 +841,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::OneX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -887,6 +891,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -951,6 +956,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::ThreeX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1015,6 +1021,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::ThreeX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1079,6 +1086,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1142,6 +1150,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1207,6 +1216,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1293,6 +1303,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::OneX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1358,6 +1369,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1425,6 +1437,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1491,6 +1504,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::OneX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1555,6 +1569,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::OneX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1618,6 +1633,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::OneX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1702,6 +1718,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1766,6 +1783,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1816,6 +1834,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1880,6 +1899,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
@@ -1944,6 +1964,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: vec![
                         StickerElement::new(StickerKind::Cassette, 0.82, 0.22, 110, -8, false)
                             .with_border(StickerBorder::DieCutBranco, 3),
@@ -2018,6 +2039,7 @@ impl AestheticPreset {
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
                     stickers: vec![
                         StickerElement::new(StickerKind::Anarchy, 0.18, 0.18, 90, 12, false)
                             .with_border(StickerBorder::Picote, 4),

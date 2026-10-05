@@ -870,6 +870,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 foreground_texts: fg_texts,
                 overlay,
                 stickers,
+                manual_drawings: Vec::new(),
                 palette: Some(palette.clone()),
                 subject_offset_x: offset_x,
                 subject_offset_y: offset_y,

@@ -30,10 +30,10 @@ pub use prep::{
 };
 pub use presets::AestheticPreset;
 pub use press::{
-    apply_sticker_border, compute_subject_seed, lcg_hash, render_poster, render_poster_cancellable,
-    BannerFontFamily, DamageEffect, DamageElement, PosterComposition, PunkOverlayConfig,
-    StickerBorder, StickerElement, StickerKind, TarjaBorderFinish, TarjaEffect, TextElement,
-    EMBEDDED_FONT_BYTES,
+    apply_sticker_border, compute_subject_seed, lcg_hash, render_manual_drawings, render_poster,
+    render_poster_cancellable, BannerFontFamily, DamageEffect, DamageElement, DrawingTool,
+    ManualDrawingStroke, PosterComposition, PunkOverlayConfig, StickerBorder, StickerElement,
+    StickerKind, TarjaBorderFinish, TarjaEffect, TextElement, EMBEDDED_FONT_BYTES,
 };
 pub use scale::{apply_scale, ScaleFactor};
 pub use svg::generate_poster_svg;
@@ -1413,6 +1413,93 @@ mod tests {
 
         // A camada tipográfica é 100% idêntica e estável, imune a variações de limiar da imagem!
         assert_eq!(text_layer_1.as_raw(), text_layer_2.as_raw(), "O seed fixado na imagem bruta garante estabilidade total das palavras");
+    }
+
+    #[test]
+    fn test_manual_drawing_tools_parsing_and_serialization() {
+        assert_eq!(DrawingTool::parse("freehand"), Some(DrawingTool::Freehand));
+        assert_eq!(DrawingTool::parse("mão-livre"), Some(DrawingTool::Freehand));
+        assert_eq!(DrawingTool::parse("mao-livre"), Some(DrawingTool::Freehand));
+        assert_eq!(DrawingTool::parse("cross"), Some(DrawingTool::Cross));
+        assert_eq!(DrawingTool::parse("cruz"), Some(DrawingTool::Cross));
+        assert_eq!(DrawingTool::parse("cruz-punk"), Some(DrawingTool::Cross));
+        assert_eq!(DrawingTool::parse("arrow"), Some(DrawingTool::Arrow));
+        assert_eq!(DrawingTool::parse("seta"), Some(DrawingTool::Arrow));
+        assert_eq!(DrawingTool::parse("line"), Some(DrawingTool::Line));
+        assert_eq!(DrawingTool::parse("reta"), Some(DrawingTool::Line));
+        assert_eq!(DrawingTool::parse("desconhecido"), None);
+
+        let stroke = ManualDrawingStroke::new(
+            DrawingTool::Cross,
+            vec![(0.2, 0.3), (0.4, 0.5)],
+            RgbColor::new(255, 0, 51),
+            6.0,
+        );
+        assert_eq!(stroke.tool, DrawingTool::Cross);
+        assert_eq!(stroke.points.len(), 2);
+        assert_eq!(stroke.color, RgbColor::new(255, 0, 51));
+        assert_eq!(stroke.width, 6.0);
+    }
+
+    #[test]
+    fn test_manual_drawing_raster_and_determinism() {
+        let mut comp = PosterComposition {
+            canvas_width: 200,
+            canvas_height: 200,
+            background_color: RgbColor::new(245, 242, 235),
+            ..Default::default()
+        };
+
+        // Traço 1: Mão livre
+        comp.manual_drawings.push(ManualDrawingStroke::new(
+            DrawingTool::Freehand,
+            vec![(0.1, 0.1), (0.2, 0.15), (0.3, 0.1)],
+            RgbColor::new(0, 0, 0),
+            4.0,
+        ));
+        // Traço 2: Cruz punk
+        comp.manual_drawings.push(ManualDrawingStroke::new(
+            DrawingTool::Cross,
+            vec![(0.5, 0.5), (0.7, 0.7)],
+            RgbColor::new(255, 0, 51),
+            5.0,
+        ));
+        // Traço 3: Seta direcional
+        comp.manual_drawings.push(ManualDrawingStroke::new(
+            DrawingTool::Arrow,
+            vec![(0.1, 0.8), (0.8, 0.8)],
+            RgbColor::new(0, 0, 0),
+            4.0,
+        ));
+        // Traço 4: Linha reta
+        comp.manual_drawings.push(ManualDrawingStroke::new(
+            DrawingTool::Line,
+            vec![(0.2, 0.9), (0.7, 0.9)],
+            RgbColor::new(255, 0, 51),
+            3.0,
+        ));
+
+        let poster1 = render_poster(&comp, None);
+        let poster2 = render_poster(&comp, None);
+
+        assert_eq!(poster1.dimensions(), (200, 200));
+        assert_eq!(
+            poster1.as_raw(),
+            poster2.as_raw(),
+            "Desenho manual deve ser 100% determinístico e reproduzível"
+        );
+
+        // Verifica que houve pixels pintados na cor preta e vermelha
+        let has_black = poster1.pixels().any(|p| p[0] == 0 && p[1] == 0 && p[2] == 0);
+        let has_red = poster1.pixels().any(|p| p[0] == 255 && p[1] == 0 && p[2] == 51);
+        assert!(has_black, "Pôster deve conter traços pretos renderizados");
+        assert!(has_red, "Pôster deve conter traços vermelhos renderizados");
+
+        // SVG export
+        let svg = generate_poster_svg(&comp, None);
+        assert!(svg.contains("<polyline"), "SVG deve conter elemento polyline para mão livre");
+        assert!(svg.contains("<line"), "SVG deve conter elementos line para cruz, seta e linha");
+        assert!(svg.contains("#FF0033"), "SVG deve conter a cor vermelha punk");
     }
 }
 

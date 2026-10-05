@@ -531,6 +531,75 @@ impl StickerElement {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum DrawingTool {
+    #[default]
+    Freehand,
+    Cross,
+    Arrow,
+    Line,
+}
+
+impl DrawingTool {
+    pub fn parse(s: &str) -> Option<Self> {
+        match s.trim().to_lowercase().as_str() {
+            "freehand" | "livre" | "mao-livre" | "mão-livre" | "draw" | "pen" => Some(Self::Freehand),
+            "cross" | "cruz" | "x" | "cruz-punk" => Some(Self::Cross),
+            "arrow" | "seta" => Some(Self::Arrow),
+            "line" | "linha" | "reta" => Some(Self::Line),
+            _ => None,
+        }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Freehand => "freehand",
+            Self::Cross => "cross",
+            Self::Arrow => "arrow",
+            Self::Line => "line",
+        }
+    }
+
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            Self::Freehand => "✏️ Mão Livre",
+            Self::Cross => "❌ Cruz Punk",
+            Self::Arrow => "➡️ Seta",
+            Self::Line => "📏 Linha Reta",
+        }
+    }
+
+    pub fn all() -> &'static [DrawingTool] {
+        &[
+            Self::Freehand,
+            Self::Cross,
+            Self::Arrow,
+            Self::Line,
+        ]
+    }
+}
+
+/// Instância de um traço ou forma de desenho manual / intervenção sobre o pôster
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ManualDrawingStroke {
+    pub tool: DrawingTool,
+    /// Pontos normalizados (0.0 a 1.0) ou absolutos em pixels
+    pub points: Vec<(f32, f32)>,
+    pub color: RgbColor,
+    pub width: f32,
+}
+
+impl ManualDrawingStroke {
+    pub fn new(tool: DrawingTool, points: Vec<(f32, f32)>, color: RgbColor, width: f32) -> Self {
+        Self {
+            tool,
+            points,
+            color,
+            width,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PosterComposition {
     pub canvas_width: u32,
@@ -545,6 +614,9 @@ pub struct PosterComposition {
     pub overlay: PunkOverlayConfig,
     /// Camada 5: Stickers e adesivos
     pub stickers: Vec<StickerElement>,
+    /// Camada 6: Intervenção manual e desenho livre
+    #[serde(default)]
+    pub manual_drawings: Vec<ManualDrawingStroke>,
     /// Paleta para filtragem opcional de stickers
     pub palette: Option<Palette>,
     /// Deslocamento horizontal do sujeito em pixels (padrão 0 = centralizado)
@@ -568,6 +640,7 @@ impl Default for PosterComposition {
             foreground_texts: Vec::new(),
             overlay: PunkOverlayConfig::default(),
             stickers: Vec::new(),
+            manual_drawings: Vec::new(),
             palette: None,
             subject_offset_x: 0,
             subject_offset_y: 0,
@@ -668,6 +741,15 @@ where
             None
         };
         render_and_blend_sticker(&mut canvas, sticker, palette_ref, &font);
+    }
+
+    if is_cancelled() {
+        return None;
+    }
+
+    // ── Camada 6: Intervenção manual e desenho livre ───────────────────────────
+    if !composition.manual_drawings.is_empty() {
+        render_manual_drawings(&mut canvas, &composition.manual_drawings);
     }
 
     if is_cancelled() {
@@ -2549,6 +2631,163 @@ fn render_and_blend_sticker(
                         let b = (sp[2] as f32 * alpha + cp[2] as f32 * inv_alpha).round() as u8;
                         canvas.put_pixel(px as u32, py as u32, Rgba([r, g, b, 255]));
                     }
+                }
+            }
+        }
+    }
+}
+
+pub fn draw_thick_line(
+    canvas: &mut RgbaImage,
+    mut x0: i32,
+    mut y0: i32,
+    x1: i32,
+    y1: i32,
+    radius: i32,
+    col: Rgba<u8>,
+) {
+    if radius <= 1 {
+        let (cw, ch) = canvas.dimensions();
+        let dx = (x1 - x0).abs();
+        let dy = -(y1 - y0).abs();
+        let sx = if x0 < x1 { 1 } else { -1 };
+        let sy = if y0 < y1 { 1 } else { -1 };
+        let mut err = dx + dy;
+
+        loop {
+            if x0 >= 0 && x0 < cw as i32 && y0 >= 0 && y0 < ch as i32 {
+                canvas.put_pixel(x0 as u32, y0 as u32, col);
+            }
+            if x0 == x1 && y0 == y1 {
+                break;
+            }
+            let e2 = 2 * err;
+            if e2 >= dy {
+                err += dy;
+                x0 += sx;
+            }
+            if e2 <= dx {
+                err += dx;
+                y0 += sy;
+            }
+        }
+        return;
+    }
+
+    let dx = (x1 - x0).abs();
+    let dy = -(y1 - y0).abs();
+    let sx = if x0 < x1 { 1 } else { -1 };
+    let sy = if y0 < y1 { 1 } else { -1 };
+    let mut err = dx + dy;
+
+    loop {
+        draw_filled_circle(canvas, x0, y0, radius, col);
+        if x0 == x1 && y0 == y1 {
+            break;
+        }
+        let e2 = 2 * err;
+        if e2 >= dy {
+            err += dy;
+            x0 += sx;
+        }
+        if e2 <= dx {
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
+/// Renderiza intervenções manuais, rabiscos e desenhos livres sobre o pôster
+pub fn render_manual_drawings(canvas: &mut RgbaImage, strokes: &[ManualDrawingStroke]) {
+    let (cw, ch) = canvas.dimensions();
+    let cw_f = cw as f32;
+    let ch_f = ch as f32;
+
+    for stroke in strokes {
+        let col = Rgba([stroke.color.r, stroke.color.g, stroke.color.b, 255]);
+        let radius = (stroke.width / 2.0).round().max(1.0) as i32;
+
+        match stroke.tool {
+            DrawingTool::Freehand => {
+                if stroke.points.is_empty() {
+                    continue;
+                }
+                if stroke.points.len() == 1 {
+                    let p = stroke.points[0];
+                    let cx = (if p.0 <= 1.0 { p.0 * cw_f } else { p.0 }).round() as i32;
+                    let cy = (if p.1 <= 1.0 { p.1 * ch_f } else { p.1 }).round() as i32;
+                    draw_filled_circle(canvas, cx, cy, radius, col);
+                } else {
+                    for pair in stroke.points.windows(2) {
+                        let p0 = pair[0];
+                        let p1 = pair[1];
+                        let x0 = (if p0.0 <= 1.0 { p0.0 * cw_f } else { p0.0 }).round() as i32;
+                        let y0 = (if p0.1 <= 1.0 { p0.1 * ch_f } else { p0.1 }).round() as i32;
+                        let x1 = (if p1.0 <= 1.0 { p1.0 * cw_f } else { p1.0 }).round() as i32;
+                        let y1 = (if p1.1 <= 1.0 { p1.1 * ch_f } else { p1.1 }).round() as i32;
+                        draw_thick_line(canvas, x0, y0, x1, y1, radius, col);
+                    }
+                }
+            }
+            DrawingTool::Line => {
+                if stroke.points.len() >= 2 {
+                    let p0 = stroke.points[0];
+                    let p1 = stroke.points[1];
+                    let x0 = (if p0.0 <= 1.0 { p0.0 * cw_f } else { p0.0 }).round() as i32;
+                    let y0 = (if p0.1 <= 1.0 { p0.1 * ch_f } else { p0.1 }).round() as i32;
+                    let x1 = (if p1.0 <= 1.0 { p1.0 * cw_f } else { p1.0 }).round() as i32;
+                    let y1 = (if p1.1 <= 1.0 { p1.1 * ch_f } else { p1.1 }).round() as i32;
+                    draw_thick_line(canvas, x0, y0, x1, y1, radius, col);
+                }
+            }
+            DrawingTool::Cross => {
+                if !stroke.points.is_empty() {
+                    let p0 = stroke.points[0];
+                    let p1 = stroke.points.get(1).copied().unwrap_or(p0);
+                    let mut x0 = (if p0.0 <= 1.0 { p0.0 * cw_f } else { p0.0 }).round() as i32;
+                    let mut y0 = (if p0.1 <= 1.0 { p0.1 * ch_f } else { p0.1 }).round() as i32;
+                    let mut x1 = (if p1.0 <= 1.0 { p1.0 * cw_f } else { p1.0 }).round() as i32;
+                    let mut y1 = (if p1.1 <= 1.0 { p1.1 * ch_f } else { p1.1 }).round() as i32;
+
+                    if (x1 - x0).abs() < 5 && (y1 - y0).abs() < 5 {
+                        let sz = (stroke.width * 4.0).max(18.0).round() as i32;
+                        x0 -= sz;
+                        y0 -= sz;
+                        x1 += sz;
+                        y1 += sz;
+                    }
+                    draw_thick_line(canvas, x0, y0, x1, y1, radius, col);
+                    draw_thick_line(canvas, x0, y1, x1, y0, radius, col);
+                }
+            }
+            DrawingTool::Arrow => {
+                if stroke.points.len() >= 2 {
+                    let p0 = stroke.points[0];
+                    let p1 = stroke.points[1];
+                    let x0 = if p0.0 <= 1.0 { p0.0 * cw_f } else { p0.0 };
+                    let y0 = if p0.1 <= 1.0 { p0.1 * ch_f } else { p0.1 };
+                    let x1 = if p1.0 <= 1.0 { p1.0 * cw_f } else { p1.0 };
+                    let y1 = if p1.1 <= 1.0 { p1.1 * ch_f } else { p1.1 };
+
+                    let dx = x1 - x0;
+                    let dy = y1 - y0;
+                    let angle = dy.atan2(dx);
+                    let wing_len = (stroke.width * 3.5).max(16.0);
+                    let a1 = angle + std::f32::consts::PI - (std::f32::consts::PI / 6.0);
+                    let a2 = angle + std::f32::consts::PI + (std::f32::consts::PI / 6.0);
+                    let wx1 = (x1 + wing_len * a1.cos()).round() as i32;
+                    let wy1 = (y1 + wing_len * a1.sin()).round() as i32;
+                    let wx2 = (x1 + wing_len * a2.cos()).round() as i32;
+                    let wy2 = (y1 + wing_len * a2.sin()).round() as i32;
+
+                    let ix0 = x0.round() as i32;
+                    let iy0 = y0.round() as i32;
+                    let ix1 = x1.round() as i32;
+                    let iy1 = y1.round() as i32;
+
+                    draw_thick_line(canvas, ix0, iy0, ix1, iy1, radius, col);
+                    draw_thick_line(canvas, ix1, iy1, wx1, wy1, radius, col);
+                    draw_thick_line(canvas, ix1, iy1, wx2, wy2, radius, col);
                 }
             }
         }
