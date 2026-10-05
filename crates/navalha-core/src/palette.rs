@@ -436,6 +436,30 @@ impl Palette {
         )
     }
 
+    pub fn comunicacao_popular() -> Self {
+        Self::new(
+            "Comunicação Popular // Linogravura & Voz das Ruas (Paulete Furacão)",
+            vec![
+                RgbColor::new(26, 20, 18),      // #1A1412 Preto Nanquim / Carvão de rua
+                RgbColor::new(246, 240, 226),   // #F6F0E2 Papel Panfleto / Kraft Claro
+                RgbColor::new(217, 56, 30),     // #D9381E Vermelho Terra / Luta Popular
+                RgbColor::new(245, 183, 0),     // #F5B700 Amarelo Dendê / Sol Baiano
+            ],
+        )
+    }
+
+    pub fn imprensa_amazonica() -> Self {
+        Self::new(
+            "Imprensa Amazônica // Retícula Viva & Resistência (Symmy Larrat)",
+            vec![
+                RgbColor::new(13, 20, 18),      // #0D1412 Preto Floresta Profunda
+                RgbColor::new(242, 237, 228),   // #F2EDE4 Papel Tabloide Ribeirinho
+                RgbColor::new(19, 75, 54),      // #134B36 Verde Clorofila / Florestal
+                RgbColor::new(255, 0, 85),      // #FF0055 Magenta Choque da Resistência
+            ],
+        )
+    }
+
     pub fn all_presets() -> Vec<Self> {
         vec![
             Self::classic_punk(),
@@ -460,6 +484,8 @@ impl Palette {
             Self::glitch_crt(),
             Self::punk_80_br(),
             Self::anarco_zine(),
+            Self::comunicacao_popular(),
+            Self::imprensa_amazonica(),
         ]
     }
 
@@ -489,6 +515,8 @@ impl Palette {
             "glitchcrt" | "glitch" | "vhs" | "robeyonce" | "robeyoncelima" => Some(Self::glitch_crt()),
             "punk80br" | "punk80" | "abc" | "k7" | "marinamathey" | "marina" => Some(Self::punk_80_br()),
             "anarcozine" | "anarco" | "zine" | "stencil" | "jaqueline" | "jaquelinejesus" | "jaquelinegomesdejesus" => Some(Self::anarco_zine()),
+            "comunicacaopopular" | "pauletefuracao" | "paulete" | "furacao" => Some(Self::comunicacao_popular()),
+            "imprensaamazonica" | "symmylarrat" | "symmy" | "larrat" | "amazonia" => Some(Self::imprensa_amazonica()),
             _ => None,
         }
     }

@@ -30,6 +30,8 @@ pub enum AestheticPreset {
     GlitchCrt,
     Punk80Br,
     AnarcoZine,
+    PauleteFuracao,
+    SymmyLarrat,
 }
 
 impl AestheticPreset {
@@ -57,6 +59,8 @@ impl AestheticPreset {
             Self::GlitchCrt,
             Self::Punk80Br,
             Self::AnarcoZine,
+            Self::PauleteFuracao,
+            Self::SymmyLarrat,
         ]
     }
 
@@ -84,6 +88,8 @@ impl AestheticPreset {
             Self::GlitchCrt => "glitch-crt",
             Self::Punk80Br => "punk-80-br",
             Self::AnarcoZine => "anarco-zine",
+            Self::PauleteFuracao => "paulete-furacao",
+            Self::SymmyLarrat => "symmy-larrat",
         }
     }
 
@@ -111,6 +117,8 @@ impl AestheticPreset {
             Self::GlitchCrt => "Glitch CRT / Sinal Pirata & Aberração Cromática (Robeyoncé Lima)",
             Self::Punk80Br => "Punk 80 BR / ABC Paulista & Fitas K7 (Marina Mathey)",
             Self::AnarcoZine => "Anarco-Zine / Stencil de Guerrilha & Grampos (Jaqueline Gomes de Jesus)",
+            Self::PauleteFuracao => "Comunicação Popular / Linogravura & Voz das Ruas (Paulete Furacão)",
+            Self::SymmyLarrat => "Imprensa Amazônica / Retícula Viva & Resistência (Symmy Larrat)",
         }
     }
 
@@ -139,6 +147,8 @@ impl AestheticPreset {
             "glitchcrt" | "glitch" | "crt" | "robeyonce" | "robeyoncelima" => Some(Self::GlitchCrt),
             "punk80br" | "punk80" | "abc" | "k7" | "marinamathey" | "marina" => Some(Self::Punk80Br),
             "anarcozine" | "anarco" | "zine" | "stencil" | "jaqueline" | "jaquelinejesus" | "jaquelinegomesdejesus" => Some(Self::AnarcoZine),
+            "pauletefuracao" | "paulete" | "furacao" | "comunicacaopopular" => Some(Self::PauleteFuracao),
+            "symmylarrat" | "symmy" | "larrat" | "imprensaamazonica" | "amazonia" => Some(Self::SymmyLarrat),
             _ => None,
         }
     }
@@ -580,6 +590,50 @@ impl AestheticPreset {
                 border_color: Some(RgbColor::new(212, 28, 28)),
                 word_jitter_rotation: 5,
                 word_tarja_cut: true,
+                ..Default::default()
+            },
+            Self::PauleteFuracao => TextElement {
+                text: phrase_upper,
+                font_size: 50.0,
+                stretch_x: 1.0,
+                stretch_y: 1.6,
+                color: RgbColor::new(246, 240, 226),
+                bg_tarja: Some(RgbColor::new(26, 20, 18)),
+                tarja_padding: 12,
+                pos_x: 0.5,
+                pos_y: 0.86,
+                center_x: true,
+                rotation: -1,
+                tarja_effect: TarjaEffect::Solida,
+                font_family: BannerFontFamily::Impact,
+                border_finish: TarjaBorderFinish::Picote,
+                border_width: 3,
+                border_color: Some(RgbColor::new(245, 183, 0)),
+                word_jitter_rotation: 4,
+                word_tarja_cut: true,
+                ..Default::default()
+            },
+            Self::SymmyLarrat => TextElement {
+                text: phrase_upper,
+                font_size: 48.0,
+                stretch_x: 1.0,
+                stretch_y: 1.5,
+                color: RgbColor::new(13, 20, 18),
+                bg_tarja: Some(RgbColor::new(255, 0, 85)),
+                tarja_padding: 10,
+                pos_x: 0.5,
+                pos_y: 0.85,
+                center_x: true,
+                rotation: 1,
+                tarja_effect: TarjaEffect::Xerox,
+                font_family: BannerFontFamily::Impact,
+                border_finish: TarjaBorderFinish::FitaDurex,
+                border_width: 3,
+                border_color: Some(RgbColor::new(19, 75, 54)),
+                word_jitter_rotation: 6,
+                word_tarja_cut: false,
+                wave_amplitude: 4.0,
+                wave_wavelength: 0.25,
                 ..Default::default()
             },
         }
@@ -2087,6 +2141,154 @@ impl AestheticPreset {
                         blade_scratches: false,
                         registration_marks: true,
                         vector_color: RgbColor::new(10, 10, 10),
+                    },
+                };
+
+                (guillotine, prep, dither, palette, scale, comp)
+            }
+            Self::PauleteFuracao => {
+                let palette = Palette::comunicacao_popular();
+                let guillotine = GuillotineConfig {
+                    auto_threshold: false,
+                    enabled: true,
+                    threshold: 0.85,
+                    invert: true,
+                    background_fill: None,
+                };
+                let prep = PrepConfig {
+                    rotation: 0,
+                    zoom: 1.0,
+                    target_width: Some(720),
+                    unsharp_strength: 2.4,
+                    unsharp_radius: 1,
+                    levels_shadow_cutoff: 0.10,
+                    levels_highlight_cutoff: 0.90,
+                    levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
+                };
+                let dither = DitherAlgorithm::SauvolaWoodcut;
+                let scale = ScaleFactor::TwoX;
+
+                let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
+                    stickers: vec![
+                        StickerElement::new(StickerKind::Anarchy, 0.84, 0.16, 95, -8, false)
+                            .with_border(StickerBorder::Picote, 4),
+                    ],
+                    subject_offset_x: 0,
+                    subject_offset_y: 0,
+                    custom_seed: None,
+                    palette: Some(palette.clone()),
+                    canvas_width: 800,
+                    canvas_height: 1100,
+                    background_color: RgbColor::new(246, 240, 226),
+                    background_text: Some(TextElement {
+                        text: phrase_upper.clone(),
+                        font_size: 96.0,
+                        stretch_x: 1.1,
+                        stretch_y: 2.0,
+                        color: RgbColor::new(217, 56, 30),
+                        bg_tarja: None,
+                        tarja_padding: 0,
+                        pos_x: 0.5,
+                        pos_y: 0.15,
+                        center_x: true,
+                        rotation: 0,
+                        tarja_effect: TarjaEffect::Solida,
+                        ..Default::default()
+                    }),
+                    foreground_texts: vec![self.default_banner_element(&phrase_upper)],
+                    overlay: PunkOverlayConfig {
+                        damage_elements: vec![
+                            DamageElement {
+                                kind: DamageEffect::Tinta,
+                                pos_x: 0.50,
+                                pos_y: 0.05,
+                                scale: 1.0,
+                            },
+                        ],
+                        damages: Vec::new(),
+                        crop_frame: true,
+                        blade_scratches: true,
+                        registration_marks: true,
+                        vector_color: RgbColor::new(217, 56, 30),
+                    },
+                };
+
+                (guillotine, prep, dither, palette, scale, comp)
+            }
+            Self::SymmyLarrat => {
+                let palette = Palette::imprensa_amazonica();
+                let guillotine = GuillotineConfig {
+                    auto_threshold: false,
+                    enabled: true,
+                    threshold: 0.82,
+                    invert: true,
+                    background_fill: None,
+                };
+                let prep = PrepConfig {
+                    rotation: 0,
+                    zoom: 1.0,
+                    target_width: Some(720),
+                    unsharp_strength: 2.2,
+                    unsharp_radius: 1,
+                    levels_shadow_cutoff: 0.08,
+                    levels_highlight_cutoff: 0.92,
+                    levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
+                };
+                let dither = DitherAlgorithm::Halftone { angle_deg: 45, cell_size: 4 };
+                let scale = ScaleFactor::TwoX;
+
+                let comp = PosterComposition {
+                    manual_drawings: Vec::new(),
+                    stickers: vec![
+                        StickerElement::new(StickerKind::Copyleft, 0.16, 0.82, 90, 10, false)
+                            .with_border(StickerBorder::DieCutBranco, 4),
+                    ],
+                    subject_offset_x: 0,
+                    subject_offset_y: 0,
+                    custom_seed: None,
+                    palette: Some(palette.clone()),
+                    canvas_width: 800,
+                    canvas_height: 1100,
+                    background_color: RgbColor::new(13, 20, 18),
+                    background_text: Some(TextElement {
+                        text: phrase_upper.clone(),
+                        font_size: 92.0,
+                        stretch_x: 1.1,
+                        stretch_y: 2.0,
+                        color: RgbColor::new(19, 75, 54),
+                        bg_tarja: None,
+                        tarja_padding: 0,
+                        pos_x: 0.5,
+                        pos_y: 0.14,
+                        center_x: true,
+                        rotation: 0,
+                        tarja_effect: TarjaEffect::Solida,
+                        ..Default::default()
+                    }),
+                    foreground_texts: vec![self.default_banner_element(&phrase_upper)],
+                    overlay: PunkOverlayConfig {
+                        damage_elements: vec![
+                            DamageElement {
+                                kind: DamageEffect::Censura,
+                                pos_x: 0.50,
+                                pos_y: 0.46,
+                                scale: 0.8,
+                            },
+                        ],
+                        damages: Vec::new(),
+                        crop_frame: true,
+                        blade_scratches: true,
+                        registration_marks: true,
+                        vector_color: RgbColor::new(255, 0, 85),
                     },
                 };
 

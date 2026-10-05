@@ -562,7 +562,7 @@ mod tests {
 
     #[test]
     fn test_all_presets_count() {
-        assert_eq!(AestheticPreset::all().len(), 22, "O motor deve fornecer exatamente 22 presets canônicos");
+        assert_eq!(AestheticPreset::all().len(), 24, "O motor deve fornecer exatamente 24 presets canônicos");
         for preset in AestheticPreset::all() {
             assert!(AestheticPreset::parse(preset.id()).is_some(), "Preset {} deve ser re-parseável pelo seu ID", preset.id());
         }
@@ -1076,7 +1076,7 @@ mod tests {
     }
 
     #[test]
-    fn test_all_twenty_presets_banner_adequation() {
+    fn test_all_presets_banner_adequation() {
         for &preset in AestheticPreset::all() {
             let expected_banner = preset.default_banner_element("PROLETARIADO");
             let (_, _, _, _, _, comp) = preset.build_pipeline_and_composition("PROLETARIADO");
@@ -1500,6 +1500,35 @@ mod tests {
         assert!(svg.contains("<polyline"), "SVG deve conter elemento polyline para mão livre");
         assert!(svg.contains("<line"), "SVG deve conter elementos line para cruz, seta e linha");
         assert!(svg.contains("#FF0033"), "SVG deve conter a cor vermelha punk");
+    }
+
+    #[test]
+    fn test_paulete_and_symmy_presets() {
+        // 1. Paulete Furacão
+        let p_furacao = AestheticPreset::PauleteFuracao;
+        assert_eq!(p_furacao.id(), "paulete-furacao");
+        assert_eq!(AestheticPreset::parse("paulete-furacao"), Some(AestheticPreset::PauleteFuracao));
+        assert_eq!(AestheticPreset::parse("paulete"), Some(AestheticPreset::PauleteFuracao));
+        assert_eq!(AestheticPreset::parse("comunicacao-popular"), Some(AestheticPreset::PauleteFuracao));
+        let (_, _, dither_p, pal_p, _, comp_p) = p_furacao.build_pipeline_and_composition("VOZ DAS RUAS");
+        assert_eq!(dither_p, DitherAlgorithm::SauvolaWoodcut);
+        assert_eq!(pal_p.name, "Comunicação Popular // Linogravura & Voz das Ruas (Paulete Furacão)");
+        assert_eq!(comp_p.background_color, RgbColor::new(246, 240, 226));
+        let poster_p = render_poster(&comp_p, None);
+        assert_eq!(poster_p.dimensions(), (800, 1100));
+
+        // 2. Symmy Larrat
+        let p_symmy = AestheticPreset::SymmyLarrat;
+        assert_eq!(p_symmy.id(), "symmy-larrat");
+        assert_eq!(AestheticPreset::parse("symmy-larrat"), Some(AestheticPreset::SymmyLarrat));
+        assert_eq!(AestheticPreset::parse("symmy"), Some(AestheticPreset::SymmyLarrat));
+        assert_eq!(AestheticPreset::parse("imprensa-amazonica"), Some(AestheticPreset::SymmyLarrat));
+        let (_, _, dither_s, pal_s, _, comp_s) = p_symmy.build_pipeline_and_composition("FLORESTA VIVA");
+        assert_eq!(dither_s, DitherAlgorithm::Halftone { angle_deg: 45, cell_size: 4 });
+        assert_eq!(pal_s.name, "Imprensa Amazônica // Retícula Viva & Resistência (Symmy Larrat)");
+        assert_eq!(comp_s.background_color, RgbColor::new(13, 20, 18));
+        let poster_s = render_poster(&comp_s, None);
+        assert_eq!(poster_s.dimensions(), (800, 1100));
     }
 }
 

@@ -178,6 +178,8 @@ fn preset_short_name(preset: AestheticPreset) -> &'static str {
         AestheticPreset::GlitchCrt => "Glitch CRT",
         AestheticPreset::Punk80Br => "Punk 80 BR",
         AestheticPreset::AnarcoZine => "Anarco-Zine",
+        AestheticPreset::PauleteFuracao => "Comunicação Popular",
+        AestheticPreset::SymmyLarrat => "Imprensa Amazônica",
     }
 }
 
@@ -1165,6 +1167,8 @@ pub fn App() -> Element {
         "glitch-crt"       => "SYNC JITTER // 640PX // SPLIT CROMÁTICO & V-HOLD",
         "punk-80-br"       => "ATKINSON // 720PX // ABC PAULISTA & FITAS K7",
         "anarco-zine"      => "HALFTONE 45° // 640PX // STENCIL & GRAMPOS FANZINE",
+        "paulete-furacao"  => "SAUVOLA // 720PX // LINOGRAVURA & VOZ DAS RUAS",
+        "symmy-larrat"     => "HALFTONE 45° // 720PX // RETÍCULA VIVA & IMPRENSA",
         _                  => "MOTOR ANTI-DESIGN // DETERMINÍSTICO // 800x1100",
     };
 
@@ -2663,7 +2667,7 @@ pub fn App() -> Element {
                             }
 
                             div { class: "control-box",
-                                label { class: "section-tag", "3. ESTÉTICA ANTI-DESIGN (22 PRESETS CANÔNICOS)" }
+                                label { class: "section-tag", "3. ESTÉTICA ANTI-DESIGN (24 PRESETS CANÔNICOS)" }
                                 div { class: "preset-carousel-container",
                                     div { class: "preset-carousel-scroll",
                                         {AestheticPreset::all().iter().enumerate().map(|(idx, p)| {
@@ -2727,6 +2731,8 @@ pub fn App() -> Element {
                                     option { value: "glitch-crt",       "20. GLITCH CRT // Robeyoncé Lima" }
                                     option { value: "punk-80-br",       "21. PUNK 80 BR // Marina Mathey" }
                                     option { value: "anarco-zine",      "22. ANARCO-ZINE // Jaqueline Gomes de Jesus" }
+                                    option { value: "paulete-furacao",  "23. COMUNICAÇÃO POPULAR // Paulete Furacão" }
+                                    option { value: "symmy-larrat",     "24. IMPRENSA AMAZÔNICA // Symmy Larrat" }
                                 }
                                 div { class: "preset-badge-summary",
                                     span { class: "preset-summary-tag", "⚡ {preset_summary}" }
