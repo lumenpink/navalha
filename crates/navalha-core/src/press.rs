@@ -133,6 +133,9 @@ pub struct TextElement {
     /// Se true, cada palavra ganha sua própria mini-tarja recortada independente
     #[serde(default)]
     pub word_tarja_cut: bool,
+    /// Se true, ativa o modo de colagem de revista punk (ransom note) com tipografias e cores heterogêneas por palavra
+    #[serde(default)]
+    pub ransom_note: bool,
 }
 
 impl Default for TextElement {
@@ -159,6 +162,7 @@ impl Default for TextElement {
             wave_wavelength: 0.0,
             word_jitter_rotation: 0,
             word_tarja_cut: false,
+            ransom_note: false,
         }
     }
 }
@@ -549,6 +553,9 @@ pub struct PosterComposition {
     /// Deslocamento vertical do sujeito em pixels (padrão 0 = centralizado)
     #[serde(default)]
     pub subject_offset_y: i32,
+    /// Semente determinística customizada (opcional). Se fornecida, sobrepõe a semente derivada da imagem processada.
+    #[serde(default)]
+    pub custom_seed: Option<u64>,
 }
 
 impl Default for PosterComposition {
@@ -564,6 +571,7 @@ impl Default for PosterComposition {
             palette: None,
             subject_offset_x: 0,
             subject_offset_y: 0,
+            custom_seed: None,
         }
     }
 }
@@ -591,12 +599,16 @@ where
         return None;
     }
 
-    let fallback_phrase = composition
-        .foreground_texts
-        .first()
-        .map(|t| t.text.as_str())
-        .unwrap_or("");
-    let seed = compute_subject_seed(processed_subject, fallback_phrase);
+    let seed = if let Some(s) = composition.custom_seed {
+        s
+    } else {
+        let fallback_phrase = composition
+            .foreground_texts
+            .first()
+            .map(|t| t.text.as_str())
+            .unwrap_or("");
+        compute_subject_seed(processed_subject, fallback_phrase)
+    };
 
     // ── Camada 0: Fundo sólido chapado ──────────────────────────────────────────
     let bg = composition.background_color;
@@ -853,10 +865,30 @@ fn render_words_cut(
         let mut word_widths: Vec<f32> = Vec::with_capacity(raw_words.len());
         let mut total_words_w = 0.0f32;
 
-        for w in &raw_words {
+        for (w_local_idx, w) in raw_words.iter().enumerate() {
+            let word_idx = global_word_idx + w_local_idx;
             let mut w_w = 0.0f32;
-            for ch in w.chars() {
-                w_w += scaled_font.h_advance(font.glyph_id(ch));
+            if elem.ransom_note {
+                let style_variant = lcg_hash(seed as u32, word_idx as u32, 31415) % 5;
+                let (sx, sy, fsm) = match style_variant {
+                    0 => (elem.stretch_x * 0.95, elem.stretch_y * 1.35, 1.05),
+                    1 => (elem.stretch_x * 1.15, elem.stretch_y * 0.90, 0.92),
+                    2 => (elem.stretch_x * 1.05, elem.stretch_y * 1.05, 1.00),
+                    3 => (elem.stretch_x * 0.90, elem.stretch_y * 1.20, 1.12),
+                    _ => (elem.stretch_x * 1.20, elem.stretch_y * 1.30, 1.08),
+                };
+                let w_scale = PxScale {
+                    x: elem.font_size * sx * fsm,
+                    y: elem.font_size * sy * fsm,
+                };
+                let word_font = font.as_scaled(w_scale);
+                for ch in w.chars() {
+                    w_w += word_font.h_advance(font.glyph_id(ch));
+                }
+            } else {
+                for ch in w.chars() {
+                    w_w += scaled_font.h_advance(font.glyph_id(ch));
+                }
             }
             word_widths.push(w_w);
             total_words_w += w_w;
@@ -878,7 +910,11 @@ fn render_words_cut(
             let word_cy = line_y + (v_metrics / 2.0);
 
             // Jitter determinístico angular por palavra
-            let rot = if elem.word_jitter_rotation != 0 {
+            let rot = if elem.ransom_note {
+                let hash_rot = lcg_hash(seed as u32, global_word_idx as u32, 7331);
+                let j = ((hash_rot % 19) as i32 - 9) as i16;
+                elem.rotation + j
+            } else if elem.word_jitter_rotation != 0 {
                 let j_max = elem.word_jitter_rotation.abs() as i32;
                 let j_span = (j_max * 2 + 1) as u32;
                 let hash_rot = lcg_hash(seed as u32, global_word_idx as u32, 7331);
@@ -889,7 +925,10 @@ fn render_words_cut(
             };
 
             // Jitter determinístico vertical de colagem analógica
-            let y_jitter = if elem.word_jitter_rotation != 0 {
+            let y_jitter = if elem.ransom_note {
+                let hash_y = lcg_hash(seed as u32, global_word_idx as u32, 1999);
+                ((hash_y % 11) as i32 - 5) as f32
+            } else if elem.word_jitter_rotation != 0 {
                 let hash_y = lcg_hash(seed as u32, global_word_idx as u32, 1999);
                 ((hash_y % 7) as i32 - 3) as f32
             } else {
@@ -906,13 +945,64 @@ fn render_words_cut(
             let target_cx = word_cx;
             let target_cy = word_cy + wave_y + y_jitter;
 
+            let (word_sf, word_v_metrics, word_col, word_bg, word_pad, word_finish, word_border_w, word_border_col) = if elem.ransom_note {
+                let style_variant = lcg_hash(seed as u32, global_word_idx as u32, 31415) % 5;
+                let (sx, sy, fsm) = match style_variant {
+                    0 => (elem.stretch_x * 0.95, elem.stretch_y * 1.35, 1.05),
+                    1 => (elem.stretch_x * 1.15, elem.stretch_y * 0.90, 0.92),
+                    2 => (elem.stretch_x * 1.05, elem.stretch_y * 1.05, 1.00),
+                    3 => (elem.stretch_x * 0.90, elem.stretch_y * 1.20, 1.12),
+                    _ => (elem.stretch_x * 1.20, elem.stretch_y * 1.30, 1.08),
+                };
+                let w_scale = PxScale {
+                    x: elem.font_size * sx * fsm,
+                    y: elem.font_size * sy * fsm,
+                };
+                let w_sf = font.as_scaled(w_scale);
+                let w_vm = w_sf.height();
+
+                let col_idx = lcg_hash(seed as u32, global_word_idx as u32, 92837) % 8;
+                let (fg, bg) = match col_idx {
+                    0 => (RgbColor::new(255, 255, 255), RgbColor::new(0, 0, 0)),
+                    1 => (RgbColor::new(0, 0, 0), RgbColor::new(255, 255, 255)),
+                    2 => (RgbColor::new(255, 238, 0), RgbColor::new(0, 0, 0)),
+                    3 => (RgbColor::new(255, 255, 255), RgbColor::new(255, 0, 51)),
+                    4 => (RgbColor::new(0, 0, 0), RgbColor::new(255, 238, 0)),
+                    5 => (RgbColor::new(255, 0, 51), RgbColor::new(255, 255, 255)),
+                    6 => (RgbColor::new(0, 0, 0), RgbColor::new(0, 255, 255)),
+                    _ => (RgbColor::new(255, 255, 255), RgbColor::new(255, 0, 127)),
+                };
+
+                let w_pad = 8.0 + ((lcg_hash(seed as u32, global_word_idx as u32, 5555) % 7) as f32);
+                let finish = match lcg_hash(seed as u32, global_word_idx as u32, 8888) % 3 {
+                    0 => TarjaBorderFinish::Solida,
+                    1 => TarjaBorderFinish::FitaDurex,
+                    _ => TarjaBorderFinish::Tracejada,
+                };
+                let b_col = if col_idx == 1 || col_idx == 5 { RgbColor::new(0, 0, 0) } else { RgbColor::new(255, 255, 255) };
+                (w_sf, w_vm, fg, Some(bg), w_pad, finish, 2u32, b_col)
+            } else {
+                let finish = if elem.border_finish == TarjaBorderFinish::Nenhuma && elem.border_width > 0 {
+                    TarjaBorderFinish::Solida
+                } else {
+                    elem.border_finish
+                };
+                let b_col = elem.border_color.unwrap_or(elem.color);
+                let b_w = if finish != TarjaBorderFinish::Nenhuma && elem.border_width == 0 {
+                    3
+                } else {
+                    elem.border_width
+                };
+                (*scaled_font, v_metrics, elem.color, elem.bg_tarja, pad, finish, b_w, b_col)
+            };
+
             // Cria um sub-canvas para esta mini-tarja da palavra
-            let sub_w = (w_w + pad * 2.0).ceil().max(1.0) as u32;
-            let sub_h = (v_metrics + pad * 2.0).ceil().max(1.0) as u32;
+            let sub_w = (w_w + word_pad * 2.0).ceil().max(1.0) as u32;
+            let sub_h = (word_v_metrics + word_pad * 2.0).ceil().max(1.0) as u32;
             let mut sub_canvas = RgbaImage::new(sub_w, sub_h);
 
             // Preenche fundo de tarja para a palavra recortada
-            if let Some(tarja_color) = elem.bg_tarja {
+            if let Some(tarja_color) = word_bg {
                 match elem.tarja_effect {
                     TarjaEffect::Solida => {
                         for ty in 0..sub_h {
@@ -926,28 +1016,17 @@ fn render_words_cut(
                     }
                 }
 
-                let border_finish = if elem.border_finish == TarjaBorderFinish::Nenhuma && elem.border_width > 0 {
-                    TarjaBorderFinish::Solida
-                } else {
-                    elem.border_finish
-                };
-                let border_col = elem.border_color.unwrap_or(elem.color);
-                let border_w = if border_finish != TarjaBorderFinish::Nenhuma && elem.border_width == 0 {
-                    3
-                } else {
-                    elem.border_width
-                };
-                draw_tarja_border(&mut sub_canvas, 0, 0, sub_w, sub_h, border_finish, border_w, border_col);
+                draw_tarja_border(&mut sub_canvas, 0, 0, sub_w, sub_h, word_finish, word_border_w, word_border_col);
             }
 
             // Rasteriza os glifos da palavra dentro de seu sub-canvas
-            let mut glyph_cursor = pad;
+            let mut glyph_cursor = word_pad;
             for ch in word.chars() {
                 let glyph_id = font.glyph_id(ch);
-                let advance = scaled_font.h_advance(glyph_id);
+                let advance = word_sf.h_advance(glyph_id);
                 let glyph = glyph_id.with_scale_and_position(
-                    scaled_font.scale,
-                    Point { x: glyph_cursor, y: pad + scaled_font.ascent() },
+                    word_sf.scale,
+                    Point { x: glyph_cursor, y: word_pad + word_sf.ascent() },
                 );
                 glyph_cursor += advance;
 
@@ -963,8 +1042,7 @@ fn render_words_cut(
                                         return;
                                     }
                                 }
-                                let col = elem.color;
-                                sub_canvas.put_pixel(px as u32, py as u32, Rgba([col.r, col.g, col.b, 255]));
+                                sub_canvas.put_pixel(px as u32, py as u32, Rgba([word_col.r, word_col.g, word_col.b, 255]));
                             }
                         }
                     });
@@ -1048,8 +1126,8 @@ fn render_text_element(canvas: &mut RgbaImage, font: &FontRef, elem: &TextElemen
         elem.pos_y
     };
 
-    // Se estiver configurado para corte individual de palavras ou com jitter angular por palavra
-    if elem.word_tarja_cut || elem.word_jitter_rotation != 0 {
+    // Se estiver configurado para corte individual de palavras, jitter angular por palavra ou modo colagem de revista (ransom note)
+    if elem.word_tarja_cut || elem.word_jitter_rotation != 0 || elem.ransom_note {
         render_words_cut(
             canvas,
             font,

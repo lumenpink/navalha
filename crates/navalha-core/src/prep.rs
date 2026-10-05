@@ -18,6 +18,14 @@ pub struct PrepConfig {
     pub levels_highlight_cutoff: f32,
     /// Gamma / meio-tom (padrão 1.0)
     pub levels_gamma: f32,
+    /// Margem de corte superior em porcentagem (0.0 a 45.0, padrão 0.0)
+    pub crop_top: f32,
+    /// Margem de corte inferior em porcentagem (0.0 a 45.0, padrão 0.0)
+    pub crop_bottom: f32,
+    /// Margem de corte esquerda em porcentagem (0.0 a 45.0, padrão 0.0)
+    pub crop_left: f32,
+    /// Margem de corte direita em porcentagem (0.0 a 45.0, padrão 0.0)
+    pub crop_right: f32,
 }
 
 impl Default for PrepConfig {
@@ -25,6 +33,10 @@ impl Default for PrepConfig {
         Self {
             rotation: 0,
             zoom: 1.0,
+            crop_top: 0.0,
+            crop_bottom: 0.0,
+            crop_left: 0.0,
+            crop_right: 0.0,
             target_width: Some(720),
             unsharp_strength: 2.2,
             unsharp_radius: 2,
@@ -35,8 +47,51 @@ impl Default for PrepConfig {
     }
 }
 
-/// Aplica rotação e zoom granular mantendo o enquadramento na chapa
-pub fn apply_image_orientation_and_zoom(img: &RgbaImage, rotation: u32, zoom: f32) -> RgbaImage {
+/// Aplica recorte (crop) retangular manual nas margens da imagem em porcentagem (0.0 a 45.0)
+pub fn apply_image_crop(
+    img: &RgbaImage,
+    crop_top: f32,
+    crop_bottom: f32,
+    crop_left: f32,
+    crop_right: f32,
+) -> RgbaImage {
+    let (w, h) = img.dimensions();
+    if w == 0 || h == 0 {
+        return img.clone();
+    }
+    let ct = crop_top.clamp(0.0, 45.0) / 100.0;
+    let cb = crop_bottom.clamp(0.0, 45.0) / 100.0;
+    let cl = crop_left.clamp(0.0, 45.0) / 100.0;
+    let cr = crop_right.clamp(0.0, 45.0) / 100.0;
+
+    if ct <= 0.0001 && cb <= 0.0001 && cl <= 0.0001 && cr <= 0.0001 {
+        return img.clone();
+    }
+
+    let x_start = (w as f32 * cl).round() as u32;
+    let y_start = (h as f32 * ct).round() as u32;
+    let x_end = (w as f32 * (1.0 - cr)).round() as u32;
+    let y_end = (h as f32 * (1.0 - cb)).round() as u32;
+
+    let crop_w = (x_end.saturating_sub(x_start)).max(1).min(w);
+    let crop_h = (y_end.saturating_sub(y_start)).max(1).min(h);
+
+    let clamped_x = x_start.min(w.saturating_sub(crop_w));
+    let clamped_y = y_start.min(h.saturating_sub(crop_h));
+
+    imageops::crop_imm(img, clamped_x, clamped_y, crop_w, crop_h).to_image()
+}
+
+/// Aplica rotação, recorte manual de margens e zoom granular mantendo o enquadramento na chapa
+pub fn apply_image_orientation_zoom_and_crop(
+    img: &RgbaImage,
+    rotation: u32,
+    zoom: f32,
+    crop_top: f32,
+    crop_bottom: f32,
+    crop_left: f32,
+    crop_right: f32,
+) -> RgbaImage {
     let rotated = match rotation % 360 {
         90 => imageops::rotate90(img),
         180 => imageops::rotate180(img),
@@ -44,7 +99,13 @@ pub fn apply_image_orientation_and_zoom(img: &RgbaImage, rotation: u32, zoom: f3
         _ => img.clone(),
     };
 
-    apply_image_zoom(&rotated, zoom)
+    let cropped = apply_image_crop(&rotated, crop_top, crop_bottom, crop_left, crop_right);
+    apply_image_zoom(&cropped, zoom)
+}
+
+/// Aplica rotação e zoom granular mantendo o enquadramento na chapa
+pub fn apply_image_orientation_and_zoom(img: &RgbaImage, rotation: u32, zoom: f32) -> RgbaImage {
+    apply_image_orientation_zoom_and_crop(img, rotation, zoom, 0.0, 0.0, 0.0, 0.0)
 }
 
 /// Aplica zoom granular sobre a imagem original:

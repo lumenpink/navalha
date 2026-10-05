@@ -192,9 +192,15 @@ pub fn App() -> Element {
     let mut preview_collapsed = use_signal(|| false);
 
     // Controles principais do Pôster Relâmpago
+    // Controles principais do Pôster Relâmpago
     let mut phrase = use_signal(|| String::from("EU SOBREVIVO AO MUNDO"));
     let mut phrase_top = use_signal(|| String::new());
     let mut aesthetic_id = use_signal(|| String::from("punk-riot"));
+
+    // Aba ativa de faixa ("bottom" = Inferior, "top" = Superior - Ticket #16)
+    let mut banner_active_tab = use_signal(|| String::from("bottom"));
+
+    // Faixa Inferior (Manchete principal da base)
     let mut banner_font_family = use_signal(|| String::from("impact"));
     let mut banner_font_size = use_signal(|| 48u32);
     let mut banner_auto_fit = use_signal(|| true);
@@ -210,7 +216,28 @@ pub fn App() -> Element {
     let mut banner_wave_amp = use_signal(|| 0u32);
     let mut banner_word_rot = use_signal(|| 0u32);
     let mut banner_word_cut = use_signal(|| false);
+    let mut banner_ransom_note = use_signal(|| false); // Ticket #18
     let mut banner_adapt_preset = use_signal(|| true);
+
+    // Faixa Superior (Manchete do topo - Tickets #15, #16 e #18)
+    let mut banner_top_font_family = use_signal(|| String::from("impact"));
+    let mut banner_top_font_size = use_signal(|| 48u32);
+    let mut banner_top_auto_fit = use_signal(|| true);
+    let mut banner_top_pos_x = use_signal(|| 50u32); // 50%
+    let mut banner_top_pos_y = use_signal(|| 10u32); // 10% (Inicia no topo!)
+    let mut banner_top_rotation = use_signal(|| 0i16); // 0 graus
+    let mut banner_top_fg_color = use_signal(|| String::from("auto"));
+    let mut banner_top_bg_color = use_signal(|| String::from("auto"));
+    let mut banner_top_border_finish = use_signal(|| String::from("nenhuma"));
+    let mut banner_top_border_width = use_signal(|| 3u32);
+    let banner_top_border_color = use_signal(|| String::from("auto"));
+    let mut banner_top_effect = use_signal(|| String::from("solida"));
+    let mut banner_top_wave_amp = use_signal(|| 0u32);
+    let mut banner_top_word_rot = use_signal(|| 0u32);
+    let mut banner_top_word_cut = use_signal(|| false);
+    let mut banner_top_ransom_note = use_signal(|| false);
+    let mut banner_top_adapt_preset = use_signal(|| true);
+
     let mut banner_sem_faixa = use_signal(|| false);
 
     // Controles de edição de recorte (guilhotina) a partir do preset ativo
@@ -231,6 +258,10 @@ pub fn App() -> Element {
     let mut image_zoom = use_signal(|| 100u32); // percentual: 100 = 1.0x
     let mut image_pos_x = use_signal(|| 50u32); // percentual: 50 = centro (0 a 100)
     let mut image_pos_y = use_signal(|| 50u32); // percentual: 50 = centro (0 a 100)
+    let mut image_crop_top = use_signal(|| 0u32);    // percentual de corte 0 a 45% (Ticket #17)
+    let mut image_crop_bottom = use_signal(|| 0u32); // percentual de corte 0 a 45%
+    let mut image_crop_left = use_signal(|| 0u32);   // percentual de corte 0 a 45%
+    let mut image_crop_right = use_signal(|| 0u32);  // percentual de corte 0 a 45%
     let mut auto_threshold = use_signal(|| false);
     let mut active_damages = use_signal(|| Vec::<String>::new());
     let mut active_stickers = use_signal(|| Vec::<String>::new());
@@ -327,8 +358,33 @@ pub fn App() -> Element {
             let b_wamp = banner_wave_amp();
             let b_wrot = banner_word_rot();
             let b_wcut = banner_word_cut();
+            let b_ransom = banner_ransom_note();
             let b_adapt = banner_adapt_preset();
             let b_sem_faixa = banner_sem_faixa();
+
+            let b_top_fam = banner_top_font_family();
+            let b_top_sz = banner_top_font_size();
+            let b_top_af = banner_top_auto_fit();
+            let b_top_px = banner_top_pos_x();
+            let b_top_py = banner_top_pos_y();
+            let b_top_rot = banner_top_rotation();
+            let b_top_fg = banner_top_fg_color();
+            let b_top_bg = banner_top_bg_color();
+            let b_top_bfinish = banner_top_border_finish();
+            let b_top_bwidth = banner_top_border_width();
+            let b_top_bcol = banner_top_border_color();
+            let b_top_eff = banner_top_effect();
+            let b_top_wamp = banner_top_wave_amp();
+            let b_top_wrot = banner_top_word_rot();
+            let b_top_wcut = banner_top_word_cut();
+            let b_top_ransom = banner_top_ransom_note();
+            let b_top_adapt = banner_top_adapt_preset();
+
+            let c_top = image_crop_top();
+            let c_bot = image_crop_bottom();
+            let c_left = image_crop_left();
+            let c_right = image_crop_right();
+
             let r_adapt = recorte_adapt_preset();
             let r_ativo = recorte_ativo();
             let r_th = recorte_threshold();
@@ -370,11 +426,18 @@ pub fn App() -> Element {
 
                 pr.rotation = rot_deg;
                 pr.zoom = (zoom as f32) / 100.0;
+                pr.crop_top = c_top as f32;
+                pr.crop_bottom = c_bot as f32;
+                pr.crop_left = c_left as f32;
+                pr.crop_right = c_right as f32;
                 comp.subject_offset_x = ((pos_x as i32 - 50) * 800) / 100;
                 comp.subject_offset_y = ((pos_y as i32 - 50) * 1100) / 100;
                 if auto_th {
                     g.auto_threshold = true;
                 }
+
+                // Semente determinística fixada na foto original bruta (Ticket #19)
+                comp.custom_seed = Some(navalha_core::compute_subject_seed(Some(&raw), &phr));
 
                 // Injeta danos com posição e escala customizáveis
                 for d_str in damages.iter() {
@@ -492,65 +555,135 @@ pub fn App() -> Element {
                     });
                 }
 
-                if b_adapt {
-                    let def_banner = current_preset.default_banner_element(&phr);
-                    for t in comp.foreground_texts.iter_mut() {
-                        t.font_family = def_banner.font_family;
-                        t.auto_fit = b_af;
-                    }
-                    if let Some(t) = comp.foreground_texts.get_mut(0) {
-                        t.pos_x = (b_px as f32) / 100.0;
-                        t.pos_y = (b_py as f32) / 100.0;
-                        t.rotation = b_rot;
-                        t.color = def_banner.color;
-                        t.bg_tarja = def_banner.bg_tarja;
-                        t.border_finish = def_banner.border_finish;
-                        t.border_width = def_banner.border_width;
-                        t.border_color = def_banner.border_color;
-                        t.tarja_effect = def_banner.tarja_effect;
-                        t.word_jitter_rotation = def_banner.word_jitter_rotation;
-                        t.word_tarja_cut = def_banner.word_tarja_cut;
-                        t.wave_amplitude = def_banner.wave_amplitude;
-                        t.wave_wavelength = def_banner.wave_wavelength;
-                    }
-                } else {
-                    let parsed_fam = navalha_core::BannerFontFamily::parse(&b_fam).unwrap_or(navalha_core::BannerFontFamily::Impact);
-                    for t in comp.foreground_texts.iter_mut() {
-                        t.font_family = parsed_fam;
-                        t.auto_fit = b_af;
-                    }
-                    if let Some(t) = comp.foreground_texts.get_mut(0) {
-                        t.pos_x = (b_px as f32) / 100.0;
-                        t.pos_y = (b_py as f32) / 100.0;
-                        t.rotation = b_rot;
+                let has_top = !phr_top.trim().is_empty();
+                let has_bottom = !phr.trim().is_empty();
 
-                        if b_fg != "auto" {
-                            if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_fg) {
-                                t.color = col;
+                let top_idx = if has_top { Some(0) } else { None };
+                let bottom_idx = match (has_top, has_bottom) {
+                    (true, true) => Some(1),
+                    (false, true) => Some(0),
+                    _ => None,
+                };
+
+                // Aplica estilização da Faixa Superior (Tickets #15, #16 e #18)
+                if let Some(t_idx) = top_idx {
+                    if let Some(t) = comp.foreground_texts.get_mut(t_idx) {
+                        t.ransom_note = b_top_ransom;
+                        if b_top_adapt {
+                            let def_banner = current_preset.default_banner_element(&phr_top);
+                            t.font_family = def_banner.font_family;
+                            t.auto_fit = b_top_af;
+                            t.pos_x = (b_top_px as f32) / 100.0;
+                            t.pos_y = (b_top_py as f32) / 100.0;
+                            t.rotation = b_top_rot;
+                            t.color = def_banner.color;
+                            t.bg_tarja = def_banner.bg_tarja;
+                            t.border_finish = def_banner.border_finish;
+                            t.border_width = def_banner.border_width;
+                            t.border_color = def_banner.border_color;
+                            t.tarja_effect = def_banner.tarja_effect;
+                            t.word_jitter_rotation = def_banner.word_jitter_rotation;
+                            t.word_tarja_cut = def_banner.word_tarja_cut;
+                            t.wave_amplitude = def_banner.wave_amplitude;
+                            t.wave_wavelength = def_banner.wave_wavelength;
+                        } else {
+                            let parsed_fam = navalha_core::BannerFontFamily::parse(&b_top_fam).unwrap_or(navalha_core::BannerFontFamily::Impact);
+                            t.font_family = parsed_fam;
+                            t.auto_fit = b_top_af;
+                            t.font_size = b_top_sz as f32;
+                            t.pos_x = (b_top_px as f32) / 100.0;
+                            t.pos_y = (b_top_py as f32) / 100.0;
+                            t.rotation = b_top_rot;
+
+                            if b_top_fg != "auto" {
+                                if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_top_fg) {
+                                    t.color = col;
+                                }
                             }
-                        }
-                        if b_bg != "auto" {
-                            if b_bg == "none" || b_bg == "sem" {
-                                t.bg_tarja = None;
-                            } else if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_bg) {
-                                t.bg_tarja = Some(col);
+                            if b_top_bg != "auto" {
+                                if b_top_bg == "none" || b_top_bg == "sem" {
+                                    t.bg_tarja = None;
+                                } else if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_top_bg) {
+                                    t.bg_tarja = Some(col);
+                                }
                             }
-                        }
-                        if let Some(finish) = navalha_core::TarjaBorderFinish::parse(&b_bfinish) {
-                            t.border_finish = finish;
-                        }
-                        t.border_width = b_bwidth;
-                        if b_bcol != "auto" {
-                            if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_bcol) {
-                                t.border_color = Some(col);
+                            if let Some(finish) = navalha_core::TarjaBorderFinish::parse(&b_top_bfinish) {
+                                t.border_finish = finish;
                             }
+                            t.border_width = b_top_bwidth;
+                            if b_top_bcol != "auto" {
+                                if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_top_bcol) {
+                                    t.border_color = Some(col);
+                                }
+                            }
+                            if let Some(ef) = navalha_core::TarjaEffect::parse(&b_top_eff) {
+                                t.tarja_effect = ef;
+                            }
+                            t.wave_amplitude = b_top_wamp as f32;
+                            t.word_jitter_rotation = b_top_wrot as i16;
+                            t.word_tarja_cut = b_top_wcut || (b_top_wrot > 0);
                         }
-                        if let Some(ef) = navalha_core::TarjaEffect::parse(&b_eff) {
-                            t.tarja_effect = ef;
+                    }
+                }
+
+                // Aplica estilização da Faixa Inferior (Tickets #15, #16 e #18)
+                if let Some(b_idx) = bottom_idx {
+                    if let Some(t) = comp.foreground_texts.get_mut(b_idx) {
+                        t.ransom_note = b_ransom;
+                        if b_adapt {
+                            let def_banner = current_preset.default_banner_element(&phr);
+                            t.font_family = def_banner.font_family;
+                            t.auto_fit = b_af;
+                            t.pos_x = (b_px as f32) / 100.0;
+                            t.pos_y = (b_py as f32) / 100.0;
+                            t.rotation = b_rot;
+                            t.color = def_banner.color;
+                            t.bg_tarja = def_banner.bg_tarja;
+                            t.border_finish = def_banner.border_finish;
+                            t.border_width = def_banner.border_width;
+                            t.border_color = def_banner.border_color;
+                            t.tarja_effect = def_banner.tarja_effect;
+                            t.word_jitter_rotation = def_banner.word_jitter_rotation;
+                            t.word_tarja_cut = def_banner.word_tarja_cut;
+                            t.wave_amplitude = def_banner.wave_amplitude;
+                            t.wave_wavelength = def_banner.wave_wavelength;
+                        } else {
+                            let parsed_fam = navalha_core::BannerFontFamily::parse(&b_fam).unwrap_or(navalha_core::BannerFontFamily::Impact);
+                            t.font_family = parsed_fam;
+                            t.auto_fit = b_af;
+                            t.font_size = b_sz as f32;
+                            t.pos_x = (b_px as f32) / 100.0;
+                            t.pos_y = (b_py as f32) / 100.0;
+                            t.rotation = b_rot;
+
+                            if b_fg != "auto" {
+                                if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_fg) {
+                                    t.color = col;
+                                }
+                            }
+                            if b_bg != "auto" {
+                                if b_bg == "none" || b_bg == "sem" {
+                                    t.bg_tarja = None;
+                                } else if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_bg) {
+                                    t.bg_tarja = Some(col);
+                                }
+                            }
+                            if let Some(finish) = navalha_core::TarjaBorderFinish::parse(&b_bfinish) {
+                                t.border_finish = finish;
+                            }
+                            t.border_width = b_bwidth;
+                            if b_bcol != "auto" {
+                                if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_bcol) {
+                                    t.border_color = Some(col);
+                                }
+                            }
+                            if let Some(ef) = navalha_core::TarjaEffect::parse(&b_eff) {
+                                t.tarja_effect = ef;
+                            }
+                            t.wave_amplitude = b_wamp as f32;
+                            t.word_jitter_rotation = b_wrot as i16;
+                            t.word_tarja_cut = b_wcut || (b_wrot > 0);
                         }
-                        t.wave_amplitude = b_wamp as f32;
-                        t.word_jitter_rotation = b_wrot as i16;
-                        t.word_tarja_cut = b_wcut || (b_wrot > 0);
                     }
                 }
 
@@ -562,7 +695,6 @@ pub fn App() -> Element {
 
                     for t in comp.foreground_texts.iter_mut() {
                         t.stretch_y = sy;
-                        t.font_size = b_sz as f32;
                     }
 
                     if d_override != "auto" {
@@ -1380,6 +1512,162 @@ pub fn App() -> Element {
                                     }
                                 }
 
+                                // Bloco de Enquadramento e Corte Manual (Crop / Bounding Box - Ticket #17)
+                                div { class: "zoom-control-box", style: "margin-top: 10px;",
+                                    div { class: "zoom-header-row",
+                                        span { class: "zoom-title", "✂️ RECORTE DE BORDAS / CROP (0% A 45%)" }
+                                        button {
+                                            r#type: "button",
+                                            class: "btn-zoom-reset",
+                                            onclick: move |_| {
+                                                image_crop_top.set(0);
+                                                image_crop_bottom.set(0);
+                                                image_crop_left.set(0);
+                                                image_crop_right.set(0);
+                                            },
+                                            "↺ ZERAR (0%)"
+                                        }
+                                    }
+                                    div { style: "display: flex; flex-direction: column; gap: 8px; margin-top: 8px;",
+                                        div { style: "display: flex; align-items: center; gap: 6px;",
+                                            span { style: "font-size: 0.72rem; min-width: 68px; opacity: 0.8;", "CORTAR TOPO:" }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper",
+                                                onclick: move |_| {
+                                                    let curr = image_crop_top();
+                                                    if curr > 0 { image_crop_top.set(curr.saturating_sub(5)); }
+                                                },
+                                                "−"
+                                            }
+                                            input {
+                                                r#type: "range",
+                                                min: "0",
+                                                max: "45",
+                                                step: "1",
+                                                value: "{image_crop_top}",
+                                                class: "slider-punk-zoom",
+                                                style: "flex: 1;",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() { image_crop_top.set(v); }
+                                                }
+                                            }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper",
+                                                onclick: move |_| {
+                                                    let curr = image_crop_top();
+                                                    if curr < 45 { image_crop_top.set((curr + 5).min(45)); }
+                                                },
+                                                "+"
+                                            }
+                                            span { style: "font-size: 0.75rem; min-width: 36px; text-align: right; font-weight: bold;", "{image_crop_top}%" }
+                                        }
+                                        div { style: "display: flex; align-items: center; gap: 6px;",
+                                            span { style: "font-size: 0.72rem; min-width: 68px; opacity: 0.8;", "CORTAR BASE:" }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper",
+                                                onclick: move |_| {
+                                                    let curr = image_crop_bottom();
+                                                    if curr > 0 { image_crop_bottom.set(curr.saturating_sub(5)); }
+                                                },
+                                                "−"
+                                            }
+                                            input {
+                                                r#type: "range",
+                                                min: "0",
+                                                max: "45",
+                                                step: "1",
+                                                value: "{image_crop_bottom}",
+                                                class: "slider-punk-zoom",
+                                                style: "flex: 1;",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() { image_crop_bottom.set(v); }
+                                                }
+                                            }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper",
+                                                onclick: move |_| {
+                                                    let curr = image_crop_bottom();
+                                                    if curr < 45 { image_crop_bottom.set((curr + 5).min(45)); }
+                                                },
+                                                "+"
+                                            }
+                                            span { style: "font-size: 0.75rem; min-width: 36px; text-align: right; font-weight: bold;", "{image_crop_bottom}%" }
+                                        }
+                                        div { style: "display: flex; align-items: center; gap: 6px;",
+                                            span { style: "font-size: 0.72rem; min-width: 68px; opacity: 0.8;", "CORTAR ESQ:" }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper",
+                                                onclick: move |_| {
+                                                    let curr = image_crop_left();
+                                                    if curr > 0 { image_crop_left.set(curr.saturating_sub(5)); }
+                                                },
+                                                "−"
+                                            }
+                                            input {
+                                                r#type: "range",
+                                                min: "0",
+                                                max: "45",
+                                                step: "1",
+                                                value: "{image_crop_left}",
+                                                class: "slider-punk-zoom",
+                                                style: "flex: 1;",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() { image_crop_left.set(v); }
+                                                }
+                                            }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper",
+                                                onclick: move |_| {
+                                                    let curr = image_crop_left();
+                                                    if curr < 45 { image_crop_left.set((curr + 5).min(45)); }
+                                                },
+                                                "+"
+                                            }
+                                            span { style: "font-size: 0.75rem; min-width: 36px; text-align: right; font-weight: bold;", "{image_crop_left}%" }
+                                        }
+                                        div { style: "display: flex; align-items: center; gap: 6px;",
+                                            span { style: "font-size: 0.72rem; min-width: 68px; opacity: 0.8;", "CORTAR DIR:" }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper",
+                                                onclick: move |_| {
+                                                    let curr = image_crop_right();
+                                                    if curr > 0 { image_crop_right.set(curr.saturating_sub(5)); }
+                                                },
+                                                "−"
+                                            }
+                                            input {
+                                                r#type: "range",
+                                                min: "0",
+                                                max: "45",
+                                                step: "1",
+                                                value: "{image_crop_right}",
+                                                class: "slider-punk-zoom",
+                                                style: "flex: 1;",
+                                                oninput: move |e| {
+                                                    if let Ok(v) = e.value().parse::<u32>() { image_crop_right.set(v); }
+                                                }
+                                            }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-stepper",
+                                                onclick: move |_| {
+                                                    let curr = image_crop_right();
+                                                    if curr < 45 { image_crop_right.set((curr + 5).min(45)); }
+                                                },
+                                                "+"
+                                            }
+                                            span { style: "font-size: 0.75rem; min-width: 36px; text-align: right; font-weight: bold;", "{image_crop_right}%" }
+                                        }
+                                    }
+                                }
+
                                 span { class: "help-text", "Suporta PNG com alfa, JPEG e WebP." }
                             }
 
@@ -1423,432 +1711,919 @@ pub fn App() -> Element {
                                         }
                                     }
 
-                                    // Posicionamento e inclinação no canvas (sempre editáveis)
-                                    div { class: "form-row-3col",
-                                        div {
-                                            div { class: "stepper-slider-box",
-                                                div { class: "stepper-header-row",
-                                                    span { class: "stepper-title", "Posição X: {banner_pos_x}%" }
-                                                    button {
-                                                        r#type: "button",
-                                                        class: "btn-stepper-reset",
-                                                        onclick: move |_| banner_pos_x.set(50),
-                                                        "↺ 50%"
-                                                    }
-                                                }
-                                                div { class: "stepper-row",
-                                                    button {
-                                                        r#type: "button",
-                                                        class: "btn-stepper",
-                                                        onclick: move |_| {
-                                                            let curr = banner_pos_x();
-                                                            if curr > 0 { banner_pos_x.set(curr.saturating_sub(5)); }
-                                                        },
-                                                        "−"
-                                                    }
-                                                    input {
-                                                        r#type: "range", min: "0", max: "100",
-                                                        value: "{banner_pos_x}",
-                                                        class: "slider-punk-zoom",
-                                                        oninput: move |e| {
-                                                            if let Ok(v) = e.value().parse::<u32>() { banner_pos_x.set(v); }
-                                                        }
-                                                    }
-                                                    button {
-                                                        r#type: "button",
-                                                        class: "btn-stepper",
-                                                        onclick: move |_| {
-                                                            let curr = banner_pos_x();
-                                                            if curr < 100 { banner_pos_x.set((curr + 5).min(100)); }
-                                                        },
-                                                        "+"
-                                                    }
-                                                }
-                                            }
+                                    div { class: "banner-tabs-container",
+                                        button {
+                                            r#type: "button",
+                                            class: if banner_active_tab() == "bottom" { "btn-banner-tab active" } else { "btn-banner-tab" },
+                                            onclick: move |_| banner_active_tab.set(String::from("bottom")),
+                                            "⬇️ FAIXA INFERIOR (BASE)"
                                         }
-                                        div {
-                                            div { class: "stepper-slider-box",
-                                                div { class: "stepper-header-row",
-                                                    span { class: "stepper-title", "Posição Y: {banner_pos_y}%" }
-                                                    button {
-                                                        r#type: "button",
-                                                        class: "btn-stepper-reset",
-                                                        onclick: move |_| banner_pos_y.set(85),
-                                                        "↺ 85%"
-                                                    }
-                                                }
-                                                div { class: "stepper-row",
-                                                    button {
-                                                        r#type: "button",
-                                                        class: "btn-stepper",
-                                                        onclick: move |_| {
-                                                            let curr = banner_pos_y();
-                                                            if curr > 0 { banner_pos_y.set(curr.saturating_sub(5)); }
-                                                        },
-                                                        "−"
-                                                    }
-                                                    input {
-                                                        r#type: "range", min: "0", max: "100",
-                                                        value: "{banner_pos_y}",
-                                                        class: "slider-punk-zoom",
-                                                        oninput: move |e| {
-                                                            if let Ok(v) = e.value().parse::<u32>() { banner_pos_y.set(v); }
-                                                        }
-                                                    }
-                                                    button {
-                                                        r#type: "button",
-                                                        class: "btn-stepper",
-                                                        onclick: move |_| {
-                                                            let curr = banner_pos_y();
-                                                            if curr < 100 { banner_pos_y.set((curr + 5).min(100)); }
-                                                        },
-                                                        "+"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        div {
-                                            div { class: "stepper-slider-box",
-                                                div { class: "stepper-header-row",
-                                                    span { class: "stepper-title", "Inclinação: {banner_rotation}°" }
-                                                    button {
-                                                        r#type: "button",
-                                                        class: "btn-stepper-reset",
-                                                        onclick: move |_| banner_rotation.set(0),
-                                                        "↺ 0°"
-                                                    }
-                                                }
-                                                div { class: "stepper-row",
-                                                    button {
-                                                        r#type: "button",
-                                                        class: "btn-stepper",
-                                                        onclick: move |_| {
-                                                            let curr = banner_rotation();
-                                                            if curr > -45 { banner_rotation.set((curr - 5).max(-45)); }
-                                                        },
-                                                        "−"
-                                                    }
-                                                    input {
-                                                        r#type: "range", min: "-45", max: "45",
-                                                        value: "{banner_rotation}",
-                                                        class: "slider-punk-zoom",
-                                                        oninput: move |e| {
-                                                            if let Ok(v) = e.value().parse::<i16>() { banner_rotation.set(v); }
-                                                        }
-                                                    }
-                                                    button {
-                                                        r#type: "button",
-                                                        class: "btn-stepper",
-                                                        onclick: move |_| {
-                                                            let curr = banner_rotation();
-                                                            if curr < 45 { banner_rotation.set((curr + 5).min(45)); }
-                                                        },
-                                                        "+"
-                                                    }
-                                                }
-                                            }
+                                        button {
+                                            r#type: "button",
+                                            class: if banner_active_tab() == "top" { "btn-banner-tab active" } else { "btn-banner-tab" },
+                                            onclick: move |_| banner_active_tab.set(String::from("top")),
+                                            "⬆️ FAIXA SUPERIOR (TOPO)"
                                         }
                                     }
 
-                                    // Sincronização estética com o preset ativo
-                                    div { style: "display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: rgba(255, 0, 51, 0.1); border: 1px dashed #ff0033;",
-                                        input {
-                                            r#type: "checkbox",
-                                            id: "banner-adapt-preset-cb",
-                                            checked: "{banner_adapt_preset}",
-                                            onchange: move |e| banner_adapt_preset.set(e.checked()),
-                                        }
-                                        label { r#for: "banner-adapt-preset-cb", style: "font-size: 0.72rem; color: #ff3366; font-weight: bold; cursor: pointer; text-transform: uppercase;", "⚡ Modo Adequado ao Preset Ativo (Sincronizar Cores, Fontes e Bordas)" }
-                                    }
-
-                                    if banner_adapt_preset() {
-                                        div { class: "preset-sync-notice",
-                                            "🔒 ESTÉTICA SINCRONIZADA AO PRESET (DESMARQUE ACIMA PARA PERSONALIZAR CORES, FONTES E BORDAS)"
-                                        }
-                                    }
-
-                                    // Controles estéticos (desativados quando sincronizados ao preset)
-                                    div { class: if banner_adapt_preset() { "controls-locked-by-preset" } else { "" },
-                                        div { class: "form-row-2col",
-                                            div {
-                                                label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Família Tipográfica" }
-                                                select {
-                                                    class: "select-preset-punk",
-                                                    disabled: "{banner_adapt_preset}",
-                                                    value: "{banner_font_family}",
-                                                    onchange: move |e| banner_font_family.set(e.value()),
-                                                    option { value: "impact", "IMPACT // Bebas" }
-                                                    option { value: "monospace", "MONO // Terminal" }
-                                                    option { value: "serif", "SERIF // Jornal" }
-                                                    option { value: "sans", "SANS // Moderna" }
-                                                }
-                                            }
-                                            div {
-                                                div { class: "stepper-slider-box",
-                                                    div { class: "stepper-header-row",
-                                                        span { class: "stepper-title", "Tamanho: {banner_font_size}px" }
-                                                        button {
-                                                            r#type: "button",
-                                                            class: "btn-stepper-reset",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            onclick: move |_| banner_font_size.set(48),
-                                                            "↺ 48px"
-                                                        }
-                                                    }
-                                                    div { class: "stepper-row",
-                                                        button {
-                                                            r#type: "button",
-                                                            class: "btn-stepper",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            onclick: move |_| {
-                                                                let curr = banner_font_size();
-                                                                if curr > 20 { banner_font_size.set(curr.saturating_sub(4).max(20)); }
-                                                            },
-                                                            "−"
-                                                        }
-                                                        input {
-                                                            r#type: "range", min: "20", max: "96",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            value: "{banner_font_size}",
-                                                            class: "slider-punk-zoom",
-                                                            oninput: move |e| {
-                                                                if let Ok(v) = e.value().parse::<u32>() { banner_font_size.set(v); }
+                                    if banner_active_tab() == "top" {
+                                        // --- CONTROLES DA FAIXA SUPERIOR (Tickets #15, #16 e #18) ---
+                                        div { style: "display: flex; flex-direction: column; gap: 8px;",
+                                            // Posicionamento e inclinação no canvas (sempre editáveis)
+                                            div { class: "form-row-3col",
+                                                div {
+                                                    div { class: "stepper-slider-box",
+                                                        div { class: "stepper-header-row",
+                                                            span { class: "stepper-title", "Posição X: {banner_top_pos_x}%" }
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper-reset",
+                                                                onclick: move |_| banner_top_pos_x.set(50),
+                                                                "↺ 50%"
                                                             }
                                                         }
-                                                        button {
-                                                            r#type: "button",
-                                                            class: "btn-stepper",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            onclick: move |_| {
-                                                                let curr = banner_font_size();
-                                                                if curr < 96 { banner_font_size.set((curr + 4).min(96)); }
-                                                            },
-                                                            "+"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        div { style: "margin-top: 4px; display: flex; align-items: center; gap: 6px;",
-                                            input {
-                                                r#type: "checkbox",
-                                                id: "banner-auto-fit-cb",
-                                                disabled: "{banner_adapt_preset}",
-                                                checked: "{banner_auto_fit}",
-                                                onchange: move |e| banner_auto_fit.set(e.checked()),
-                                            }
-                                            label { r#for: "banner-auto-fit-cb", style: "font-size: 0.72rem; color: #ccc; cursor: pointer;", "Reduzir fonte automaticamente se exceder a faixa (auto-fit)" }
-                                        }
-
-                                        div { class: "form-row-3col", style: "margin-top: 6px;",
-                                            div {
-                                                label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Cor do Texto" }
-                                                select {
-                                                    class: "select-preset-punk",
-                                                    disabled: "{banner_adapt_preset}",
-                                                    value: "{banner_fg_color}",
-                                                    onchange: move |e| banner_fg_color.set(e.value()),
-                                                    option { value: "auto", "AUTO // Preset" }
-                                                    option { value: "white", "BRANCO // #FFFFFF" }
-                                                    option { value: "black", "PRETO // #000000" }
-                                                    option { value: "yellow", "AMARELO // #FFEE00" }
-                                                    option { value: "red", "VERMELHO // #FF0033" }
-                                                    option { value: "cyan", "CIANO // #00FFFF" }
-                                                    option { value: "green", "VERDE // #00FF66" }
-                                                }
-                                            }
-                                            div {
-                                                label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Fundo da Tarja" }
-                                                select {
-                                                    class: "select-preset-punk",
-                                                    disabled: "{banner_adapt_preset}",
-                                                    value: "{banner_bg_color}",
-                                                    onchange: move |e| banner_bg_color.set(e.value()),
-                                                    option { value: "auto", "AUTO // Preset" }
-                                                    option { value: "black", "PRETO // #000000" }
-                                                    option { value: "white", "BRANCO // #FFFFFF" }
-                                                    option { value: "red", "VERMELHO // #FF0033" }
-                                                    option { value: "yellow", "AMARELO // #FFEE00" }
-                                                    option { value: "none", "SEM FUNDO // Transparente" }
-                                                }
-                                            }
-                                            div {
-                                                label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Acabamento" }
-                                                select {
-                                                    class: "select-preset-punk",
-                                                    disabled: "{banner_adapt_preset}",
-                                                    value: "{banner_effect}",
-                                                    onchange: move |e| banner_effect.set(e.value()),
-                                                    option { value: "solida", "SÓLIDA" }
-                                                    option { value: "xerox", "XEROX // Toner" }
-                                                }
-                                            }
-                                        }
-
-                                        div { class: "form-row-2col", style: "margin-top: 6px;",
-                                            div {
-                                                label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Estilo de Borda" }
-                                                select {
-                                                    class: "select-preset-punk",
-                                                    disabled: "{banner_adapt_preset}",
-                                                    value: "{banner_border_finish}",
-                                                    onchange: move |e| banner_border_finish.set(e.value()),
-                                                    option { value: "nenhuma", "NENHUMA" }
-                                                    option { value: "solida", "SÓLIDA" }
-                                                    option { value: "tracejada", "TRACEJADA" }
-                                                    option { value: "picote", "PICOTE // Serrilhado" }
-                                                    option { value: "durex", "FITA DUREX // Adesiva" }
-                                                }
-                                            }
-                                            div {
-                                                div { class: "stepper-slider-box",
-                                                    div { class: "stepper-header-row",
-                                                        span { class: "stepper-title", "Espessura Borda: {banner_border_width}px" }
-                                                        button {
-                                                            r#type: "button",
-                                                            class: "btn-stepper-reset",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            onclick: move |_| banner_border_width.set(3),
-                                                            "↺ 3px"
-                                                        }
-                                                    }
-                                                    div { class: "stepper-row",
-                                                        button {
-                                                            r#type: "button",
-                                                            class: "btn-stepper",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            onclick: move |_| {
-                                                                let curr = banner_border_width();
-                                                                if curr > 1 { banner_border_width.set(curr.saturating_sub(1)); }
-                                                            },
-                                                            "−"
-                                                        }
-                                                        input {
-                                                            r#type: "range", min: "1", max: "12",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            value: "{banner_border_width}",
-                                                            class: "slider-punk-zoom",
-                                                            oninput: move |e| {
-                                                                if let Ok(v) = e.value().parse::<u32>() { banner_border_width.set(v); }
+                                                        div { class: "stepper-row",
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper",
+                                                                onclick: move |_| {
+                                                                    let curr = banner_top_pos_x();
+                                                                    if curr > 0 { banner_top_pos_x.set(curr.saturating_sub(5)); }
+                                                                },
+                                                                "−"
                                                             }
-                                                        }
-                                                        button {
-                                                            r#type: "button",
-                                                            class: "btn-stepper",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            onclick: move |_| {
-                                                                let curr = banner_border_width();
-                                                                if curr < 12 { banner_border_width.set(curr + 1); }
-                                                            },
-                                                            "+"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        div { class: "form-row-2col", style: "margin-top: 6px;",
-                                            div {
-                                                div { class: "stepper-slider-box",
-                                                    div { class: "stepper-header-row",
-                                                        span { class: "stepper-title", "Ondulação: {banner_wave_amp}px" }
-                                                        button {
-                                                            r#type: "button",
-                                                            class: "btn-stepper-reset",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            onclick: move |_| banner_wave_amp.set(0),
-                                                            "↺ 0px"
-                                                        }
-                                                    }
-                                                    div { class: "stepper-row",
-                                                        button {
-                                                            r#type: "button",
-                                                            class: "btn-stepper",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            onclick: move |_| {
-                                                                let curr = banner_wave_amp();
-                                                                if curr > 0 { banner_wave_amp.set(curr.saturating_sub(2)); }
-                                                            },
-                                                            "−"
-                                                        }
-                                                        input {
-                                                            r#type: "range", min: "0", max: "30",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            value: "{banner_wave_amp}",
-                                                            class: "slider-punk-zoom",
-                                                            oninput: move |e| {
-                                                                if let Ok(v) = e.value().parse::<u32>() { banner_wave_amp.set(v); }
-                                                            }
-                                                        }
-                                                        button {
-                                                            r#type: "button",
-                                                            class: "btn-stepper",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            onclick: move |_| {
-                                                                let curr = banner_wave_amp();
-                                                                if curr < 30 { banner_wave_amp.set((curr + 2).min(30)); }
-                                                            },
-                                                            "+"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            div {
-                                                div { class: "stepper-slider-box",
-                                                    div { class: "stepper-header-row",
-                                                        span { class: "stepper-title", "Jitter Palavras: {banner_word_rot}°" }
-                                                        button {
-                                                            r#type: "button",
-                                                            class: "btn-stepper-reset",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            onclick: move |_| {
-                                                                banner_word_rot.set(0);
-                                                                banner_word_cut.set(false);
-                                                            },
-                                                            "↺ 0°"
-                                                        }
-                                                    }
-                                                    div { class: "stepper-row",
-                                                        button {
-                                                            r#type: "button",
-                                                            class: "btn-stepper",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            onclick: move |_| {
-                                                                let curr = banner_word_rot();
-                                                                if curr > 0 {
-                                                                    let next = curr.saturating_sub(2);
-                                                                    banner_word_rot.set(next);
-                                                                    if next == 0 { banner_word_cut.set(false); }
+                                                            input {
+                                                                r#type: "range", min: "0", max: "100",
+                                                                value: "{banner_top_pos_x}",
+                                                                class: "slider-punk-zoom",
+                                                                oninput: move |e| {
+                                                                    if let Ok(v) = e.value().parse::<u32>() { banner_top_pos_x.set(v); }
                                                                 }
-                                                            },
-                                                            "−"
+                                                            }
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper",
+                                                                onclick: move |_| {
+                                                                    let curr = banner_top_pos_x();
+                                                                    if curr < 100 { banner_top_pos_x.set((curr + 5).min(100)); }
+                                                                },
+                                                                "+"
+                                                            }
                                                         }
-                                                        input {
-                                                            r#type: "range", min: "0", max: "20",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            value: "{banner_word_rot}",
-                                                            class: "slider-punk-zoom",
-                                                            oninput: move |e| {
-                                                                if let Ok(v) = e.value().parse::<u32>() {
-                                                                    banner_word_rot.set(v);
-                                                                    if v > 0 { banner_word_cut.set(true); } else { banner_word_cut.set(false); }
+                                                    }
+                                                }
+                                                div {
+                                                    div { class: "stepper-slider-box",
+                                                        div { class: "stepper-header-row",
+                                                            span { class: "stepper-title", "Posição Y: {banner_top_pos_y}%" }
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper-reset",
+                                                                onclick: move |_| banner_top_pos_y.set(10),
+                                                                "↺ 10%"
+                                                            }
+                                                        }
+                                                        div { class: "stepper-row",
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper",
+                                                                onclick: move |_| {
+                                                                    let curr = banner_top_pos_y();
+                                                                    if curr > 0 { banner_top_pos_y.set(curr.saturating_sub(5)); }
+                                                                },
+                                                                "−"
+                                                            }
+                                                            input {
+                                                                r#type: "range", min: "0", max: "100",
+                                                                value: "{banner_top_pos_y}",
+                                                                class: "slider-punk-zoom",
+                                                                oninput: move |e| {
+                                                                    if let Ok(v) = e.value().parse::<u32>() { banner_top_pos_y.set(v); }
+                                                                }
+                                                            }
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper",
+                                                                onclick: move |_| {
+                                                                    let curr = banner_top_pos_y();
+                                                                    if curr < 100 { banner_top_pos_y.set((curr + 5).min(100)); }
+                                                                },
+                                                                "+"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                div {
+                                                    div { class: "stepper-slider-box",
+                                                        div { class: "stepper-header-row",
+                                                            span { class: "stepper-title", "Inclinação: {banner_top_rotation}°" }
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper-reset",
+                                                                onclick: move |_| banner_top_rotation.set(0),
+                                                                "↺ 0°"
+                                                            }
+                                                        }
+                                                        div { class: "stepper-row",
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper",
+                                                                onclick: move |_| {
+                                                                    let curr = banner_top_rotation();
+                                                                    if curr > -45 { banner_top_rotation.set((curr - 5).max(-45)); }
+                                                                },
+                                                                "−"
+                                                            }
+                                                            input {
+                                                                r#type: "range", min: "-45", max: "45",
+                                                                value: "{banner_top_rotation}",
+                                                                class: "slider-punk-zoom",
+                                                                oninput: move |e| {
+                                                                    if let Ok(v) = e.value().parse::<i16>() { banner_top_rotation.set(v); }
+                                                                }
+                                                            }
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper",
+                                                                onclick: move |_| {
+                                                                    let curr = banner_top_rotation();
+                                                                    if curr < 45 { banner_top_rotation.set((curr + 5).min(45)); }
+                                                                },
+                                                                "+"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            // Sincronização estética com o preset ativo
+                                            div { style: "display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: rgba(255, 0, 51, 0.1); border: 1px dashed #ff0033;",
+                                                input {
+                                                    r#type: "checkbox",
+                                                    id: "banner-top-adapt-preset-cb",
+                                                    checked: "{banner_top_adapt_preset}",
+                                                    onchange: move |e| banner_top_adapt_preset.set(e.checked()),
+                                                }
+                                                label { r#for: "banner-top-adapt-preset-cb", style: "font-size: 0.72rem; color: #ff3366; font-weight: bold; cursor: pointer; text-transform: uppercase;", "⚡ Modo Adequado ao Preset Ativo (Sincronizar Cores, Fontes e Bordas)" }
+                                            }
+
+                                            if banner_top_adapt_preset() {
+                                                div { class: "preset-sync-notice",
+                                                    "🔒 ESTÉTICA SINCRONIZADA AO PRESET (DESMARQUE ACIMA PARA PERSONALIZAR CORES, FONTES E BORDAS)"
+                                                }
+                                            }
+
+                                            // Controles estéticos (desativados quando sincronizados ao preset)
+                                            div { class: if banner_top_adapt_preset() { "controls-locked-by-preset" } else { "" },
+                                                div { class: "form-row-2col",
+                                                    div {
+                                                        label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Família Tipográfica" }
+                                                        select {
+                                                            class: "select-preset-punk",
+                                                            disabled: "{banner_top_adapt_preset}",
+                                                            value: "{banner_top_font_family}",
+                                                            onchange: move |e| banner_top_font_family.set(e.value()),
+                                                            option { value: "impact", "IMPACT // Bebas" }
+                                                            option { value: "monospace", "MONO // Terminal" }
+                                                            option { value: "serif", "SERIF // Jornal" }
+                                                            option { value: "sans", "SANS // Moderna" }
+                                                        }
+                                                    }
+                                                    div {
+                                                        div { class: "stepper-slider-box",
+                                                            div { class: "stepper-header-row",
+                                                                span { class: "stepper-title", "Tamanho: {banner_top_font_size}px" }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper-reset",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    onclick: move |_| banner_top_font_size.set(48),
+                                                                    "↺ 48px"
+                                                                }
+                                                            }
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_top_font_size();
+                                                                        if curr > 20 { banner_top_font_size.set(curr.saturating_sub(4).max(20)); }
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "20", max: "96",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    value: "{banner_top_font_size}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() { banner_top_font_size.set(v); }
+                                                                    }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_top_font_size();
+                                                                        if curr < 96 { banner_top_font_size.set((curr + 4).min(96)); }
+                                                                    },
+                                                                    "+"
                                                                 }
                                                             }
                                                         }
-                                                        button {
-                                                            r#type: "button",
-                                                            class: "btn-stepper",
-                                                            disabled: "{banner_adapt_preset}",
-                                                            onclick: move |_| {
-                                                                let curr = banner_word_rot();
-                                                                if curr < 20 {
-                                                                    banner_word_rot.set((curr + 2).min(20));
-                                                                    banner_word_cut.set(true);
-                                                                }
-                                                            },
-                                                            "+"
+                                                    }
+                                                }
+
+                                                div { style: "margin-top: 4px; display: flex; align-items: center; gap: 6px;",
+                                                    input {
+                                                        r#type: "checkbox",
+                                                        id: "banner-top-auto-fit-cb",
+                                                        disabled: "{banner_top_adapt_preset}",
+                                                        checked: "{banner_top_auto_fit}",
+                                                        onchange: move |e| banner_top_auto_fit.set(e.checked()),
+                                                    }
+                                                    label { r#for: "banner-top-auto-fit-cb", style: "font-size: 0.72rem; color: #ccc; cursor: pointer;", "Reduzir fonte automaticamente se exceder a faixa (auto-fit)" }
+                                                }
+
+                                                div { class: "form-row-3col", style: "margin-top: 6px;",
+                                                    div {
+                                                        label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Cor do Texto" }
+                                                        select {
+                                                            class: "select-preset-punk",
+                                                            disabled: "{banner_top_adapt_preset}",
+                                                            value: "{banner_top_fg_color}",
+                                                            onchange: move |e| banner_top_fg_color.set(e.value()),
+                                                            option { value: "auto", "AUTO // Preset" }
+                                                            option { value: "white", "BRANCO // #FFFFFF" }
+                                                            option { value: "black", "PRETO // #000000" }
+                                                            option { value: "yellow", "AMARELO // #FFEE00" }
+                                                            option { value: "red", "VERMELHO // #FF0033" }
+                                                            option { value: "cyan", "CIANO // #00FFFF" }
+                                                            option { value: "green", "VERDE // #00FF66" }
                                                         }
+                                                    }
+                                                    div {
+                                                        label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Fundo da Tarja" }
+                                                        select {
+                                                            class: "select-preset-punk",
+                                                            disabled: "{banner_top_adapt_preset}",
+                                                            value: "{banner_top_bg_color}",
+                                                            onchange: move |e| banner_top_bg_color.set(e.value()),
+                                                            option { value: "auto", "AUTO // Preset" }
+                                                            option { value: "black", "PRETO // #000000" }
+                                                            option { value: "white", "BRANCO // #FFFFFF" }
+                                                            option { value: "red", "VERMELHO // #FF0033" }
+                                                            option { value: "yellow", "AMARELO // #FFEE00" }
+                                                            option { value: "none", "SEM FUNDO // Transparente" }
+                                                        }
+                                                    }
+                                                    div {
+                                                        label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Acabamento" }
+                                                        select {
+                                                            class: "select-preset-punk",
+                                                            disabled: "{banner_top_adapt_preset}",
+                                                            value: "{banner_top_effect}",
+                                                            onchange: move |e| banner_top_effect.set(e.value()),
+                                                            option { value: "solida", "SÓLIDA" }
+                                                            option { value: "xerox", "XEROX // Toner" }
+                                                        }
+                                                    }
+                                                }
+
+                                                div { class: "form-row-2col", style: "margin-top: 6px;",
+                                                    div {
+                                                        label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Estilo de Borda" }
+                                                        select {
+                                                            class: "select-preset-punk",
+                                                            disabled: "{banner_top_adapt_preset}",
+                                                            value: "{banner_top_border_finish}",
+                                                            onchange: move |e| banner_top_border_finish.set(e.value()),
+                                                            option { value: "nenhuma", "NENHUMA" }
+                                                            option { value: "solida", "SÓLIDA" }
+                                                            option { value: "tracejada", "TRACEJADA" }
+                                                            option { value: "picote", "PICOTE // Serrilhado" }
+                                                            option { value: "durex", "FITA DUREX // Adesiva" }
+                                                        }
+                                                    }
+                                                    div {
+                                                        div { class: "stepper-slider-box",
+                                                            div { class: "stepper-header-row",
+                                                                span { class: "stepper-title", "Espessura Borda: {banner_top_border_width}px" }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper-reset",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    onclick: move |_| banner_top_border_width.set(3),
+                                                                    "↺ 3px"
+                                                                }
+                                                            }
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_top_border_width();
+                                                                        if curr > 1 { banner_top_border_width.set(curr.saturating_sub(1)); }
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "1", max: "12",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    value: "{banner_top_border_width}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() { banner_top_border_width.set(v); }
+                                                                    }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_top_border_width();
+                                                                        if curr < 12 { banner_top_border_width.set(curr + 1); }
+                                                                    },
+                                                                    "+"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                div { class: "form-row-2col", style: "margin-top: 6px;",
+                                                    div {
+                                                        div { class: "stepper-slider-box",
+                                                            div { class: "stepper-header-row",
+                                                                span { class: "stepper-title", "Ondulação: {banner_top_wave_amp}px" }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper-reset",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    onclick: move |_| banner_top_wave_amp.set(0),
+                                                                    "↺ 0px"
+                                                                }
+                                                            }
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_top_wave_amp();
+                                                                        if curr > 0 { banner_top_wave_amp.set(curr.saturating_sub(2)); }
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "0", max: "30",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    value: "{banner_top_wave_amp}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() { banner_top_wave_amp.set(v); }
+                                                                    }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_top_wave_amp();
+                                                                        if curr < 30 { banner_top_wave_amp.set((curr + 2).min(30)); }
+                                                                    },
+                                                                    "+"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    div {
+                                                        div { class: "stepper-slider-box",
+                                                            div { class: "stepper-header-row",
+                                                                span { class: "stepper-title", "Jitter Palavras: {banner_top_word_rot}°" }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper-reset",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        banner_top_word_rot.set(0);
+                                                                        banner_top_word_cut.set(false);
+                                                                    },
+                                                                    "↺ 0°"
+                                                                }
+                                                            }
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_top_word_rot();
+                                                                        if curr > 0 {
+                                                                            let next = curr.saturating_sub(2);
+                                                                            banner_top_word_rot.set(next);
+                                                                            if next == 0 { banner_top_word_cut.set(false); }
+                                                                        }
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "0", max: "20",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    value: "{banner_top_word_rot}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() {
+                                                                            banner_top_word_rot.set(v);
+                                                                            if v > 0 { banner_top_word_cut.set(true); } else { banner_top_word_cut.set(false); }
+                                                                        }
+                                                                    }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_top_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_top_word_rot();
+                                                                        if curr < 20 {
+                                                                            banner_top_word_rot.set((curr + 2).min(20));
+                                                                            banner_top_word_cut.set(true);
+                                                                        }
+                                                                    },
+                                                                    "+"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                // Modo Fanzine / Ransom Note (Ticket #18)
+                                                div { style: "margin-top: 8px; display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: rgba(0, 0, 0, 0.4); border: 1px dashed #555;",
+                                                    input {
+                                                        r#type: "checkbox",
+                                                        id: "banner-top-ransom-note-cb",
+                                                        disabled: "{banner_top_adapt_preset}",
+                                                        checked: "{banner_top_ransom_note}",
+                                                        onchange: move |e| banner_top_ransom_note.set(e.checked()),
+                                                    }
+                                                    label {
+                                                        r#for: "banner-top-ransom-note-cb",
+                                                        style: "font-size: 0.72rem; color: #ff007f; font-weight: bold; cursor: pointer; text-transform: uppercase;",
+                                                        "✂️ Colagem de Revista / Ransom Note (Fontes e cores alternadas por palavra)"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        // --- CONTROLES DA FAIXA INFERIOR (Tickets #15, #16 e #18) ---
+                                        div { style: "display: flex; flex-direction: column; gap: 8px;",
+                                            // Posicionamento e inclinação no canvas (sempre editáveis)
+                                            div { class: "form-row-3col",
+                                                div {
+                                                    div { class: "stepper-slider-box",
+                                                        div { class: "stepper-header-row",
+                                                            span { class: "stepper-title", "Posição X: {banner_pos_x}%" }
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper-reset",
+                                                                onclick: move |_| banner_pos_x.set(50),
+                                                                "↺ 50%"
+                                                            }
+                                                        }
+                                                        div { class: "stepper-row",
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper",
+                                                                onclick: move |_| {
+                                                                    let curr = banner_pos_x();
+                                                                    if curr > 0 { banner_pos_x.set(curr.saturating_sub(5)); }
+                                                                },
+                                                                "−"
+                                                            }
+                                                            input {
+                                                                r#type: "range", min: "0", max: "100",
+                                                                value: "{banner_pos_x}",
+                                                                class: "slider-punk-zoom",
+                                                                oninput: move |e| {
+                                                                    if let Ok(v) = e.value().parse::<u32>() { banner_pos_x.set(v); }
+                                                                }
+                                                            }
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper",
+                                                                onclick: move |_| {
+                                                                    let curr = banner_pos_x();
+                                                                    if curr < 100 { banner_pos_x.set((curr + 5).min(100)); }
+                                                                },
+                                                                "+"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                div {
+                                                    div { class: "stepper-slider-box",
+                                                        div { class: "stepper-header-row",
+                                                            span { class: "stepper-title", "Posição Y: {banner_pos_y}%" }
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper-reset",
+                                                                onclick: move |_| banner_pos_y.set(85),
+                                                                "↺ 85%"
+                                                            }
+                                                        }
+                                                        div { class: "stepper-row",
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper",
+                                                                onclick: move |_| {
+                                                                    let curr = banner_pos_y();
+                                                                    if curr > 0 { banner_pos_y.set(curr.saturating_sub(5)); }
+                                                                },
+                                                                "−"
+                                                             }
+                                                            input {
+                                                                r#type: "range", min: "0", max: "100",
+                                                                value: "{banner_pos_y}",
+                                                                class: "slider-punk-zoom",
+                                                                oninput: move |e| {
+                                                                    if let Ok(v) = e.value().parse::<u32>() { banner_pos_y.set(v); }
+                                                                }
+                                                            }
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper",
+                                                                onclick: move |_| {
+                                                                    let curr = banner_pos_y();
+                                                                    if curr < 100 { banner_pos_y.set((curr + 5).min(100)); }
+                                                                },
+                                                                "+"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                div {
+                                                    div { class: "stepper-slider-box",
+                                                        div { class: "stepper-header-row",
+                                                            span { class: "stepper-title", "Inclinação: {banner_rotation}°" }
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper-reset",
+                                                                onclick: move |_| banner_rotation.set(0),
+                                                                "↺ 0°"
+                                                            }
+                                                        }
+                                                        div { class: "stepper-row",
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper",
+                                                                onclick: move |_| {
+                                                                    let curr = banner_rotation();
+                                                                    if curr > -45 { banner_rotation.set((curr - 5).max(-45)); }
+                                                                },
+                                                                "−"
+                                                            }
+                                                            input {
+                                                                r#type: "range", min: "-45", max: "45",
+                                                                value: "{banner_rotation}",
+                                                                class: "slider-punk-zoom",
+                                                                oninput: move |e| {
+                                                                    if let Ok(v) = e.value().parse::<i16>() { banner_rotation.set(v); }
+                                                                }
+                                                            }
+                                                            button {
+                                                                r#type: "button",
+                                                                class: "btn-stepper",
+                                                                onclick: move |_| {
+                                                                    let curr = banner_rotation();
+                                                                    if curr < 45 { banner_rotation.set((curr + 5).min(45)); }
+                                                                },
+                                                                "+"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            // Sincronização estética com o preset ativo
+                                            div { style: "display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: rgba(255, 0, 51, 0.1); border: 1px dashed #ff0033;",
+                                                input {
+                                                    r#type: "checkbox",
+                                                    id: "banner-adapt-preset-cb",
+                                                    checked: "{banner_adapt_preset}",
+                                                    onchange: move |e| banner_adapt_preset.set(e.checked()),
+                                                }
+                                                label { r#for: "banner-adapt-preset-cb", style: "font-size: 0.72rem; color: #ff3366; font-weight: bold; cursor: pointer; text-transform: uppercase;", "⚡ Modo Adequado ao Preset Ativo (Sincronizar Cores, Fontes e Bordas)" }
+                                            }
+
+                                            if banner_adapt_preset() {
+                                                div { class: "preset-sync-notice",
+                                                    "🔒 ESTÉTICA SINCRONIZADA AO PRESET (DESMARQUE ACIMA PARA PERSONALIZAR CORES, FONTES E BORDAS)"
+                                                }
+                                            }
+
+                                            // Controles estéticos (desativados quando sincronizados ao preset)
+                                            div { class: if banner_adapt_preset() { "controls-locked-by-preset" } else { "" },
+                                                div { class: "form-row-2col",
+                                                    div {
+                                                        label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Família Tipográfica" }
+                                                        select {
+                                                            class: "select-preset-punk",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            value: "{banner_font_family}",
+                                                            onchange: move |e| banner_font_family.set(e.value()),
+                                                            option { value: "impact", "IMPACT // Bebas" }
+                                                            option { value: "monospace", "MONO // Terminal" }
+                                                            option { value: "serif", "SERIF // Jornal" }
+                                                            option { value: "sans", "SANS // Moderna" }
+                                                        }
+                                                    }
+                                                    div {
+                                                        div { class: "stepper-slider-box",
+                                                            div { class: "stepper-header-row",
+                                                                span { class: "stepper-title", "Tamanho: {banner_font_size}px" }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper-reset",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    onclick: move |_| banner_font_size.set(48),
+                                                                    "↺ 48px"
+                                                                }
+                                                            }
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_font_size();
+                                                                        if curr > 20 { banner_font_size.set(curr.saturating_sub(4).max(20)); }
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "20", max: "96",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    value: "{banner_font_size}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() { banner_font_size.set(v); }
+                                                                    }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_font_size();
+                                                                        if curr < 96 { banner_font_size.set((curr + 4).min(96)); }
+                                                                    },
+                                                                    "+"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                div { style: "margin-top: 4px; display: flex; align-items: center; gap: 6px;",
+                                                    input {
+                                                        r#type: "checkbox",
+                                                        id: "banner-auto-fit-cb",
+                                                        disabled: "{banner_adapt_preset}",
+                                                        checked: "{banner_auto_fit}",
+                                                        onchange: move |e| banner_auto_fit.set(e.checked()),
+                                                    }
+                                                    label { r#for: "banner-auto-fit-cb", style: "font-size: 0.72rem; color: #ccc; cursor: pointer;", "Reduzir fonte automaticamente se exceder a faixa (auto-fit)" }
+                                                }
+
+                                                div { class: "form-row-3col", style: "margin-top: 6px;",
+                                                    div {
+                                                        label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Cor do Texto" }
+                                                        select {
+                                                            class: "select-preset-punk",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            value: "{banner_fg_color}",
+                                                            onchange: move |e| banner_fg_color.set(e.value()),
+                                                            option { value: "auto", "AUTO // Preset" }
+                                                            option { value: "white", "BRANCO // #FFFFFF" }
+                                                            option { value: "black", "PRETO // #000000" }
+                                                            option { value: "yellow", "AMARELO // #FFEE00" }
+                                                            option { value: "red", "VERMELHO // #FF0033" }
+                                                            option { value: "cyan", "CIANO // #00FFFF" }
+                                                            option { value: "green", "VERDE // #00FF66" }
+                                                        }
+                                                    }
+                                                    div {
+                                                        label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Fundo da Tarja" }
+                                                        select {
+                                                            class: "select-preset-punk",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            value: "{banner_bg_color}",
+                                                            onchange: move |e| banner_bg_color.set(e.value()),
+                                                            option { value: "auto", "AUTO // Preset" }
+                                                            option { value: "black", "PRETO // #000000" }
+                                                            option { value: "white", "BRANCO // #FFFFFF" }
+                                                            option { value: "red", "VERMELHO // #FF0033" }
+                                                            option { value: "yellow", "AMARELO // #FFEE00" }
+                                                            option { value: "none", "SEM FUNDO // Transparente" }
+                                                        }
+                                                    }
+                                                    div {
+                                                        label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Acabamento" }
+                                                        select {
+                                                            class: "select-preset-punk",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            value: "{banner_effect}",
+                                                            onchange: move |e| banner_effect.set(e.value()),
+                                                            option { value: "solida", "SÓLIDA" }
+                                                            option { value: "xerox", "XEROX // Toner" }
+                                                        }
+                                                    }
+                                                }
+
+                                                div { class: "form-row-2col", style: "margin-top: 6px;",
+                                                    div {
+                                                        label { style: "font-size: 0.68rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px;", "Estilo de Borda" }
+                                                        select {
+                                                            class: "select-preset-punk",
+                                                            disabled: "{banner_adapt_preset}",
+                                                            value: "{banner_border_finish}",
+                                                            onchange: move |e| banner_border_finish.set(e.value()),
+                                                            option { value: "nenhuma", "NENHUMA" }
+                                                            option { value: "solida", "SÓLIDA" }
+                                                            option { value: "tracejada", "TRACEJADA" }
+                                                            option { value: "picote", "PICOTE // Serrilhado" }
+                                                            option { value: "durex", "FITA DUREX // Adesiva" }
+                                                        }
+                                                    }
+                                                    div {
+                                                        div { class: "stepper-slider-box",
+                                                            div { class: "stepper-header-row",
+                                                                span { class: "stepper-title", "Espessura Borda: {banner_border_width}px" }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper-reset",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    onclick: move |_| banner_border_width.set(3),
+                                                                    "↺ 3px"
+                                                                }
+                                                            }
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_border_width();
+                                                                        if curr > 1 { banner_border_width.set(curr.saturating_sub(1)); }
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "1", max: "12",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    value: "{banner_border_width}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() { banner_border_width.set(v); }
+                                                                    }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_border_width();
+                                                                        if curr < 12 { banner_border_width.set(curr + 1); }
+                                                                    },
+                                                                    "+"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                div { class: "form-row-2col", style: "margin-top: 6px;",
+                                                    div {
+                                                        div { class: "stepper-slider-box",
+                                                            div { class: "stepper-header-row",
+                                                                span { class: "stepper-title", "Ondulação: {banner_wave_amp}px" }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper-reset",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    onclick: move |_| banner_wave_amp.set(0),
+                                                                    "↺ 0px"
+                                                                }
+                                                            }
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_wave_amp();
+                                                                        if curr > 0 { banner_wave_amp.set(curr.saturating_sub(2)); }
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "0", max: "30",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    value: "{banner_wave_amp}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() { banner_wave_amp.set(v); }
+                                                                    }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_wave_amp();
+                                                                        if curr < 30 { banner_wave_amp.set((curr + 2).min(30)); }
+                                                                    },
+                                                                    "+"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    div {
+                                                        div { class: "stepper-slider-box",
+                                                            div { class: "stepper-header-row",
+                                                                span { class: "stepper-title", "Jitter Palavras: {banner_word_rot}°" }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper-reset",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        banner_word_rot.set(0);
+                                                                        banner_word_cut.set(false);
+                                                                    },
+                                                                    "↺ 0°"
+                                                                }
+                                                            }
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_word_rot();
+                                                                        if curr > 0 {
+                                                                            let next = curr.saturating_sub(2);
+                                                                            banner_word_rot.set(next);
+                                                                            if next == 0 { banner_word_cut.set(false); }
+                                                                        }
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "0", max: "20",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    value: "{banner_word_rot}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() {
+                                                                            banner_word_rot.set(v);
+                                                                            if v > 0 { banner_word_cut.set(true); } else { banner_word_cut.set(false); }
+                                                                        }
+                                                                    }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    disabled: "{banner_adapt_preset}",
+                                                                    onclick: move |_| {
+                                                                        let curr = banner_word_rot();
+                                                                        if curr < 20 {
+                                                                            banner_word_rot.set((curr + 2).min(20));
+                                                                            banner_word_cut.set(true);
+                                                                        }
+                                                                    },
+                                                                    "+"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                // Modo Fanzine / Ransom Note (Ticket #18)
+                                                div { style: "margin-top: 8px; display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: rgba(0, 0, 0, 0.4); border: 1px dashed #555;",
+                                                    input {
+                                                        r#type: "checkbox",
+                                                        id: "banner-ransom-note-cb",
+                                                        disabled: "{banner_adapt_preset}",
+                                                        checked: "{banner_ransom_note}",
+                                                        onchange: move |e| banner_ransom_note.set(e.checked()),
+                                                    }
+                                                    label {
+                                                        r#for: "banner-ransom-note-cb",
+                                                        style: "font-size: 0.72rem; color: #ff007f; font-weight: bold; cursor: pointer; text-transform: uppercase;",
+                                                        "✂️ Colagem de Revista / Ransom Note (Fontes e cores alternadas por palavra)"
                                                     }
                                                 }
                                             }
@@ -1952,6 +2727,27 @@ pub fn App() -> Element {
                                         banner_border_width.set(3);
                                         banner_wave_amp.set(0);
                                         banner_word_rot.set(0);
+                                        banner_word_cut.set(false);
+                                        banner_ransom_note.set(false);
+                                        banner_top_adapt_preset.set(true);
+                                        banner_top_pos_x.set(50);
+                                        banner_top_pos_y.set(10);
+                                        banner_top_rotation.set(0);
+                                        banner_top_font_size.set(48);
+                                        banner_top_font_family.set(String::from("impact"));
+                                        banner_top_fg_color.set(String::from("auto"));
+                                        banner_top_bg_color.set(String::from("auto"));
+                                        banner_top_effect.set(String::from("solida"));
+                                        banner_top_border_finish.set(String::from("nenhuma"));
+                                        banner_top_border_width.set(3);
+                                        banner_top_wave_amp.set(0);
+                                        banner_top_word_rot.set(0);
+                                        banner_top_word_cut.set(false);
+                                        banner_top_ransom_note.set(false);
+                                        image_crop_top.set(0);
+                                        image_crop_bottom.set(0);
+                                        image_crop_left.set(0);
+                                        image_crop_right.set(0);
                                         dither_override.set(String::from("auto"));
                                         palette_override.set(String::from("auto"));
                                         show_advanced.set(false);

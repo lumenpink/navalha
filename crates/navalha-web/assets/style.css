@@ -1564,3 +1564,39 @@ input[type="range"]::-moz-range-thumb {
     letter-spacing: 0.3px;
 }
 
+/* 🏷️ Alternador de Abas de Faixas de Texto (Superior / Inferior) */
+.banner-tabs-container {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    margin-bottom: 8px;
+}
+
+.btn-banner-tab {
+    flex: 1;
+    background: #1a1a1a;
+    color: #888888;
+    border: 2px solid #333333;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 0.75rem;
+    padding: 8px 10px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.15s ease;
+}
+
+.btn-banner-tab:hover {
+    color: #ffffff;
+    border-color: #666666;
+}
+
+.btn-banner-tab.active {
+    background: #000000;
+    color: #e2f835;
+    border-color: #e2f835;
+    box-shadow: 2px 2px 0px #ff0033;
+}
+
+

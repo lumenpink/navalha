@@ -56,6 +56,22 @@ enum Commands {
         #[arg(long, default_value_t = 1.0)]
         zoom: f32,
 
+        /// Recorte/margem superior da imagem em porcentagem (0.0 a 45.0)
+        #[arg(long = "crop-top", default_value_t = 0.0)]
+        crop_top: f32,
+
+        /// Recorte/margem inferior da imagem em porcentagem (0.0 a 45.0)
+        #[arg(long = "crop-bottom", default_value_t = 0.0)]
+        crop_bottom: f32,
+
+        /// Recorte/margem esquerda da imagem em porcentagem (0.0 a 45.0)
+        #[arg(long = "crop-left", default_value_t = 0.0)]
+        crop_left: f32,
+
+        /// Recorte/margem direita da imagem em porcentagem (0.0 a 45.0)
+        #[arg(long = "crop-right", default_value_t = 0.0)]
+        crop_right: f32,
+
         /// Deslocamento horizontal do sujeito em pixels (padrão 0 = centralizado)
         #[arg(long = "offset-x", default_value_t = 0)]
         offset_x: i32,
@@ -152,6 +168,10 @@ enum Commands {
         #[arg(long = "palavra-tarja")]
         palavra_tarja: Option<bool>,
 
+        /// Modo fanzine / ransom note (colagem de letras/palavras com fontes e cores alternadas)
+        #[arg(long = "ransom-note", default_value_t = false)]
+        ransom_note: bool,
+
         /// Desativa/remove totalmente as faixas decorativas de texto
         #[arg(long = "sem-faixa", default_value_t = false)]
         sem_faixa: bool,
@@ -224,6 +244,22 @@ enum Commands {
         #[arg(long, default_value_t = 1.0)]
         zoom: f32,
 
+        /// Recorte/margem superior da imagem em porcentagem (0.0 a 45.0)
+        #[arg(long = "crop-top", default_value_t = 0.0)]
+        crop_top: f32,
+
+        /// Recorte/margem inferior da imagem em porcentagem (0.0 a 45.0)
+        #[arg(long = "crop-bottom", default_value_t = 0.0)]
+        crop_bottom: f32,
+
+        /// Recorte/margem esquerda da imagem em porcentagem (0.0 a 45.0)
+        #[arg(long = "crop-left", default_value_t = 0.0)]
+        crop_left: f32,
+
+        /// Recorte/margem direita da imagem em porcentagem (0.0 a 45.0)
+        #[arg(long = "crop-right", default_value_t = 0.0)]
+        crop_right: f32,
+
         /// Deslocamento horizontal do sujeito em pixels (padrão 0 = centralizado)
         #[arg(long = "offset-x", default_value_t = 0)]
         offset_x: i32,
@@ -271,6 +307,10 @@ enum Commands {
         /// Distorção vertical da tipografia (ex: 1.5 a 2.2)
         #[arg(long, default_value_t = 1.5)]
         distorcao_vertical: f32,
+
+        /// Modo fanzine / ransom note (colagem de letras/palavras com fontes e cores alternadas)
+        #[arg(long = "ransom-note", default_value_t = false)]
+        ransom_note: bool,
 
         /// Danos e marcas de intervenção física. Aceita nome simples (tiro) ou especificador completo
         /// "tipo:posX:posY:escala" onde posição é 0.0–1.0 e escala é multiplicador (1.0 = padrão).
@@ -377,6 +417,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             estetica,
             rotacao,
             zoom,
+            crop_top,
+            crop_bottom,
+            crop_left,
+            crop_right,
             offset_x,
             offset_y,
             dano,
@@ -399,6 +443,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             onda_freq,
             palavra_rot,
             palavra_tarja,
+            ransom_note,
             sem_faixa,
             sem_recorte,
             recorte,
@@ -431,8 +476,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 preset.build_pipeline_and_composition_dual(&frase, frase_superior.as_deref());
             pr.rotation = rotacao;
             pr.zoom = zoom;
+            pr.crop_top = crop_top;
+            pr.crop_bottom = crop_bottom;
+            pr.crop_left = crop_left;
+            pr.crop_right = crop_right;
             comp.subject_offset_x = offset_x;
             comp.subject_offset_y = offset_y;
+            comp.custom_seed = Some(navalha_core::compute_subject_seed(Some(&img), &frase));
+
+            if ransom_note {
+                for t in comp.foreground_texts.iter_mut() {
+                    t.ransom_note = true;
+                }
+            }
 
             if sem_faixa {
                 comp.foreground_texts.clear();
@@ -450,7 +506,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 g.invert = !g.invert;
             }
 
-            if let Some(t) = comp.foreground_texts.get_mut(0) {
+            let b_idx = if frase_superior.is_some() { 1 } else { 0 };
+            if let Some(t) = comp.foreground_texts.get_mut(b_idx) {
                 if let Some(bx) = banner_x {
                     t.pos_x = bx;
                 }
@@ -588,6 +645,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             input,
             rotacao,
             zoom,
+            crop_top,
+            crop_bottom,
+            crop_left,
+            crop_right,
             offset_x,
             offset_y,
             recorte,
@@ -600,6 +661,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             texto_topo,
             tarja_baixo,
             distorcao_vertical,
+            ransom_note,
             dano,
             sticker,
             sticker_borda,
@@ -627,6 +689,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let prep = PrepConfig {
                 rotation: rotacao,
                 zoom,
+                crop_top,
+                crop_bottom,
+                crop_left,
+                crop_right,
                 ..Default::default()
             };
 
@@ -651,7 +717,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 });
             }
 
-            if let Some(baixo) = tarja_baixo {
+            if let Some(ref baixo) = tarja_baixo {
                 fg_texts.push(TextElement {
                     text: baixo.to_uppercase(),
                     font_size: 48.0,
@@ -665,6 +731,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     center_x: true,
                     rotation: 0,
                     tarja_effect: TarjaEffect::Solida,
+                    ransom_note,
                     ..Default::default()
                 });
             }
@@ -732,6 +799,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 palette: Some(palette.clone()),
                 subject_offset_x: offset_x,
                 subject_offset_y: offset_y,
+                custom_seed: Some(navalha_core::compute_subject_seed(Some(&img), tarja_baixo.as_deref().unwrap_or(""))),
             };
 
             let poster = navalha_core::render_poster(&comp, Some(&processed));

@@ -654,6 +654,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.15,
                     levels_highlight_cutoff: 0.85,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::Atkinson;
                 let scale = ScaleFactor::TwoX;
@@ -662,6 +666,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -712,6 +717,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.25,
                     levels_highlight_cutoff: 0.75,
                     levels_gamma: 0.8,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::Bayer8x8;
                 let scale = ScaleFactor::TwoX;
@@ -720,6 +729,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -756,6 +766,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.14,
                     levels_highlight_cutoff: 0.90,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::FloydSteinberg;
                 let scale = ScaleFactor::OneX;
@@ -764,6 +778,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -814,6 +829,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.15,
                     levels_highlight_cutoff: 0.85,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::Halftone { angle_deg: 45, cell_size: 6 };
                 let scale = ScaleFactor::OneX;
@@ -822,6 +841,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -858,6 +878,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.20,
                     levels_highlight_cutoff: 0.80,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::Atkinson;
                 let scale = ScaleFactor::TwoX;
@@ -866,6 +890,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -917,6 +942,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.12,
                     levels_highlight_cutoff: 0.88,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::Bayer4x4;
                 let scale = ScaleFactor::ThreeX;
@@ -925,6 +954,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -976,6 +1006,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.10,
                     levels_highlight_cutoff: 0.90,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::Bayer4x4;
                 let scale = ScaleFactor::ThreeX;
@@ -984,6 +1018,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1035,6 +1070,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.15,
                     levels_highlight_cutoff: 0.85,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::Atkinson;
                 let scale = ScaleFactor::TwoX;
@@ -1043,6 +1082,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1093,6 +1133,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.15,
                     levels_highlight_cutoff: 0.85,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::Threshold; // Binarização estrita por média ponderada
                 let scale = ScaleFactor::TwoX;
@@ -1101,6 +1145,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1153,6 +1198,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.12,
                     levels_highlight_cutoff: 0.88,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::FloydSteinberg; // 4 níveis de cinza com paleta trash_polka
                 let scale = ScaleFactor::TwoX;
@@ -1161,6 +1210,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1234,6 +1284,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.05,
                     levels_highlight_cutoff: 0.95,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::AtariGaming;
                 let scale = ScaleFactor::OneX;
@@ -1242,6 +1296,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1294,6 +1349,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.10,
                     levels_highlight_cutoff: 0.90,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::Mimeografo;
                 let scale = ScaleFactor::TwoX;
@@ -1302,6 +1361,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1356,6 +1416,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.12,
                     levels_highlight_cutoff: 0.88,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::SauvolaWoodcut;
                 let scale = ScaleFactor::TwoX;
@@ -1364,6 +1428,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1417,6 +1482,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.08,
                     levels_highlight_cutoff: 0.92,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::GlitchCrt;
                 let scale = ScaleFactor::OneX;
@@ -1425,6 +1494,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1476,6 +1546,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.08,
                     levels_highlight_cutoff: 0.85,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::AsciiArt;
                 let scale = ScaleFactor::OneX;
@@ -1484,6 +1558,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1534,6 +1609,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.16,
                     levels_highlight_cutoff: 0.84,
                     levels_gamma: 0.95,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::FloydSteinberg;
                 let scale = ScaleFactor::OneX;
@@ -1542,6 +1621,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1613,6 +1693,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.12,
                     levels_highlight_cutoff: 0.88,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::Atkinson;
                 let scale = ScaleFactor::TwoX;
@@ -1621,6 +1705,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1672,6 +1757,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.18,
                     levels_highlight_cutoff: 0.82,
                     levels_gamma: 0.85,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::FloydSteinberg;
                 let scale = ScaleFactor::TwoX;
@@ -1680,6 +1769,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1717,6 +1807,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.15,
                     levels_highlight_cutoff: 0.85,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::Bayer4x4;
                 let scale = ScaleFactor::TwoX;
@@ -1725,6 +1819,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1776,6 +1871,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.10,
                     levels_highlight_cutoff: 0.90,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::Bayer8x8;
                 let scale = ScaleFactor::TwoX;
@@ -1784,6 +1883,7 @@ impl AestheticPreset {
                     stickers: Vec::new(),
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1835,6 +1935,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.15,
                     levels_highlight_cutoff: 0.85,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::Atkinson;
                 let scale = ScaleFactor::TwoX;
@@ -1846,6 +1950,7 @@ impl AestheticPreset {
                     ],
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,
@@ -1904,6 +2009,10 @@ impl AestheticPreset {
                     levels_shadow_cutoff: 0.12,
                     levels_highlight_cutoff: 0.88,
                     levels_gamma: 1.0,
+                    crop_top: 0.0,
+                    crop_bottom: 0.0,
+                    crop_left: 0.0,
+                    crop_right: 0.0,
                 };
                 let dither = DitherAlgorithm::Halftone { angle_deg: 45, cell_size: 5 };
                 let scale = ScaleFactor::TwoX;
@@ -1915,6 +2024,7 @@ impl AestheticPreset {
                     ],
                     subject_offset_x: 0,
                     subject_offset_y: 0,
+                    custom_seed: None,
                     palette: Some(palette.clone()),
                     canvas_width: 800,
                     canvas_height: 1100,

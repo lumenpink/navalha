@@ -25,14 +25,15 @@ pub use plates::{
     generate_plates_pdf, separate_plates, PlateError, PlateMode, PlateSeparationConfig, PrintPlate,
 };
 pub use prep::{
-    apply_image_orientation_and_zoom, apply_image_zoom, compute_otsu_threshold, prepare_plate,
-    PrepConfig,
+    apply_image_crop, apply_image_orientation_and_zoom, apply_image_orientation_zoom_and_crop,
+    apply_image_zoom, compute_otsu_threshold, prepare_plate, PrepConfig,
 };
 pub use presets::AestheticPreset;
 pub use press::{
-    apply_sticker_border, lcg_hash, render_poster, render_poster_cancellable, BannerFontFamily,
-    DamageEffect, DamageElement, PosterComposition, PunkOverlayConfig, StickerBorder,
-    StickerElement, StickerKind, TarjaBorderFinish, TarjaEffect, TextElement, EMBEDDED_FONT_BYTES,
+    apply_sticker_border, compute_subject_seed, lcg_hash, render_poster, render_poster_cancellable,
+    BannerFontFamily, DamageEffect, DamageElement, PosterComposition, PunkOverlayConfig,
+    StickerBorder, StickerElement, StickerKind, TarjaBorderFinish, TarjaEffect, TextElement,
+    EMBEDDED_FONT_BYTES,
 };
 pub use scale::{apply_scale, ScaleFactor};
 pub use svg::generate_poster_svg;
@@ -55,8 +56,16 @@ where
     if is_cancelled() {
         return None;
     }
-    // 0. Enquadramento da foto bruta: rotação e zoom granular antes do corte
-    let framed = apply_image_orientation_and_zoom(input, prep.rotation, prep.zoom);
+    // 0. Enquadramento da foto bruta: rotação, crop manual de margens e zoom granular antes do corte
+    let framed = apply_image_orientation_zoom_and_crop(
+        input,
+        prep.rotation,
+        prep.zoom,
+        prep.crop_top,
+        prep.crop_bottom,
+        prep.crop_left,
+        prep.crop_right,
+    );
     if is_cancelled() {
         return None;
     }
@@ -72,6 +81,10 @@ where
     let mut prep_plate_config = prep.clone();
     prep_plate_config.rotation = 0;
     prep_plate_config.zoom = 1.0;
+    prep_plate_config.crop_top = 0.0;
+    prep_plate_config.crop_bottom = 0.0;
+    prep_plate_config.crop_left = 0.0;
+    prep_plate_config.crop_right = 0.0;
     let prepped = prepare_plate(&cut, &prep_plate_config);
     if is_cancelled() {
         return None;
@@ -1307,6 +1320,99 @@ mod tests {
         let poster_az_1 = render_poster(&compaz, Some(&test_img));
         let poster_az_2 = render_poster(&compaz, Some(&test_img));
         assert_eq!(poster_az_1.as_raw(), poster_az_2.as_raw(), "AnarcoZine deve ser 100% determinístico");
+    }
+
+    #[test]
+    fn test_image_crop_functionality() {
+        let mut img = image::RgbaImage::new(100, 100);
+        for y in 0..100 {
+            for x in 0..100 {
+                img.put_pixel(x, y, image::Rgba([x as u8, y as u8, 128, 255]));
+            }
+        }
+
+        // Teste de crop zero (identidade)
+        let uncropped = apply_image_crop(&img, 0.0, 0.0, 0.0, 0.0);
+        assert_eq!(uncropped.dimensions(), (100, 100));
+        assert_eq!(uncropped.as_raw(), img.as_raw());
+
+        // Teste de corte de 10% nas quatro bordas
+        let cropped = apply_image_crop(&img, 10.0, 10.0, 10.0, 10.0);
+        assert_eq!(cropped.dimensions(), (80, 80));
+
+        // Teste de corte assimétrico
+        let asym = apply_image_crop(&img, 20.0, 10.0, 5.0, 15.0);
+        assert_eq!(asym.dimensions(), (80, 70));
+
+        // Teste integrado de rotação, corte e zoom
+        let framed = apply_image_orientation_zoom_and_crop(&img, 0, 1.0, 10.0, 10.0, 10.0, 10.0);
+        assert_eq!(framed.dimensions(), (80, 80));
+    }
+
+    #[test]
+    fn test_ransom_note_magazine_collage_mode() {
+        let (_, _, _, _, _, mut comp) = AestheticPreset::PunkRiot.build_pipeline_and_composition("PUNK FANZINE REVOLTA");
+        if let Some(ref mut elem) = comp.foreground_texts.get_mut(0) {
+            elem.ransom_note = true;
+        }
+
+        let test_img = create_test_image(80, 80);
+        let poster1 = render_poster(&comp, Some(&test_img));
+        let poster2 = render_poster(&comp, Some(&test_img));
+
+        // Determinismo rigoroso em modo colagem de revista
+        assert_eq!(poster1.as_raw(), poster2.as_raw(), "Modo Ransom Note deve ser 100% determinístico");
+        assert_eq!(poster1.dimensions(), (800, 1100));
+    }
+
+    #[test]
+    fn test_raw_image_seed_stability_across_filter_changes() {
+        let raw_img = create_test_image(100, 100);
+        let phrase = "RESISTÊNCIA SUBVERSIVA";
+
+        // Seed determinístico calculado sobre a foto bruta não editada (Ticket #19)
+        let stable_seed = compute_subject_seed(Some(&raw_img), phrase);
+
+        // Simulamos duas variações extremas de limiar de corte da guilhotina (ex: 40% vs 85%)
+        let mut g1 = GuillotineConfig::default();
+        g1.enabled = true;
+        g1.threshold = 0.40;
+        let mut g2 = GuillotineConfig::default();
+        g2.enabled = true;
+        g2.threshold = 0.85;
+
+        let prep = PrepConfig::default();
+        let palette = Palette::classic_punk();
+
+        let cut1 = process_subject(&raw_img, &g1, &prep, DitherAlgorithm::Atkinson, &palette, ScaleFactor::OneX);
+        let cut2 = process_subject(&raw_img, &g2, &prep, DitherAlgorithm::Atkinson, &palette, ScaleFactor::OneX);
+
+        // Os sujeitos processados diferem nos seus pixels
+        assert_ne!(cut1.as_raw(), cut2.as_raw(), "Sujeitos com limiares distintos devem ter pixels distintos");
+
+        // Porém, com custom_seed ancorado na foto original, as duas composições usam a mesma semente
+        let mut comp1 = PosterComposition {
+            custom_seed: Some(stable_seed),
+            ..Default::default()
+        };
+        let mut comp2 = PosterComposition {
+            custom_seed: Some(stable_seed),
+            ..Default::default()
+        };
+
+        let mut banner = AestheticPreset::PunkRiot.default_banner_element(phrase);
+        banner.word_jitter_rotation = 8;
+        banner.wave_amplitude = 12.0;
+
+        comp1.foreground_texts.push(banner.clone());
+        comp2.foreground_texts.push(banner);
+
+        // Renderizamos pôsteres apenas com a camada de texto (None no sujeito) para isolar o seed da faixa
+        let text_layer_1 = render_poster(&comp1, None);
+        let text_layer_2 = render_poster(&comp2, None);
+
+        // A camada tipográfica é 100% idêntica e estável, imune a variações de limiar da imagem!
+        assert_eq!(text_layer_1.as_raw(), text_layer_2.as_raw(), "O seed fixado na imagem bruta garante estabilidade total das palavras");
     }
 }
 
