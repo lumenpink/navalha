@@ -16,6 +16,9 @@ use navalha_core::{
 use std::fs::File;
 use std::io::{self, Cursor, Read, Write};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Mutex;
+use std::time::Instant;
 
 #[derive(Parser)]
 #[command(
@@ -403,6 +406,77 @@ enum Commands {
         /// Inverter densidade ótica (ideal para fundos claros/impressão em papel)
         #[arg(short, long)]
         inverter: bool,
+    },
+
+    /// 📦 Processamento em lote de diretórios inteiros de imagens
+    #[command(alias = "batch")]
+    Lote {
+        /// Diretório ou arquivo de entrada contendo as imagens
+        input: PathBuf,
+
+        /// Diretório de destino para os arquivos gerados
+        #[arg(short = 'o', long = "saida", default_value = "lote_posters")]
+        saida: PathBuf,
+
+        /// Modo de processamento: poster (pôster anti-design completo) ou dither (retícula pura)
+        #[arg(short = 'm', long = "modo", default_value = "poster")]
+        modo: String,
+
+        /// Estética anti-design para modo pôster (punk-riot, navalha-sata, xerox-podre, etc.)
+        #[arg(short = 'e', long = "estetica", default_value = "punk-riot")]
+        estetica: String,
+
+        /// Frase padrão da faixa inferior para todos os pôsteres
+        #[arg(short = 'f', long = "frase", default_value = "EU SOBREVIVO AO MUNDO")]
+        frase: String,
+
+        /// Extrai a frase do pôster a partir do nome do arquivo (ex: 'contra-cultura.jpg' -> 'CONTRA CULTURA')
+        #[arg(long = "frase-do-nome", default_value_t = false)]
+        frase_do_nome: bool,
+
+        /// Arquivo .txt contendo frases (uma por linha) para distribuir entre as imagens
+        #[arg(long = "frases-arquivo")]
+        frases_arquivo: Option<PathBuf>,
+
+        /// Frase ou manchete opcional da faixa superior
+        #[arg(long = "frase-superior")]
+        frase_superior: Option<String>,
+
+        /// Desativa/remove as faixas de texto no modo pôster
+        #[arg(long = "sem-faixa", default_value_t = false)]
+        sem_faixa: bool,
+
+        /// Ativa modo fanzine / ransom note (colagem de letras/palavras)
+        #[arg(long = "ransom-note", default_value_t = false)]
+        ransom_note: bool,
+
+        /// Varrer subdiretórios recursivamente mantendo estrutura
+        #[arg(short = 'r', long = "recursivo", default_value_t = false)]
+        recursivo: bool,
+
+        /// Lista de extensões aceitas separadas por vírgula (padrão: jpg,jpeg,png,webp,bmp)
+        #[arg(long = "extensoes", default_value = "jpg,jpeg,png,webp,bmp")]
+        extensoes: String,
+
+        /// Algoritmo de quantização (quando no modo dither): floyd-steinberg, atkinson, bayer4x4, bayer8x8, halftone
+        #[arg(long = "algoritmo", default_value = "atkinson")]
+        algoritmo: String,
+
+        /// Paleta de cor (quando no modo dither ou override)
+        #[arg(long = "paleta", default_value = "classic-punk")]
+        paleta: String,
+
+        /// Fator de ampliação (quando no modo dither): 1x, 2x, 3x, 4x
+        #[arg(long = "escala", default_value = "2x")]
+        escala: String,
+
+        /// Separa chapas para risografia e silk-screen para cada imagem
+        #[arg(long = "separar-chapas", default_value_t = false)]
+        separar_chapas: bool,
+
+        /// Número de threads simultâneas para processamento paralelo (0 = automático por núcleos de CPU)
+        #[arg(short = 'j', long = "jobs", default_value_t = 0)]
+        jobs: usize,
     },
 }
 
@@ -858,7 +932,349 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let ascii_str = navalha_core::image_to_ascii(&dyn_img, colunas, inverter);
             print!("{}", ascii_str);
         }
+
+        Commands::Lote {
+            input,
+            saida,
+            modo,
+            estetica,
+            frase,
+            frase_do_nome,
+            frases_arquivo,
+            frase_superior,
+            sem_faixa,
+            ransom_note,
+            recursivo,
+            extensoes,
+            algoritmo,
+            paleta,
+            escala,
+            separar_chapas,
+            jobs,
+        } => {
+            run_lote(
+                input,
+                saida,
+                modo,
+                estetica,
+                frase,
+                frase_do_nome,
+                frases_arquivo,
+                frase_superior,
+                sem_faixa,
+                ransom_note,
+                recursivo,
+                extensoes,
+                algoritmo,
+                paleta,
+                escala,
+                separar_chapas,
+                jobs,
+            )?;
+        }
     }
+
+    Ok(())
+}
+
+/// Extrai uma frase limpa em caixa alta a partir do nome do arquivo (ex: 'punk-riot_01' -> 'PUNK RIOT 01').
+fn extract_phrase_from_stem(stem: &str) -> String {
+    let clean = stem
+        .chars()
+        .map(|c| if c == '-' || c == '_' || c == '.' { ' ' } else { c })
+        .collect::<String>();
+    let result = clean
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .to_uppercase();
+    if result.is_empty() {
+        String::from("EU SOBREVIVO AO MUNDO")
+    } else {
+        result
+    }
+}
+
+/// Varre arquivos de imagem com extensões especificadas, de forma determinística e opcionalmente recursiva.
+fn collect_image_files(
+    root: &Path,
+    current: &Path,
+    recursive: bool,
+    extensions: &[String],
+    results: &mut Vec<(PathBuf, PathBuf)>,
+) -> std::io::Result<()> {
+    let mut entries = Vec::new();
+    for entry in std::fs::read_dir(current)? {
+        entries.push(entry?);
+    }
+    entries.sort_by_key(|e| e.path());
+
+    for entry in entries {
+        let path = entry.path();
+        if path.is_dir() {
+            if recursive {
+                collect_image_files(root, &path, recursive, extensions, results)?;
+            }
+        } else if path.is_file() {
+            if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
+                if extensions.iter().any(|e| e.eq_ignore_ascii_case(ext)) {
+                    let rel = path.strip_prefix(root).unwrap_or(&path).to_path_buf();
+                    results.push((path, rel));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Processa um único item do lote (pôster ou retícula).
+fn process_single_item(
+    in_path: &Path,
+    out_path: &Path,
+    modo: &str,
+    estetica: &str,
+    frase: &str,
+    frase_superior: Option<&str>,
+    sem_faixa: bool,
+    ransom_note: bool,
+    algoritmo: &str,
+    paleta: &str,
+    escala: &str,
+    separar_chapas: bool,
+    target_dir: &Path,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let img_bytes = std::fs::read(in_path)?;
+    let reader = ImageReader::new(Cursor::new(img_bytes)).with_guessed_format()?;
+    let img = reader.decode()?.to_rgba8();
+
+    if modo.eq_ignore_ascii_case("dither") {
+        let palette = resolve_palette(paleta);
+        let dither_algo = DitherAlgorithm::parse(algoritmo).unwrap_or(DitherAlgorithm::Atkinson);
+        let scale_factor = ScaleFactor::parse(escala).unwrap_or(ScaleFactor::TwoX);
+        let prep = PrepConfig::default();
+        let guillotine = GuillotineConfig::default();
+        let out = process_subject(&img, &guillotine, &prep, dither_algo, &palette, scale_factor);
+        out.save_with_format(out_path, ImageFormat::Png)?;
+    } else {
+        let preset = AestheticPreset::parse(estetica).unwrap_or(AestheticPreset::PunkRiot);
+        let (_g, _pr, _dt, _pal, _sc, mut comp) =
+            preset.build_pipeline_and_composition_dual(frase, frase_superior);
+        comp.custom_seed = Some(navalha_core::compute_subject_seed(Some(&img), frase));
+
+        if sem_faixa {
+            comp.foreground_texts.clear();
+        }
+
+        if ransom_note {
+            for t in comp.foreground_texts.iter_mut() {
+                t.ransom_note = true;
+            }
+        }
+
+        let poster = render_poster(&comp, Some(&img));
+        poster.save_with_format(out_path, ImageFormat::Png)?;
+
+        if separar_chapas {
+            let stem = in_path.file_stem().and_then(|s| s.to_str()).unwrap_or("item");
+            let chapas_dir = target_dir.join(format!("{}_chapas", stem));
+            let plate_cfg = PlateSeparationConfig::default();
+            let plates = separate_plates(&poster, &plate_cfg)
+                .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())) })?;
+            export_plates_to_dir(&plates, &chapas_dir, "ambos")
+                .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())) })?;
+        }
+    }
+
+    Ok(())
+}
+
+/// Orquestra a execução concorrente em lote de todas as imagens encontradas.
+fn run_lote(
+    input: PathBuf,
+    saida: PathBuf,
+    modo: String,
+    estetica: String,
+    frase: String,
+    frase_do_nome: bool,
+    frases_arquivo: Option<PathBuf>,
+    frase_superior: Option<String>,
+    sem_faixa: bool,
+    ransom_note: bool,
+    recursivo: bool,
+    extensoes: String,
+    algoritmo: String,
+    paleta: String,
+    escala: String,
+    separar_chapas: bool,
+    jobs: usize,
+) -> Result<(), Box<dyn std::error::Error>> {
+    eprintln!("[navalha] 📦 Iniciando processamento em lote...");
+    let start_all = Instant::now();
+
+    // 1. Lê frases de arquivo se fornecido
+    let frases_list: Vec<String> = if let Some(ref f_path) = frases_arquivo {
+        let content = std::fs::read_to_string(f_path)?;
+        content
+            .lines()
+            .map(|l| l.trim().to_string())
+            .filter(|l| !l.is_empty())
+            .collect()
+    } else {
+        Vec::new()
+    };
+
+    // 2. Parser das extensões aceitas
+    let exts: Vec<String> = extensoes
+        .split(',')
+        .map(|s| s.trim().trim_start_matches('.').to_ascii_lowercase())
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    // 3. Coleta os arquivos de imagem
+    let mut files = Vec::new();
+    if input.is_file() {
+        let filename = PathBuf::from(input.file_name().unwrap_or_default());
+        files.push((input.clone(), filename));
+    } else if input.is_dir() {
+        collect_image_files(&input, &input, recursivo, &exts, &mut files)?;
+    } else {
+        return Err(format!("Caminho de entrada inválido ou inexistente: {}", input.display()).into());
+    }
+
+    // Ordenação alfabética para determinismo estrito
+    files.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let total = files.len();
+    if total == 0 {
+        eprintln!(
+            "[navalha] ⚠️ Nenhuma imagem encontrada em '{}' com extensões [{}]",
+            input.display(),
+            exts.join(", ")
+        );
+        return Ok(());
+    }
+
+    std::fs::create_dir_all(&saida)?;
+    eprintln!(
+        "[navalha] ⚡ {} imagens encontradas para lote (modo: {}, destino: '{}')",
+        total,
+        modo,
+        saida.display()
+    );
+
+    // 4. Concorrência paralela com threads nativas
+    let num_threads = if jobs > 0 {
+        jobs
+    } else {
+        std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(4)
+    }
+    .max(1)
+    .min(total);
+
+    let next_file_idx = AtomicUsize::new(0);
+    let success_counter = AtomicUsize::new(0);
+    let error_counter = AtomicUsize::new(0);
+    let print_mutex = Mutex::new(());
+
+    std::thread::scope(|s| {
+        for _ in 0..num_threads {
+            s.spawn(|| {
+                loop {
+                    let idx = next_file_idx.fetch_add(1, Ordering::SeqCst);
+                    if idx >= total {
+                        break;
+                    }
+                    let (ref in_path, ref rel_path) = files[idx];
+                    let start_item = Instant::now();
+                    let stem = in_path.file_stem().and_then(|s| s.to_str()).unwrap_or("imagem");
+
+                    let mut target_dir = saida.clone();
+                    if let Some(parent) = rel_path.parent() {
+                        if !parent.as_os_str().is_empty() {
+                            target_dir = target_dir.join(parent);
+                        }
+                    }
+                    let _ = std::fs::create_dir_all(&target_dir);
+
+                    let target_name = format!("{}.png", stem);
+                    let mut out_path = target_dir.join(&target_name);
+                    if out_path == *in_path {
+                        out_path = target_dir.join(format!("{}_poster.png", stem));
+                    }
+
+                    let item_phrase = if frase_do_nome {
+                        extract_phrase_from_stem(stem)
+                    } else if !frases_list.is_empty() {
+                        frases_list[idx % frases_list.len()].clone()
+                    } else {
+                        frase.clone()
+                    };
+
+                    let res = process_single_item(
+                        in_path,
+                        &out_path,
+                        &modo,
+                        &estetica,
+                        &item_phrase,
+                        frase_superior.as_deref(),
+                        sem_faixa,
+                        ransom_note,
+                        &algoritmo,
+                        &paleta,
+                        &escala,
+                        separar_chapas,
+                        &target_dir,
+                    );
+
+                    let elapsed = start_item.elapsed();
+                    let _lock = print_mutex.lock().unwrap();
+                    match res {
+                        Ok(()) => {
+                            success_counter.fetch_add(1, Ordering::SeqCst);
+                            eprintln!(
+                                "[{}/{}] {} -> {} [{:.0?}]",
+                                idx + 1,
+                                total,
+                                in_path.file_name().and_then(|s| s.to_str()).unwrap_or("?"),
+                                out_path.display(),
+                                elapsed
+                            );
+                        }
+                        Err(e) => {
+                            error_counter.fetch_add(1, Ordering::SeqCst);
+                            eprintln!(
+                                "[{}/{}] ⚠️ Falha ao processar {}: {}",
+                                idx + 1,
+                                total,
+                                in_path.display(),
+                                e
+                            );
+                        }
+                    }
+                }
+            });
+        }
+    });
+
+    let total_elapsed = start_all.elapsed();
+    let succ = success_counter.load(Ordering::SeqCst);
+    let err = error_counter.load(Ordering::SeqCst);
+    let rate = if total_elapsed.as_secs_f32() > 0.0 {
+        (succ as f32) / total_elapsed.as_secs_f32()
+    } else {
+        succ as f32
+    };
+
+    eprintln!(
+        "[navalha] ✅ Lote finalizado: {}/{} imagens processadas com sucesso ({} falhas) em {:.2}s ({:.1} img/s)",
+        succ,
+        total,
+        err,
+        total_elapsed.as_secs_f32(),
+        rate
+    );
 
     Ok(())
 }
@@ -1102,5 +1518,177 @@ fn export_plates_to_dir(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use image::{GenericImageView, Rgba, RgbaImage};
+
+    fn create_dummy_png(path: &Path, width: u32, height: u32) {
+        let mut img = RgbaImage::new(width, height);
+        for y in 0..height {
+            for x in 0..width {
+                let v = ((x * 13 + y * 7) % 256) as u8;
+                img.put_pixel(x, y, Rgba([v, 255 - v, 128, 255]));
+            }
+        }
+        img.save_with_format(path, ImageFormat::Png).expect("Falha ao salvar dummy png");
+    }
+
+    #[test]
+    fn test_extract_phrase_from_stem() {
+        assert_eq!(extract_phrase_from_stem("contra-cultura_zine"), "CONTRA CULTURA ZINE");
+        assert_eq!(extract_phrase_from_stem("fanzine-punk.01"), "FANZINE PUNK 01");
+        assert_eq!(extract_phrase_from_stem("   "), "EU SOBREVIVO AO MUNDO");
+    }
+
+    #[test]
+    fn test_collect_image_files_filtering_and_recursion() {
+        let tmp_dir = std::env::temp_dir().join(format!("navalha_test_collect_{}", std::process::id()));
+        let sub_dir = tmp_dir.join("subpasta");
+        std::fs::create_dir_all(&sub_dir).unwrap();
+
+        let f1 = tmp_dir.join("foto1.png");
+        let f2 = tmp_dir.join("foto2.jpg");
+        let f3 = tmp_dir.join("ignore.txt");
+        let f4 = sub_dir.join("foto3.PNG");
+
+        std::fs::write(&f1, b"fake").unwrap();
+        std::fs::write(&f2, b"fake").unwrap();
+        std::fs::write(&f3, b"fake").unwrap();
+        std::fs::write(&f4, b"fake").unwrap();
+
+        let exts = vec!["png".to_string(), "jpg".to_string()];
+
+        // Não recursivo
+        let mut non_rec = Vec::new();
+        collect_image_files(&tmp_dir, &tmp_dir, false, &exts, &mut non_rec).unwrap();
+        assert_eq!(non_rec.len(), 2);
+
+        // Recursivo
+        let mut rec = Vec::new();
+        collect_image_files(&tmp_dir, &tmp_dir, true, &exts, &mut rec).unwrap();
+        assert_eq!(rec.len(), 3);
+
+        let _ = std::fs::remove_dir_all(&tmp_dir);
+    }
+
+    #[test]
+    fn test_run_lote_poster_and_dither_modes() {
+        let unique_id = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let in_dir = std::env::temp_dir().join(format!("navalha_lote_in_{}", unique_id));
+        let out_poster_dir = std::env::temp_dir().join(format!("navalha_lote_out_poster_{}", unique_id));
+        let out_dither_dir = std::env::temp_dir().join(format!("navalha_lote_out_dither_{}", unique_id));
+
+        std::fs::create_dir_all(&in_dir).unwrap();
+
+        create_dummy_png(&in_dir.join("revolta-popular.png"), 60, 60);
+        create_dummy_png(&in_dir.join("grito-rua.png"), 60, 60);
+
+        // Teste 1: Modo Poster com frase do nome
+        run_lote(
+            in_dir.clone(),
+            out_poster_dir.clone(),
+            String::from("poster"),
+            String::from("punk-riot"),
+            String::from("FRASE BASE"),
+            true, // frase_do_nome
+            None,
+            None,
+            false,
+            false,
+            false,
+            String::from("png,jpg"),
+            String::from("atkinson"),
+            String::from("classic-punk"),
+            String::from("2x"),
+            false,
+            2,
+        ).expect("Lote poster deve rodar com sucesso");
+
+        let p1 = out_poster_dir.join("revolta-popular.png");
+        let p2 = out_poster_dir.join("grito-rua.png");
+        assert!(p1.exists(), "Pôster 1 deve ser gerado");
+        assert!(p2.exists(), "Pôster 2 deve ser gerado");
+
+        let img1 = image::open(&p1).unwrap();
+        assert_eq!(img1.dimensions(), (800, 1100));
+
+        // Teste 2: Modo Dither direto
+        run_lote(
+            in_dir.clone(),
+            out_dither_dir.clone(),
+            String::from("dither"),
+            String::from("punk-riot"),
+            String::from(""),
+            false,
+            None,
+            None,
+            true,
+            false,
+            false,
+            String::from("png"),
+            String::from("floyd-steinberg"),
+            String::from("classic-punk"),
+            String::from("2x"),
+            false,
+            1,
+        ).expect("Lote dither deve rodar com sucesso");
+
+        assert!(out_dither_dir.join("revolta-popular.png").exists());
+        assert!(out_dither_dir.join("grito-rua.png").exists());
+
+        // Limpeza
+        let _ = std::fs::remove_dir_all(&in_dir);
+        let _ = std::fs::remove_dir_all(&out_poster_dir);
+        let _ = std::fs::remove_dir_all(&out_dither_dir);
+    }
+
+    #[test]
+    fn test_run_lote_with_frases_arquivo() {
+        let unique_id = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let in_dir = std::env::temp_dir().join(format!("navalha_lote_frases_in_{}", unique_id));
+        let out_dir = std::env::temp_dir().join(format!("navalha_lote_frases_out_{}", unique_id));
+        let txt_path = in_dir.join("frases.txt");
+
+        std::fs::create_dir_all(&in_dir).unwrap();
+        create_dummy_png(&in_dir.join("fotoA.png"), 50, 50);
+        create_dummy_png(&in_dir.join("fotoB.png"), 50, 50);
+
+        std::fs::write(&txt_path, "PRIMEIRA LINHA\nSEGUNDA LINHA\n").unwrap();
+
+        run_lote(
+            in_dir.clone(),
+            out_dir.clone(),
+            String::from("poster"),
+            String::from("punk-riot"),
+            String::from("FALLBACK"),
+            false,
+            Some(txt_path),
+            None,
+            false,
+            true, // ransom note
+            false,
+            String::from("png"),
+            String::from("atkinson"),
+            String::from("classic-punk"),
+            String::from("2x"),
+            false,
+            2,
+        ).expect("Lote com arquivo de frases deve rodar com sucesso");
+
+        assert!(out_dir.join("fotoA.png").exists());
+        assert!(out_dir.join("fotoB.png").exists());
+
+        let _ = std::fs::remove_dir_all(&in_dir);
+        let _ = std::fs::remove_dir_all(&out_dir);
+    }
 }
 
