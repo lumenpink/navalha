@@ -219,27 +219,31 @@ O cartaz final é composto deterministamente em dimensões padronizadas de **$80
 
 ### 6.1 Estilização e Adequação Canônica de Faixas por Preset
 
-Cada preset anti-design define de forma canônica sua tipografia, acabamento e contraste de tarja através de `AestheticPreset::default_banner_element`:
-- **`punk-riot`**: Impact Brutal, borda sólida de 2px vermelha punk (`#FF0033`), fundo preto e letras brancas vazadas.
-- **`navalha-sata`**: Serif Editorial, borda sólida de 2px ouro cru (`#D4883A`), fundo carvão linóleo (`#1A1412`) e letras brancas.
-- **`xerox-podre`**: Impact Brutal, acabamento Xerox com micro-cavidades e perda de toner, borda picotada de 3px (`#322D28`), fundo toner escuro e letras oxidado-vazadas.
-- **`viagem-solitaria`**: Mono Archive, borda tracejada de 2px kraft (`#C8A870`), fundo marrom quente Olivetti (`#2B1D0C`) e letras bege papel.
-- **`lapa-noturna`**: Impact Brutal, borda sólida de 2px magenta elétrico (`#FF0080`), fundo noite profunda (`#0A0A0E`) e letras ciano neon.
-- **`teatro-operario`**: Impact Brutal largo, borda sólida pesada de 4px vermelho operário (`#B31B1B`), fundo carvão construtivista e letras bege jornal.
-- **`risografia`**: Sans Moderna, borda em picote mecânico de 2px azul royal (`#0055FF`), fundo rosa fluorescente (`#FF48B0`) e letras amarelo solar.
-- **`fanzine-digital`**: Mono Archive, borda tracejada de 2px azul ultramarino BBS (`#001188`), fundo amarelo CRT (`#FFEE00`) e texto azul escuro.
-- **`asfalto-alerta`**: Impact Brutal pesado, borda sólida de 4px preto piche (`#111111`), fundo amarelo sinalização tática (`#FFCC00`) e texto preto vazado.
-- **`vga256`**: Mono Archive, borda tracejada de 2px azul DOS (`#0000AA`), fundo preto maciço e texto amarelo neon Modo 13h (`#FFFF55`).
-- **`cga`**: Mono Archive, borda sólida de 2px magenta CGA (`#FF55FF`), fundo preto e texto ciano brilhante IBM 5150 (`#55FFFF`).
-- **`old-mac-pop-art`**: Sans Moderna, borda sólida de 3px rosa pop art (`#FF69B4`), fundo branco estampa e texto preto alto contraste.
-- **`ascii-art`**: Mono Archive, borda tracejada de 2px verde fósforo (`#00FF66`), fundo preto terminal CRT e texto verde brilhante.
-- **`tabloide-popular`**: Impact Brutal rotativa, borda sólida de 3px amarelo manchete (`#FFCC00`), fundo chumbo escuro e texto branco de alto impacto.
-- **`brutalismo`**: Impact Brutal condensado caixa-alta, borda sólida pesada de 4px preto piche (`#0A0A0A`), fundo preto maciço e texto branco gesso (`#FAFAFA`).
-- **`trash-polka`**: Mono Archive máquina mecânica, borda tracejada de 2px preto carvão (`#111111`), fundo carmim (`#BA0C2F`) e texto branco cirúrgico.
-- **`atari-gaming`**: Mono Archive console anos 80, borda sólida de 3px carmim TIA (`#D06C6C`), fundo preto absoluto e texto amarelo Stella (`#FCFC70`).
-- **`mimeografo`**: Mono Archive estêncil a álcool, acabamento xerox/tinta com borda em picote de 2px saturação escura (`#2A1954`), fundo violeta metil (`#432C7A`) e texto manilha (`#F4EFE6`).
-- **`xilogravura`**: Impact Brutal talhado em madeira, borda sólida de 4px kraft queimado (`#D6C4A5`), fundo preto de fumo (`#131110`) e texto kraft.
-- **`glitch-crt`**: Mono Archive terminal quebrado, borda tracejada de 2px vermelho aberração (`#FF0033`), fundo ruído escuro (`#0D0F12`) e texto fósforo verde/ciano (`#00FFCC`).
+Cada preset anti-design define de forma canônica sua tipografia, acabamento e contraste de tarja através de `AestheticPreset::default_banner_element`, preservando a fonte flat original na vasta maioria e aplicando as novas fontes embutidas exclusivamente em vocações materiais explícitas:
+- **`punk-riot`**: Impact Brutal (Grotesca Flat), borda sólida de 2px vermelha punk (`#FF0033`), fundo preto e letras brancas vazadas.
+- **`navalha-sata`**: Serif Editorial (*DejaVu Serif Condensed Bold*), borda sólida de 2px ouro cru (`#D4883A`), fundo carvão linóleo (`#1A1412`) e letras brancas de folhetim de época.
+- **`xerox-podre`**: Impact Brutal (Grotesca Flat), acabamento Xerox com micro-cavidades e perda de toner, borda picotada de 3px (`#322D28`), fundo toner escuro e letras oxidado-vazadas.
+- **`viagem-solitaria`**: Typewriter Mecânica (*Special Elite Regular*), borda tracejada de 2px kraft (`#C8A870`), fundo marrom quente Olivetti (`#2B1D0C`) e letras datilografadas cor papel kraft.
+- **`lapa-noturna`**: Impact Brutal (Grotesca Flat), borda sólida de 2px magenta elétrico (`#FF0080`), fundo noite profunda (`#0A0A0E`) e letras ciano neon com ondulação senoidal.
+- **`teatro-operario`**: Impact Brutal (Grotesca Flat), borda sólida pesada de 4px vermelho operário (`#B31B1B`), fundo carvão construtivista e letras bege jornal.
+- **`risografia`**: Sans Moderna (Grotesca Limpa), borda em picote mecânico de 2px azul royal (`#0055FF`), fundo rosa fluorescente (`#FF48B0`) e letras amarelo solar.
+- **`fanzine-digital`**: Impact Brutal (Grotesca Flat), borda tracejada de 2px azul ultramarino BBS (`#001188`), fundo amarelo CRT (`#FFEE00`) e texto azul com distorção de onda.
+- **`asfalto-alerta`**: Impact Brutal (Grotesca Flat), borda sólida de 4px preto piche (`#111111`), fundo amarelo sinalização tática (`#FFCC00`) e texto preto vazado.
+- **`vga256`**: Impact Brutal (Display Flat Modo 13h), borda tracejada de 2px azul DOS (`#0000AA`), fundo preto maciço e texto amarelo neon (`#FFFF55`).
+- **`cga`**: Impact Brutal (Display Flat IBM 5150), borda sólida de 2px magenta CGA (`#FF55FF`), fundo preto e texto ciano brilhante (`#55FFFF`).
+- **`old-mac-pop-art`**: Sans Moderna (Grotesca Limpa 1984), borda sólida de 3px rosa pop art (`#FF69B4`), fundo branco estampa e texto preto alto contraste.
+- **`ascii-art`**: Impact Brutal (Display Flat CRT), borda tracejada de 2px verde fósforo (`#00FF66`), fundo preto terminal e texto verde brilhante.
+- **`tabloide-popular`**: Impact Brutal (Manchete Flat de Choque), borda sólida de 3px amarelo manchete (`#FFCC00`), fundo chumbo escuro e texto branco de rotativa.
+- **`brutalismo`**: Impact Brutal (Grotesca Flat Concreto), borda sólida pesada de 4px preto piche (`#0A0A0A`), fundo preto maciço e texto branco gesso (`#FAFAFA`).
+- **`trash-polka`**: Typewriter Mecânica (*Special Elite Regular*), borda tracejada de 2px preto carvão (`#111111`), fundo carmim (`#BA0C2F`) e texto branco datilografado.
+- **`atari-gaming`**: Impact Brutal (Display Flat TIA), borda sólida de 3px carmim (`#D06C6C`), fundo preto absoluto e texto amarelo Stella (`#FCFC70`).
+- **`mimeografo`**: Typewriter Mecânica (*Special Elite Regular*), acabamento xerox/tinta com borda em picote de 2px violeta anilina (`#421954`), fundo violeta metil (`#432C7A`) e texto manilha datilografado (`#F4EFE6`).
+- **`xilogravura`**: Impact Brutal (Grotesca Flat Madeira), borda sólida de 4px kraft queimado (`#D6C4A5`), fundo preto de fumo (`#131110`) e texto kraft talhado.
+- **`glitch-crt`**: Impact Brutal (Display Flat CRT), borda tracejada de 2px vermelho aberração (`#FF0033`), fundo ruído escuro (`#0D0F12`) e texto fósforo verde/ciano com ondulação.
+- **`punk-80-br`**: Impact Brutal (Grotesca Flat ABC), borda fita adesiva durex de 3px vermelho vinil (`#A62B2B`), fundo fita K7 e texto cru.
+- **`anarco-zine`**: Impact Brutal (Grotesca Flat Stencil), borda em picote de 3px vermelho anarquia (`#D41C1C`), fundo preto e texto papel kraft com grampos.
+- **`paulete-furacao`**: Impact Brutal (Grotesca Flat Linogravura), borda em picote de 3px amarelo dendê (`#F5B700`), fundo linogravura e texto cru.
+- **`symmy-larrat`**: Impact Brutal (Grotesca Flat Imprensa), borda fita adesiva durex de 3px verde amazônico (`#134B36`), fundo magenta e texto escuro.
 
 ---
 
