@@ -1070,9 +1070,43 @@ mod tests {
         assert_eq!(nery_b.font_family, BannerFontFamily::Monospace);
         assert_eq!(nery_b.border_finish, TarjaBorderFinish::Tracejada);
 
+        let mimeo_b = AestheticPreset::Mimeografo.default_banner_element("MIMEO");
+        assert_eq!(mimeo_b.font_family, BannerFontFamily::Monospace);
+
+        let trash_b = AestheticPreset::TrashPolka.default_banner_element("TRASH");
+        assert_eq!(trash_b.font_family, BannerFontFamily::Monospace);
+
+        let sata_b = AestheticPreset::NavalhaSata.default_banner_element("SATA");
+        assert_eq!(sata_b.font_family, BannerFontFamily::Serif);
+
         let riso_b = AestheticPreset::Risografia.default_banner_element("RISO");
         assert_eq!(riso_b.font_family, BannerFontFamily::Sans);
         assert_eq!(riso_b.border_finish, TarjaBorderFinish::Picote);
+
+        let mac_b = AestheticPreset::OldMacPopArt.default_banner_element("MAC");
+        assert_eq!(mac_b.font_family, BannerFontFamily::Sans);
+
+        // Presets digitais e manchetes de choque mantêm estritamente a fonte flat Impact
+        for &flat_preset in &[
+            AestheticPreset::TabloidePopular,
+            AestheticPreset::Vga256,
+            AestheticPreset::Cga,
+            AestheticPreset::AtariGaming,
+            AestheticPreset::GlitchCrt,
+            AestheticPreset::AsciiArt,
+            AestheticPreset::FanzineDigital,
+            AestheticPreset::PunkRiot,
+            AestheticPreset::Brutalismo,
+            AestheticPreset::Xilogravura,
+        ] {
+            let b = flat_preset.default_banner_element("FLAT");
+            assert_eq!(
+                b.font_family,
+                BannerFontFamily::Impact,
+                "Preset {:?} deve manter a fonte flat original Impact",
+                flat_preset
+            );
+        }
     }
 
     #[test]
