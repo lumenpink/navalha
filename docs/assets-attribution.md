@@ -60,6 +60,19 @@ A interface web do Navalha carrega aleatoriamente a cada inicialização uma ima
 | `19-televisao-crt.jpg` | Televisor de Tubo CRT Vintage | **CC BY-SA 2.0** | Housing Works Thrift Shops | Wikimedia Commons (`Philco-Ford Orange Retro TV (1970s)`) |
 | `20-fita-cassete.jpg` | Fita Cassete K7 Analógica | **CC BY-SA 3.0** | 星空マニア | Wikimedia Commons (`Panasonic Audio tape PX.JPG`) |
 
+---
+
+## 🔤 Fontes Tipográficas Embutidas (`crates/navalha-core/assets/`)
+
+O **Navalha** embute em tempo de compilação 3 famílias tipográficas livres para garantir determinismo bit a bit e autonomia completa sem dependências dinâmicas de sistema operacional ou chamadas externas de rede:
+
+| Arquivo | Família / Variante | Uso no Navalha | Autor / Fundição | Licença Declarada |
+| :--- | :--- | :--- | :--- | :--- |
+| `font.ttf` / `font_sans.ttf` | **DejaVu Sans Condensed Bold** | Manchetes brutas, pôster de choque, tarjas sólidas (`impact`, `sans`) | DejaVu Fonts Project / Bitstream | **Bitstream Vera / DejaVu License** (Livre) |
+| `font_typewriter.ttf` | **Special Elite Regular** | Máquina de escrever mecânica Olivetti/Remington (`mono`, `typewriter`) | Astigmatic (Brian J. Bonislawsky) | **Apache-2.0** (Livre) |
+| `font_serif.ttf` | **DejaVu Serif Condensed Bold** | Imprensa editorial, panfletos e jornais de época (`serif`, `jornal`) | DejaVu Fonts Project / Bitstream | **Bitstream Vera / DejaVu License** (Livre) |
+
+Adicionalmente, o modo **Ransom Note** (`TarjaCutStyle::RansomNote`) utiliza determinismo derivado da semente do pôster para alternar pseudo-aleatoriamente entre essas 3 famílias palavra a palavra, simulando colagem tátil com recortes de múltiplas publicações.
 
 ---
 
