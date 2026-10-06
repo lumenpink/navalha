@@ -8,7 +8,7 @@ use clap::{Parser, Subcommand};
 use image::{ImageFormat, ImageReader};
 use navalha_core::{
     generate_plates_pdf, generate_poster_svg, process_subject, render_poster, separate_plates,
-    AestheticPreset, DamageElement, DitherAlgorithm, GuillotineConfig, Palette,
+    AestheticPreset, BannerFontFamily, DamageElement, DitherAlgorithm, GuillotineConfig, Palette,
     PlateMode, PlateSeparationConfig, PosterComposition, PrepConfig, PrintPlate,
     PunkOverlayConfig, RgbColor, ScaleFactor, StickerBorder, StickerElement, StickerKind,
     TarjaBorderFinish, TarjaEffect, TextElement,
@@ -154,6 +154,10 @@ enum Commands {
         /// Efeito/acabamento da tarja: solida, xerox
         #[arg(long = "banner-efeito")]
         banner_efeito: Option<String>,
+
+        /// Família tipográfica da faixa: impact, mono (typewriter/olivetti), serif (jornal), sans
+        #[arg(long = "banner-fonte", alias = "fonte")]
+        banner_fonte: Option<String>,
 
         /// Amplitude da distorção ondulada em pixels (0.0 = desativada)
         #[arg(long = "onda-amp")]
@@ -513,6 +517,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             banner_borda_largura,
             banner_borda_cor,
             banner_efeito,
+            banner_fonte,
             onda_amp,
             onda_freq,
             palavra_rot,
@@ -635,6 +640,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 if let Some(cut) = palavra_tarja {
                     t.word_tarja_cut = cut;
+                }
+            }
+
+            if let Some(ref bf) = banner_fonte {
+                if let Some(fam) = BannerFontFamily::parse(bf) {
+                    for t in comp.foreground_texts.iter_mut() {
+                        t.font_family = fam;
+                    }
                 }
             }
 

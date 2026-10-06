@@ -1917,10 +1917,10 @@ pub fn App() -> Element {
                                                             disabled: "{banner_top_adapt_preset}",
                                                             value: "{banner_top_font_family}",
                                                             onchange: move |e| banner_top_font_family.set(e.value()),
-                                                            option { value: "impact", "IMPACT // Bebas" }
-                                                            option { value: "monospace", "MONO // Terminal" }
-                                                            option { value: "serif", "SERIF // Jornal" }
-                                                            option { value: "sans", "SANS // Moderna" }
+                                                            option { value: "impact", "IMPACT // Pôster Brutalista" }
+                                                            option { value: "monospace", "MÁQUINA // Olivetti Typewriter" }
+                                                            option { value: "serif", "SERIF // Jornal de Época" }
+                                                            option { value: "sans", "SANS // Grotesca Limpa" }
                                                         }
                                                     }
                                                     div {
@@ -2368,10 +2368,10 @@ pub fn App() -> Element {
                                                             disabled: "{banner_adapt_preset}",
                                                             value: "{banner_font_family}",
                                                             onchange: move |e| banner_font_family.set(e.value()),
-                                                            option { value: "impact", "IMPACT // Bebas" }
-                                                            option { value: "monospace", "MONO // Terminal" }
-                                                            option { value: "serif", "SERIF // Jornal" }
-                                                            option { value: "sans", "SANS // Moderna" }
+                                                            option { value: "impact", "IMPACT // Pôster Brutalista" }
+                                                            option { value: "monospace", "MÁQUINA // Olivetti Typewriter" }
+                                                            option { value: "serif", "SERIF // Jornal de Época" }
+                                                            option { value: "sans", "SANS // Grotesca Limpa" }
                                                         }
                                                     }
                                                     div {

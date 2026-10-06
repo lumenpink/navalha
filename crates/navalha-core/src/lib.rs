@@ -1530,6 +1530,34 @@ mod tests {
         let poster_s = render_poster(&comp_s, None);
         assert_eq!(poster_s.dimensions(), (800, 1100));
     }
+
+    #[test]
+    fn test_embedded_font_families_and_ransom_note() {
+        let test_img = create_test_image(80, 80);
+
+        for fam in [
+            BannerFontFamily::Impact,
+            BannerFontFamily::Monospace,
+            BannerFontFamily::Serif,
+            BannerFontFamily::Sans,
+        ] {
+            let (_, _, _, _, _, mut comp) = AestheticPreset::PunkRiot.build_pipeline_and_composition("TIPOGRAFIA CRUA");
+            if let Some(ref mut elem) = comp.foreground_texts.get_mut(0) {
+                elem.font_family = fam;
+            }
+            let poster = render_poster(&comp, Some(&test_img));
+            assert_eq!(poster.dimensions(), (800, 1100), "Renderização com família {:?} deve ter dimensões corretas", fam);
+        }
+
+        // Teste de determinismo estrito no modo Ransom Note com múltiplas fontes
+        let (_, _, _, _, _, mut comp_ransom) = AestheticPreset::ViagemSolitaria.build_pipeline_and_composition("MÁQUINA OLIVETTI JORNAL REVOLTA");
+        if let Some(ref mut elem) = comp_ransom.foreground_texts.get_mut(0) {
+            elem.ransom_note = true;
+        }
+        let p1 = render_poster(&comp_ransom, Some(&test_img));
+        let p2 = render_poster(&comp_ransom, Some(&test_img));
+        assert_eq!(p1.as_raw(), p2.as_raw(), "Modo Ransom Note com múltiplas fontes deve ser 100% determinístico");
+    }
 }
 
 

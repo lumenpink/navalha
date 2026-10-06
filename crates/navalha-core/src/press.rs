@@ -9,8 +9,29 @@ use image::{Rgba, RgbaImage};
 use crate::palette::{Palette, RgbColor};
 use serde::{Deserialize, Serialize};
 
-// Fonte brutalista embutida no binário/wasm para determinismo absoluto em qualquer plataforma
-pub const EMBEDDED_FONT_BYTES: &[u8] = include_bytes!("../assets/font.ttf");
+// Fontes brutalistas e fanzineiras embutidas no binário/wasm para determinismo absoluto em qualquer plataforma
+pub const EMBEDDED_FONT_SANS_BYTES: &[u8] = include_bytes!("../assets/font.ttf");
+pub const EMBEDDED_FONT_BYTES: &[u8] = EMBEDDED_FONT_SANS_BYTES;
+pub const EMBEDDED_FONT_TYPEWRITER_BYTES: &[u8] = include_bytes!("../assets/font_typewriter.ttf");
+pub const EMBEDDED_FONT_SERIF_BYTES: &[u8] = include_bytes!("../assets/font_serif.ttf");
+
+/// Retorna a referência da fonte correspondente à família tipográfica solicitada
+pub fn get_font_for_family(family: BannerFontFamily) -> FontRef<'static> {
+    match family {
+        BannerFontFamily::Impact | BannerFontFamily::Sans => {
+            FontRef::try_from_slice(EMBEDDED_FONT_SANS_BYTES)
+                .expect("Fonte brutalista sans corrompida ou inválida")
+        }
+        BannerFontFamily::Monospace => {
+            FontRef::try_from_slice(EMBEDDED_FONT_TYPEWRITER_BYTES)
+                .expect("Fonte máquina de escrever typewriter corrompida ou inválida")
+        }
+        BannerFontFamily::Serif => {
+            FontRef::try_from_slice(EMBEDDED_FONT_SERIF_BYTES)
+                .expect("Fonte serifada de jornal corrompida ou inválida")
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum TarjaEffect {
@@ -48,10 +69,12 @@ pub enum BannerFontFamily {
 impl BannerFontFamily {
     pub fn parse(s: &str) -> Option<Self> {
         match s.trim().to_lowercase().as_str() {
-            "impact" | "bebas" | "poster" => Some(Self::Impact),
-            "monospace" | "mono" | "terminal" => Some(Self::Monospace),
-            "serif" | "jornal" | "romano" => Some(Self::Serif),
-            "sans" | "helvetica" | "modern" => Some(Self::Sans),
+            "impact" | "bebas" | "poster" | "brutal" | "brutalista" => Some(Self::Impact),
+            "monospace" | "mono" | "terminal" | "typewriter" | "maquina" | "máquina" | "olivetti" => {
+                Some(Self::Monospace)
+            }
+            "serif" | "jornal" | "romano" | "editorial" => Some(Self::Serif),
+            "sans" | "helvetica" | "modern" | "moderna" => Some(Self::Sans),
             _ => None,
         }
     }
@@ -59,8 +82,8 @@ impl BannerFontFamily {
     pub fn css_font_family(&self) -> &'static str {
         match self {
             Self::Impact => "Impact, 'Bebas Neue', sans-serif",
-            Self::Monospace => "'Courier New', Courier, monospace",
-            Self::Serif => "'Times New Roman', Times, serif",
+            Self::Monospace => "'Special Elite', 'Courier New', Courier, monospace",
+            Self::Serif => "'DejaVu Serif', 'Times New Roman', Times, serif",
             Self::Sans => "Arial, Helvetica, sans-serif",
         }
     }
@@ -951,6 +974,13 @@ fn render_words_cut(
             let word_idx = global_word_idx + w_local_idx;
             let mut w_w = 0.0f32;
             if elem.ransom_note {
+                let font_variant = lcg_hash(seed as u32, word_idx as u32, 12345) % 3;
+                let word_font_fam = match font_variant {
+                    0 => BannerFontFamily::Impact,
+                    1 => BannerFontFamily::Monospace,
+                    _ => BannerFontFamily::Serif,
+                };
+                let w_font_ref = get_font_for_family(word_font_fam);
                 let style_variant = lcg_hash(seed as u32, word_idx as u32, 31415) % 5;
                 let (sx, sy, fsm) = match style_variant {
                     0 => (elem.stretch_x * 0.95, elem.stretch_y * 1.35, 1.05),
@@ -963,9 +993,9 @@ fn render_words_cut(
                     x: elem.font_size * sx * fsm,
                     y: elem.font_size * sy * fsm,
                 };
-                let word_font = font.as_scaled(w_scale);
+                let word_scaled = w_font_ref.as_scaled(w_scale);
                 for ch in w.chars() {
-                    w_w += word_font.h_advance(font.glyph_id(ch));
+                    w_w += word_scaled.h_advance(w_font_ref.glyph_id(ch));
                 }
             } else {
                 for ch in w.chars() {
@@ -1027,6 +1057,18 @@ fn render_words_cut(
             let target_cx = word_cx;
             let target_cy = word_cy + wave_y + y_jitter;
 
+            let word_font = if elem.ransom_note {
+                let font_variant = lcg_hash(seed as u32, global_word_idx as u32, 12345) % 3;
+                let word_font_fam = match font_variant {
+                    0 => BannerFontFamily::Impact,
+                    1 => BannerFontFamily::Monospace,
+                    _ => BannerFontFamily::Serif,
+                };
+                get_font_for_family(word_font_fam)
+            } else {
+                font.clone()
+            };
+
             let (word_sf, word_v_metrics, word_col, word_bg, word_pad, word_finish, word_border_w, word_border_col) = if elem.ransom_note {
                 let style_variant = lcg_hash(seed as u32, global_word_idx as u32, 31415) % 5;
                 let (sx, sy, fsm) = match style_variant {
@@ -1040,7 +1082,7 @@ fn render_words_cut(
                     x: elem.font_size * sx * fsm,
                     y: elem.font_size * sy * fsm,
                 };
-                let w_sf = font.as_scaled(w_scale);
+                let w_sf = word_font.as_scaled(w_scale);
                 let w_vm = w_sf.height();
 
                 let col_idx = lcg_hash(seed as u32, global_word_idx as u32, 92837) % 8;
@@ -1104,7 +1146,7 @@ fn render_words_cut(
             // Rasteriza os glifos da palavra dentro de seu sub-canvas
             let mut glyph_cursor = word_pad;
             for ch in word.chars() {
-                let glyph_id = font.glyph_id(ch);
+                let glyph_id = word_font.glyph_id(ch);
                 let advance = word_sf.h_advance(glyph_id);
                 let glyph = glyph_id.with_scale_and_position(
                     word_sf.scale,
@@ -1112,7 +1154,7 @@ fn render_words_cut(
                 );
                 glyph_cursor += advance;
 
-                if let Some(outlined) = font.outline_glyph(glyph) {
+                if let Some(outlined) = word_font.outline_glyph(glyph) {
                     let bounds = outlined.px_bounds();
                     outlined.draw(|x, y, c| {
                         if c > 0.15 {
@@ -1140,16 +1182,18 @@ fn render_words_cut(
     }
 }
 
-fn render_text_element(canvas: &mut RgbaImage, font: &FontRef, elem: &TextElement, seed: u64) {
+fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &TextElement, seed: u64) {
     if elem.text.trim().is_empty() {
         return;
     }
+    let elem_font = get_font_for_family(elem.font_family);
+    let font = &elem_font;
     let (cw, ch) = canvas.dimensions();
-    let (fam_stretch_x, fam_stretch_y, is_mono) = match elem.font_family {
-        BannerFontFamily::Impact => (elem.stretch_x * 1.0, elem.stretch_y * 1.0, false),
-        BannerFontFamily::Monospace => (elem.stretch_x * 0.92, elem.stretch_y * 0.88, true),
-        BannerFontFamily::Serif => (elem.stretch_x * 1.05, elem.stretch_y * 0.92, false),
-        BannerFontFamily::Sans => (elem.stretch_x * 0.94, elem.stretch_y * 0.95, false),
+    let (fam_stretch_x, fam_stretch_y) = match elem.font_family {
+        BannerFontFamily::Impact => (elem.stretch_x * 1.0, elem.stretch_y * 1.0),
+        BannerFontFamily::Monospace => (elem.stretch_x * 1.0, elem.stretch_y * 1.0),
+        BannerFontFamily::Serif => (elem.stretch_x * 1.0, elem.stretch_y * 1.0),
+        BannerFontFamily::Sans => (elem.stretch_x * 0.95, elem.stretch_y * 0.95),
     };
 
     let mut scale = PxScale {
@@ -1169,16 +1213,10 @@ fn render_text_element(canvas: &mut RgbaImage, font: &FontRef, elem: &TextElemen
     if elem.auto_fit {
         let test_font = font.as_scaled(scale);
         let mut test_max_w = 0.0f32;
-        let mono_adv = test_font.height() * 0.58;
         for line in &lines {
             let mut line_w = 0.0f32;
             for ch in line.chars() {
-                let adv = if is_mono {
-                    mono_adv
-                } else {
-                    test_font.h_advance(font.glyph_id(ch))
-                };
-                line_w += adv;
+                line_w += test_font.h_advance(font.glyph_id(ch));
             }
             if line_w > test_max_w {
                 test_max_w = line_w;
@@ -1228,17 +1266,12 @@ fn render_text_element(canvas: &mut RgbaImage, font: &FontRef, elem: &TextElemen
     let mut line_records: Vec<(Vec<Glyph>, f32)> = Vec::with_capacity(lines.len());
     let mut max_line_width = 0.0f32;
 
-    let mono_adv = scaled_font.height() * 0.58;
     for line in &lines {
         let mut glyphs: Vec<Glyph> = Vec::new();
         let mut cursor_x = 0.0f32;
         for ch in line.chars() {
             let glyph_id = font.glyph_id(ch);
-            let advance = if is_mono {
-                mono_adv
-            } else {
-                scaled_font.h_advance(glyph_id)
-            };
+            let advance = scaled_font.h_advance(glyph_id);
             let glyph = glyph_id.with_scale_and_position(scale, Point { x: cursor_x, y: 0.0 });
             glyphs.push(glyph);
             cursor_x += advance;
