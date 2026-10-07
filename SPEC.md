@@ -45,6 +45,9 @@ O repositório do Navalha está estruturado em conformidade estrita com as Seç�
 │   ├── doc/index.html          # Memorial histórico e especificações dos presets
 │   ├── _headers                # Cabeçalhos HTTP de segurança estritos
 │   └── assets/                 # Cartazes de referência, ícones e fontes
+├── plugins/                    # Extensões para ferramentas abertas de editoração
+│   ├── gimp/                   # Plugin Python-Fu para GIMP 2.10/3.0
+│   └── scribus/                # Script Scripter de automação para Scribus
 └── scripts/
     ├── build.sh                # Script de compilação da release nativa e Wasm
     └── serve.sh                # Servidor de desenvolvimento local
@@ -290,6 +293,10 @@ navalha poster <INPUT> [OPTIONS]
 navalha ascii <INPUT> [--colunas <N>] [--inverter]
 ```
 Converte qualquer imagem em texto puro monoespaçado e despeja diretamente no `stdout` do terminal Linux, sem interface gráfica.
+
+### 7.3 Extensões para Softwares Livres de Editoração (`plugins/`)
+- **Plugin GIMP (`plugins/gimp/navalha_gimp.py`):** Integrado a `<Image>/Filters/Artistic/Navalha...`, exporta a camada ativa, executa o motor CLI com o preset desejado e insere o resultado em uma nova camada no GIMP.
+- **Extensão Scribus (`plugins/scribus/navalha_scribus.py`):** Script Scripter executável em `Script > Executar Script...`, detecta quadros de imagem (`ImageFrame`), aplica filtros preservando vínculos ou extrai matrizes de cor para camadas independentes com marcas de registro para serigrafia e risografia.
 
 ---
 

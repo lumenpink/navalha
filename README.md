@@ -195,6 +195,15 @@ Acesse em: `http://localhost:8080`
 
 ---
 
+### 3. Extensões para Softwares Livres de Editoração (`plugins/`)
+
+Para integrar o Navalha diretamente ao fluxo de trabalho de designers, artistas e coletivos gráficos em ferramentas abertas de desktop:
+
+* **[Plugin para o GIMP](plugins/gimp/)**: Filtro Python nativo registrado em `Filtros > Artístico > Navalha...` para aplicar presets de dither e pôster diretamente na camada selecionada.
+* **[Extensão para o Scribus](plugins/scribus/)**: Script Scripter (`Script > Executar Script...`) para diagramação de fanzines e publicações, com suporte a substituição de imagens em quadros (*Image Frames*) e **geração automática de camadas (*Layers*) com matrizes de separação de cores para serigrafia e risografia**.
+
+---
+
 ## 📐 Pipeline Gráfico em 5 Estágios
 
 ```

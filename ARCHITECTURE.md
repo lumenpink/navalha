@@ -196,3 +196,16 @@ A entrega da aplicação web e da documentação hiperdescritiva opera sem servi
    - `site/pkg/`: Binários otimizados de Wasm (`navalha_web_bg.wasm`) e glue code JS.
    - `site/_headers`: Cabeçalhos estritos de segurança e cache HTTP (`X-Content-Type-Options: nosniff`, MIME type de WebAssembly).
 2. **Alta Disponibilidade e Redundância**: O workflow CI/CD tenta primeiramente o deploy na rede de borda da Cloudflare (`navalha.2lp.in`). Caso as credenciais não estejam disponíveis ou ocorra indisponibilidade temporária, um fallback automático publica o mesmo diretório na branch `pages` do Codeberg.
+
+---
+
+## 7. Extensões para Softwares Livres de Editoração (`plugins/`)
+
+O **Navalha** expõe sua biblioteca de processamento determinístico para ferramentas livres de criação gráfica através de adaptadores leves em Python que se conectam ao executável nativo `navalha-cli`:
+
+1. **GIMP (`plugins/gimp/navalha_gimp.py`)**:
+   - Registrado como procedimento Procedural Database (PDB) em `<Image>/Filters/Artistic/Navalha...`.
+   - Lê a camada ativa da imagem, invoca `navalha poster` ou `navalha dither` via subprocess em memória/disco temporário e devolve o pôster processado em uma nova camada isolada com histórico de desfazer (Undo Group).
+2. **Scribus (`plugins/scribus/navalha_scribus.py`)**:
+   - Registrado na Scripter API do Scribus (`Script > Executar Script...`).
+   - Identifica o objeto selecionado (`ImageFrame`), extrai o caminho do arquivo de imagem original e permite substituir o gráfico pelo pôster processado ou extrair matrizes separadas (`navalha chapas`) diretamente em camadas independentes (`Layers`) do documento para fluxo de trabalho serigráfico ou risográfico.

@@ -27,7 +27,7 @@ Planejamento de evolução para as próximas versões do motor e ambiente Navalh
 ---
 
 ## Versão 1.0.0 (Em Desenvolvimento)
-- [ ] **Plugin para Ferramentas de Editoração Aberta** (`#11`):
+- [x] **Plugin para Ferramentas de Editoração Aberta** (`#11`):
   - Extensão para Scribus e GIMP operando como filtro determinístico direto nas ferramentas livres de design gráfico.
 - [x] ~~**Pacote Desktop Híbrido**~~ (`#10` - Descontinuado):
   - Substituído com paridade total pelo binário nativo UNIX `navalha-cli` e pela aplicação web WebAssembly com suporte offline e instalação como PWA (evitando dependências pesadas de WebKitGTK e mantendo 100% de privacidade).
