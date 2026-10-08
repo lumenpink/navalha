@@ -32,7 +32,7 @@ pub use presets::AestheticPreset;
 pub use press::{
     apply_sticker_border, compute_subject_seed, lcg_hash, render_manual_drawings, render_poster,
     render_poster_cancellable, BannerFontFamily, DamageEffect, DamageElement, DrawingTool,
-    ManualDrawingStroke, PosterComposition, PunkOverlayConfig, StickerBorder, StickerElement,
+    ManualDrawingStroke, PosterComposition, PosterFormat, PunkOverlayConfig, StickerBorder, StickerElement,
     StickerKind, TarjaBorderFinish, TarjaEffect, TextElement, EMBEDDED_FONT_BYTES,
 };
 pub use scale::{apply_scale, ScaleFactor};

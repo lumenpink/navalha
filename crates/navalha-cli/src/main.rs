@@ -9,7 +9,7 @@ use image::{ImageFormat, ImageReader};
 use navalha_core::{
     generate_plates_pdf, generate_poster_svg, process_subject, render_poster, separate_plates,
     AestheticPreset, BannerFontFamily, DamageElement, DitherAlgorithm, GuillotineConfig, Palette,
-    PlateMode, PlateSeparationConfig, PosterComposition, PrepConfig, PrintPlate,
+    PlateMode, PlateSeparationConfig, PosterComposition, PosterFormat, PrepConfig, PrintPlate,
     PunkOverlayConfig, RgbColor, ScaleFactor, StickerBorder, StickerElement, StickerKind,
     TarjaBorderFinish, TarjaEffect, TextElement,
 };
@@ -207,6 +207,10 @@ enum Commands {
         #[arg(long = "chapas-dir")]
         chapas_dir: Option<PathBuf>,
 
+        /// Formato e orientação do pôster: vertical (800x1100), horizontal (1100x800), quadrado (1000x1000)
+        #[arg(long = "formato", alias = "orientacao", default_value = "vertical")]
+        formato: String,
+
         /// Arquivo de saída (.png ou .svg)
         #[arg(short = 'o', long = "saida", default_value = "poster.png")]
         saida: PathBuf,
@@ -362,6 +366,10 @@ enum Commands {
         /// Diretório personalizado para salvar as chapas (opcional)
         #[arg(long = "chapas-dir")]
         chapas_dir: Option<PathBuf>,
+
+        /// Formato e orientação do pôster: vertical (800x1100), horizontal (1100x800), quadrado (1000x1000)
+        #[arg(long = "formato", alias = "orientacao", default_value = "vertical")]
+        formato: String,
 
         /// Arquivo de saída (.png ou .svg)
         #[arg(short = 'o', long = "saida", default_value = "poster_composto.png")]
@@ -530,6 +538,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             recorte_inverter,
             separar_chapas,
             chapas_dir,
+            formato,
             saida,
         } => {
             eprintln!("[navalha] ⚡ Afiando a lâmina anti-design...");
@@ -553,6 +562,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let (mut g, mut pr, dt, pal, sc, mut comp) =
                 preset.build_pipeline_and_composition_dual(&frase, frase_superior.as_deref());
+            let poster_fmt = PosterFormat::parse(&formato).unwrap_or(PosterFormat::Vertical);
+            comp.set_format(poster_fmt);
             pr.rotation = rotacao;
             pr.zoom = zoom;
             pr.crop_top = crop_top;
@@ -758,6 +769,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             texto_extra,
             separar_chapas,
             chapas_dir,
+            formato,
             saida,
         } => {
             eprintln!("[navalha] 📐 Montando prensagem brutalista em 5 camadas...");
@@ -875,6 +887,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
 
+            let poster_fmt = PosterFormat::parse(&formato).unwrap_or(PosterFormat::Vertical);
             let comp = PosterComposition {
                 canvas_width: 800,
                 canvas_height: 1100,
@@ -888,7 +901,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 subject_offset_x: offset_x,
                 subject_offset_y: offset_y,
                 custom_seed: Some(navalha_core::compute_subject_seed(Some(&img), tarja_baixo.as_deref().unwrap_or(""))),
-            };
+            }.with_format(poster_fmt);
 
             let poster = navalha_core::render_poster(&comp, Some(&processed));
             save_output(&poster, &comp, &saida)?;

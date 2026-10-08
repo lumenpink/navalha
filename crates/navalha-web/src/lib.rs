@@ -14,7 +14,7 @@ use gloo_timers::future::TimeoutFuture;
 use image::{ImageFormat, ImageReader, Rgba, RgbaImage};
 use navalha_core::{
     generate_poster_svg, AestheticPreset, DamageEffect, DamageElement, DitherAlgorithm,
-    DrawingTool, ManualDrawingStroke, Palette, RgbColor, ScaleFactor, StickerBorder,
+    DrawingTool, ManualDrawingStroke, Palette, PosterFormat, RgbColor, ScaleFactor, StickerBorder,
     StickerElement, StickerKind, TarjaEffect,
 };
 use navalha_core::plates::{generate_plates_pdf, separate_plates, PlateSeparationConfig};
@@ -212,7 +212,7 @@ pub fn App() -> Element {
     let mut preview_collapsed = use_signal(|| false);
 
     // Controles principais do Pôster Relâmpago
-    // Controles principais do Pôster Relâmpago
+    let mut poster_format = use_signal(|| String::from("vertical"));
     let mut phrase = use_signal(|| String::from("EU SOBREVIVO AO MUNDO"));
     let mut phrase_top = use_signal(|| String::new());
     let mut aesthetic_id = use_signal(|| String::from("punk-riot"));
@@ -342,6 +342,7 @@ pub fn App() -> Element {
             // Rastreamento explícito de todos os sinais que alteram a estética do pôster
             let m_drawings = manual_drawings();
             let raw = raw_image();
+            let p_format = poster_format();
             let phr = phrase();
             let phr_top = phrase_top();
             let aes = aesthetic_id();
@@ -447,6 +448,10 @@ pub fn App() -> Element {
                 let (mut g, mut pr, mut dt, mut pal, mut sc, mut comp) =
                     current_preset.build_pipeline_and_composition_dual(&phr, if phr_top.trim().is_empty() { None } else { Some(&phr_top) });
 
+                let p_fmt = PosterFormat::parse(&p_format).unwrap_or(PosterFormat::Vertical);
+                comp.set_format(p_fmt);
+                let (cw, ch) = p_fmt.dimensions();
+
                 if !r_adapt {
                     g.enabled = r_ativo;
                     g.threshold = (r_th as f32) / 100.0;
@@ -459,8 +464,8 @@ pub fn App() -> Element {
                 pr.crop_bottom = c_bot as f32;
                 pr.crop_left = c_left as f32;
                 pr.crop_right = c_right as f32;
-                comp.subject_offset_x = ((pos_x as i32 - 50) * 800) / 100;
-                comp.subject_offset_y = ((pos_y as i32 - 50) * 1100) / 100;
+                comp.subject_offset_x = ((pos_x as i32 - 50) * cw as i32) / 100;
+                comp.subject_offset_y = ((pos_y as i32 - 50) * ch as i32) / 100;
                 if auto_th {
                     g.auto_threshold = true;
                 }
@@ -898,10 +903,20 @@ pub fn App() -> Element {
         String::new()
     };
 
-    let offset_x = ((image_pos_x() as i32 - 50) * 800) / 100;
-    let offset_y = ((image_pos_y() as i32 - 50) * 1100) / 100;
+    let poster_fmt_obj = PosterFormat::parse(&poster_format()).unwrap_or(PosterFormat::Vertical);
+    let (canvas_w, canvas_h) = poster_fmt_obj.dimensions();
+    let (cw_f, ch_f) = (canvas_w as f32, canvas_h as f32);
+
+    let offset_x = ((image_pos_x() as i32 - 50) * canvas_w as i32) / 100;
+    let offset_y = ((image_pos_y() as i32 - 50) * canvas_h as i32) / 100;
     let offset_flag = if offset_x != 0 || offset_y != 0 {
         format!(" --offset-x {} --offset-y {}", offset_x, offset_y)
+    } else {
+        String::new()
+    };
+
+    let formato_flag = if poster_format() != "vertical" {
+        format!(" --formato {}", poster_format())
     } else {
         String::new()
     };
@@ -971,9 +986,10 @@ pub fn App() -> Element {
 
     let cli_cmd = if !show_advanced() {
         format!(
-            "navalha poster foto.jpg --frase \"{}\"{}{}{}{}{}{}{}{}{}{}{} -o poster.png",
+            "navalha poster foto.jpg --frase \"{}\"{}{}{}{}{}{}{}{}{}{}{}{} -o poster.png",
             phrase(),
             frase_superior_flag,
+            formato_flag,
             sem_faixa_flag,
             recorte_flags,
             banner_style_flags,
@@ -987,11 +1003,12 @@ pub fn App() -> Element {
         )
     } else {
         format!(
-            "navalha compor foto.jpg --recorte --recorte-threshold {:.2} --dither {} --paleta {} --escala {}{}{}{}{} --tarja-baixo \"{}\" --distorcao-vertical {:.1}{}{}{} -o poster.png",
+            "navalha compor foto.jpg --recorte --recorte-threshold {:.2} --dither {} --paleta {} --escala {}{}{}{}{}{} --tarja-baixo \"{}\" --distorcao-vertical {:.1}{}{}{} -o poster.png",
             (threshold_slider() as f32) / 100.0,
             dither_label,
             palette_label,
             scale_select(),
+            formato_flag,
             rotacao_flag,
             zoom_flag,
             offset_flag,
@@ -1266,6 +1283,26 @@ pub fn App() -> Element {
                     // Conteúdo dinâmico da aba ativa
                     div { class: "controls-tab-body",
                         if active_tab() == "poster" {
+                            div { class: "control-box",
+                                label { class: "section-tag", "0. FORMATO & ORIENTAÇÃO DO PÔSTER" }
+                                div { class: "img-edit-tools-row",
+                                    button {
+                                        class: if poster_format() == "vertical" { "btn-edit-action active" } else { "btn-edit-action" },
+                                        onclick: move |_| poster_format.set("vertical".into()),
+                                        "📱 VERTICAL (800x1100)"
+                                    }
+                                    button {
+                                        class: if poster_format() == "horizontal" { "btn-edit-action active" } else { "btn-edit-action" },
+                                        onclick: move |_| poster_format.set("horizontal".into()),
+                                        "🖥️ HORIZONTAL (1100x800)"
+                                    }
+                                    button {
+                                        class: if poster_format() == "quadrado" { "btn-edit-action active" } else { "btn-edit-action" },
+                                        onclick: move |_| poster_format.set("quadrado".into()),
+                                        "⏹️ QUADRADO (1000x1000)"
+                                    }
+                                }
+                            }
                             div { class: "control-box",
                                 label { class: "section-tag", "1. CARREGAR FOTO & EDIÇÃO DA CHAPA" }
                                 input {
@@ -4028,7 +4065,7 @@ pub fn App() -> Element {
                                     svg {
                                         id: "manual-drawing-overlay",
                                         class: if drawing_active() { "drawing-overlay active" } else { "drawing-overlay" },
-                                        view_box: "0 0 800 1100",
+                                        view_box: "0 0 {canvas_w} {canvas_h}",
                                         onpointerdown: move |evt| {
                                             if drawing_active() {
                                                 if let Some((nx, ny)) = get_norm_coords(&evt) {
@@ -4098,15 +4135,15 @@ pub fn App() -> Element {
                                                     DrawingTool::Freehand => {
                                                         if stroke.points.len() == 1 {
                                                             let p = stroke.points[0];
-                                                            let cx = p.0 * 800.0;
-                                                            let cy = p.1 * 1100.0;
+                                                            let cx = p.0 * cw_f;
+                                                            let cy = p.1 * ch_f;
                                                             let r = (sw / 2.0).max(1.0);
                                                             rsx! {
                                                                 circle { cx: "{cx}", cy: "{cy}", r: "{r}", fill: "{col}" }
                                                             }
                                                         } else {
                                                             let pts: Vec<String> = stroke.points.iter().map(|p| {
-                                                                format!("{:.1},{:.1}", p.0 * 800.0, p.1 * 1100.0)
+                                                                format!("{:.1},{:.1}", p.0 * cw_f, p.1 * ch_f)
                                                             }).collect();
                                                             let pts_str = pts.join(" ");
                                                             rsx! {
@@ -4125,10 +4162,10 @@ pub fn App() -> Element {
                                                         if stroke.points.len() >= 2 {
                                                             let p0 = stroke.points[0];
                                                             let p1 = stroke.points[1];
-                                                            let x0 = p0.0 * 800.0;
-                                                            let y0 = p0.1 * 1100.0;
-                                                            let x1 = p1.0 * 800.0;
-                                                            let y1 = p1.1 * 1100.0;
+                                                            let x0 = p0.0 * cw_f;
+                                                            let y0 = p0.1 * ch_f;
+                                                            let x1 = p1.0 * cw_f;
+                                                            let y1 = p1.1 * ch_f;
                                                             rsx! {
                                                                 line {
                                                                     x1: "{x0}", y1: "{y0}", x2: "{x1}", y2: "{y1}",
@@ -4143,10 +4180,10 @@ pub fn App() -> Element {
                                                         if !stroke.points.is_empty() {
                                                             let p0 = stroke.points[0];
                                                             let p1 = stroke.points.get(1).copied().unwrap_or(p0);
-                                                            let mut x0 = p0.0 * 800.0;
-                                                            let mut y0 = p0.1 * 1100.0;
-                                                            let mut x1 = p1.0 * 800.0;
-                                                            let mut y1 = p1.1 * 1100.0;
+                                                            let mut x0 = p0.0 * cw_f;
+                                                            let mut y0 = p0.1 * ch_f;
+                                                            let mut x1 = p1.0 * cw_f;
+                                                            let mut y1 = p1.1 * ch_f;
                                                             if (x1 - x0).abs() < 5.0 && (y1 - y0).abs() < 5.0 {
                                                                 let sz = (sw * 4.0).max(18.0);
                                                                 x0 -= sz; y0 -= sz; x1 += sz; y1 += sz;
@@ -4163,10 +4200,10 @@ pub fn App() -> Element {
                                                         if stroke.points.len() >= 2 {
                                                             let p0 = stroke.points[0];
                                                             let p1 = stroke.points[1];
-                                                            let x0 = p0.0 * 800.0;
-                                                            let y0 = p0.1 * 1100.0;
-                                                            let x1 = p1.0 * 800.0;
-                                                            let y1 = p1.1 * 1100.0;
+                                                            let x0 = p0.0 * cw_f;
+                                                            let y0 = p0.1 * ch_f;
+                                                            let x1 = p1.0 * cw_f;
+                                                            let y1 = p1.1 * ch_f;
                                                             let dx = x1 - x0;
                                                             let dy = y1 - y0;
                                                             let angle = dy.atan2(dx);

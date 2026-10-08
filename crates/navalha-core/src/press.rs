@@ -653,6 +653,62 @@ pub struct PosterComposition {
     pub custom_seed: Option<u64>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum PosterFormat {
+    #[default]
+    Vertical,
+    Horizontal,
+    Quadrado,
+}
+
+impl PosterFormat {
+    pub fn dimensions(&self) -> (u32, u32) {
+        match self {
+            Self::Vertical => (800, 1100),
+            Self::Horizontal => (1100, 800),
+            Self::Quadrado => (1000, 1000),
+        }
+    }
+
+    pub fn parse(s: &str) -> Option<Self> {
+        match s.trim().to_lowercase().as_str() {
+            "vertical" | "retrato" | "portrait" | "v" => Some(Self::Vertical),
+            "horizontal" | "paisagem" | "landscape" | "h" => Some(Self::Horizontal),
+            "quadrado" | "square" | "1:1" | "q" => Some(Self::Quadrado),
+            _ => None,
+        }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vertical => "vertical",
+            Self::Horizontal => "horizontal",
+            Self::Quadrado => "quadrado",
+        }
+    }
+
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            Self::Vertical => "Vertical (800x1100)",
+            Self::Horizontal => "Horizontal (1100x800)",
+            Self::Quadrado => "Quadrado (1000x1000)",
+        }
+    }
+}
+
+impl PosterComposition {
+    pub fn with_format(mut self, format: PosterFormat) -> Self {
+        self.set_format(format);
+        self
+    }
+
+    pub fn set_format(&mut self, format: PosterFormat) {
+        let (w, h) = format.dimensions();
+        self.canvas_width = w;
+        self.canvas_height = h;
+    }
+}
+
 impl Default for PosterComposition {
     fn default() -> Self {
         Self {
