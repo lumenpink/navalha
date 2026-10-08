@@ -198,6 +198,17 @@ Todas as camadas do motor adaptam-se dinamicamente às dimensões do canvas esco
    - Efeitos de agressão física: `tiro`, `rasgo`, `chuva`, `sangue`, `tinta`, `faca`, `pixo`, `censura`, `pulica`.
 6. **Camada 5 — Stickers Temáticos e Elementos de Recorte:** Selos de protesto gráficos (anarquia, caveira, lâmina, biohazard, smiley, etc.) e suporte a upload de imagens personalizadas do usuário (`custom_image` ou `--sticker-custom`) convertidas em elementos de colagem com redimensionamento proporcional inteligente, colados sobre o cartaz com suporte a rotação angular contínua, filtragem opcional de cor com a paleta do preset, acabamento de corte/borda personalizável (`StickerBorder`: die-cut vinílico com vinco externo, picote perfurado com espaçamento de destaque, borda serrilhada em dente-de-serra, linha preta ou sem borda), espessura ajustável em pixels e renderização vetorial SVG com embutimento de imagem em Base64.
 
+### 5.1 Prevenção de Sobreposição e Espaçamento de Palavras em Recortes
+
+Nos modos onde as palavras possuem posicionamento e rotações heterogêneas (`ransom_note`, `word_tarja_cut`, `word_jitter_rotation`), cada bloco de palavra é tratado como um módulo independente com as seguintes regras de layout:
+1. **Cálculo de Bounding Box Rotacionada:** A projeção horizontal de cada mini-tarja considera a largura e altura do sub-canvas rotacionado:
+   $$\Delta x_{\text{proj}} = \text{sub\_w} \cdot |\cos\theta| + \text{sub\_h} \cdot |\sin\theta|$$
+2. **Prevenção de Sobreposição Ilegível:** O avanço horizontal (`cursor_x`) entre palavras adjacentes é calculado de modo a garantir que a distância mínima entre centros impeça colisão destrutiva de caracteres, permitindo no máximo uma sobreposição perimetral controlada das bordas da tarja (`max_overlap`).
+3. **Fator de Espaçamento Configurável (`word_spacing`):** Parâmetro numérico ($0.5$ a $2.5$, padrão $1.0$) multiplicador da folga entre palavras, disponibilizado via:
+   - `TextElement.word_spacing: f32`
+   - Flag CLI `--palavra-espacamento <f32>` (alias `--word-spacing`)
+   - Controle deslizante na interface Web para ajuste fino em tempo real.
+
 ---
 
 ## 6. Catálogo Canônico de 20 Presets Anti-Design (Ordem Intercalada)
