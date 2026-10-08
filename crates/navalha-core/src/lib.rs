@@ -1592,6 +1592,37 @@ mod tests {
         let p2 = render_poster(&comp_ransom, Some(&test_img));
         assert_eq!(p1.as_raw(), p2.as_raw(), "Modo Ransom Note com múltiplas fontes deve ser 100% determinístico");
     }
+
+    #[test]
+    fn test_poster_formats_horizontal_and_quadrado() {
+        use crate::press::PosterFormat;
+
+        assert_eq!(PosterFormat::Vertical.dimensions(), (800, 1100));
+        assert_eq!(PosterFormat::Horizontal.dimensions(), (1100, 800));
+        assert_eq!(PosterFormat::Quadrado.dimensions(), (1000, 1000));
+
+        assert_eq!(PosterFormat::parse("horizontal"), Some(PosterFormat::Horizontal));
+        assert_eq!(PosterFormat::parse("paisagem"), Some(PosterFormat::Horizontal));
+        assert_eq!(PosterFormat::parse("quadrado"), Some(PosterFormat::Quadrado));
+        assert_eq!(PosterFormat::parse("square"), Some(PosterFormat::Quadrado));
+        assert_eq!(PosterFormat::parse("vertical"), Some(PosterFormat::Vertical));
+        assert_eq!(PosterFormat::parse("desconhecido"), None);
+
+        let test_img = create_test_image(80, 80);
+        let (_, _, _, _, _, comp) = AestheticPreset::PunkRiot.build_pipeline_and_composition("SUBVERSÃO");
+
+        let comp_horiz = comp.clone().with_format(PosterFormat::Horizontal);
+        assert_eq!(comp_horiz.canvas_width, 1100);
+        assert_eq!(comp_horiz.canvas_height, 800);
+        let poster_h = render_poster(&comp_horiz, Some(&test_img));
+        assert_eq!(poster_h.dimensions(), (1100, 800));
+
+        let comp_quad = comp.clone().with_format(PosterFormat::Quadrado);
+        assert_eq!(comp_quad.canvas_width, 1000);
+        assert_eq!(comp_quad.canvas_height, 1000);
+        let poster_q = render_poster(&comp_quad, Some(&test_img));
+        assert_eq!(poster_q.dimensions(), (1000, 1000));
+    }
 }
 
 
