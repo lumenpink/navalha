@@ -181,7 +181,12 @@ Homenagem à obra *“Derivadas de uma Imagem”* criada no computador IBM 360/4
 
 ## 5. Motor de Composição e Imprensa (`render_poster`)
 
-O cartaz final é composto deterministamente em dimensões padronizadas de **$800 \times 1100$ pixels** através de 6 camadas sequenciais:
+O cartaz final é composto deterministamente através de 6 camadas sequenciais sob três formatos e orientações canônicas (`PosterFormat`):
+* **`Vertical` (Retrato / Portrait - Padrão):** $800 \times 1100$ pixels.
+* **`Horizontal` (Paisagem / Landscape):** $1100 \times 800$ pixels.
+* **`Quadrado` (1:1 / Square):** $1000 \times 1000$ pixels.
+
+Todas as camadas do motor adaptam-se dinamicamente às dimensões do canvas escolhido, mantendo proporções harmônicas de auto-fit, posicionamento de tarjas, centralização do sujeito e molduras perimetrais de corte.
 
 1. **Camada 0 — Fundo Sólido Chapado:** Preenchimento integral com a cor primária de fundo da estética (ex: Vermelho Navalha `#FF0033`, Preto CRT `#050A05`, Asfalto `#0B0B0E` ou Papel Jornal `#E8E6DF`).
 2. **Camada 1 — Tipografia de Fundo Sangrada:** Letras maciças (tamanho até 96pt) com distorção vertical e horizontal agressiva, posicionadas no fundo da cena como marca d'água de choque.
