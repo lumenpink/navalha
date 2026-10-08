@@ -1623,6 +1623,48 @@ mod tests {
         let poster_q = render_poster(&comp_quad, Some(&test_img));
         assert_eq!(poster_q.dimensions(), (1000, 1000));
     }
+
+    #[test]
+    fn test_ransom_note_word_spacing_and_overlap_prevention() {
+        use crate::press::TextElement;
+
+        let mut elem_normal = TextElement {
+            text: String::from("EU SOBREVIVO AO MUNDO"),
+            ransom_note: true,
+            font_size: 48.0,
+            word_spacing: 1.0,
+            ..Default::default()
+        };
+
+        let mut elem_spaced = elem_normal.clone();
+        elem_spaced.word_spacing = 2.0;
+
+        let comp1 = PosterComposition {
+            canvas_width: 800,
+            canvas_height: 1100,
+            foreground_texts: vec![elem_normal],
+            ..Default::default()
+        };
+
+        let comp2 = PosterComposition {
+            canvas_width: 800,
+            canvas_height: 1100,
+            foreground_texts: vec![elem_spaced],
+            ..Default::default()
+        };
+
+        let poster1 = render_poster(&comp1, None);
+        let poster2 = render_poster(&comp2, None);
+
+        // A renderização com maior espaçamento produz distribuição diferente de pixels não-fundo
+        let diff_pixels = poster1
+            .pixels()
+            .zip(poster2.pixels())
+            .filter(|(p1, p2)| p1 != p2)
+            .count();
+
+        assert!(diff_pixels > 0, "Deveria haver diferenca visual entre word_spacing 1.0 e 2.0");
+    }
 }
 
 
