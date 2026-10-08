@@ -17,6 +17,39 @@
 
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
     <link rel="stylesheet" href="assets/style.css">
+
+  <style>
+    .site-footer {
+      border-top: 1px solid var(--border, #333);
+      padding: 2rem 1rem;
+      margin-top: 3rem;
+      text-align: center;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+    .footer-canonical {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      align-items: center;
+      justify-content: center;
+    }
+    .footer-line-identity {
+      font-weight: 500;
+    }
+    .footer-line-metadata {
+      color: var(--text-muted, #888);
+      font-size: 0.8rem;
+    }
+    .site-footer a {
+      color: var(--accent, #ff79c6);
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+
 </head>
 <body>
     <div id="main"></div>
@@ -24,5 +57,17 @@
         import init from './pkg/navalha_web.js';
         init();
     </script>
+
+  <footer class="site-footer">
+    <div class="footer-canonical">
+      <div class="footer-line footer-line-identity">
+        Orgulhosamente produzido por uma <a href="https://travesti.2lp.in/pt/" target="_blank" rel="noopener">travesti latina</a> 🏳️‍⚧️ :)
+      </div>
+      <div class="footer-line footer-line-metadata">
+        navalha v0.1.0-dev.12+20260928.66a36e3 • por <a href="https://lumen.pink" target="_blank" rel="noopener">Lumen Pink</a> • Brasil 🇧🇷 • <a href="LICENSE" target="_blank" rel="noopener">GPL-3.0</a>
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>
