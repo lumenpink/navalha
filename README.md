@@ -117,6 +117,7 @@ navalha poster foto.jpg \
 
 > **Enquadramento, Danos e Stickers com Posicionamento Granular na CLI**:
 > * `--formato` (alias `--orientacao`): define a proporção do pôster (`vertical` 800x1100, `horizontal` 1100x800, `quadrado` 1000x1000).
+> * `--palavra-espacamento` (alias `--word-spacing`): multiplicador de espaçamento entre palavras em recortes e ransom note (padrão `1.0`, ex: `1.5`).
 > * `--offset-x` / `--offset-y`: deslocamento horizontal e vertical do sujeito em pixels em relação ao centro (padrão `0`).
 > * `--dano`: aceita tanto o nome simples (`tiro`, `sangue`, `pixo`) quanto a sintaxe completa `tipo:posX:posY:escala` (onde `posX` e `posY` são relativos de 0.0 a 1.0 e `escala` é o multiplicador de tamanho, ex: `tiro:0.50:0.40:1.5`).
 > * `--sticker`: aceita nome simples (`anarchy`, `skull`) ou a sintaxe completa `tipo:posX:posY:tamanho:rotacao` (onde `tamanho` é em pixels e `rotacao` em graus, ex: `anarchy:0.75:0.25:140:-15`).
