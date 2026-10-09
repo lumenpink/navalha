@@ -1628,7 +1628,7 @@ mod tests {
     fn test_ransom_note_word_spacing_and_overlap_prevention() {
         use crate::press::TextElement;
 
-        let mut elem_normal = TextElement {
+        let elem_normal = TextElement {
             text: String::from("EU SOBREVIVO AO MUNDO"),
             ransom_note: true,
             font_size: 48.0,

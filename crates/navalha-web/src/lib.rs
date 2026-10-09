@@ -236,6 +236,7 @@ pub fn App() -> Element {
     let mut banner_wave_amp = use_signal(|| 0u32);
     let mut banner_word_rot = use_signal(|| 0u32);
     let mut banner_word_cut = use_signal(|| false);
+    let mut banner_word_spacing = use_signal(|| 100u32); // 100% = 1.0x (50% a 250%)
     let mut banner_ransom_note = use_signal(|| false); // Ticket #18
     let mut banner_adapt_preset = use_signal(|| true);
 
@@ -255,6 +256,7 @@ pub fn App() -> Element {
     let mut banner_top_wave_amp = use_signal(|| 0u32);
     let mut banner_top_word_rot = use_signal(|| 0u32);
     let mut banner_top_word_cut = use_signal(|| false);
+    let mut banner_top_word_spacing = use_signal(|| 100u32);
     let mut banner_top_ransom_note = use_signal(|| false);
     let mut banner_top_adapt_preset = use_signal(|| true);
 
@@ -388,6 +390,7 @@ pub fn App() -> Element {
             let b_wamp = banner_wave_amp();
             let b_wrot = banner_word_rot();
             let b_wcut = banner_word_cut();
+            let b_wspace = (banner_word_spacing() as f32) / 100.0;
             let b_ransom = banner_ransom_note();
             let b_adapt = banner_adapt_preset();
             let b_sem_faixa = banner_sem_faixa();
@@ -407,6 +410,7 @@ pub fn App() -> Element {
             let b_top_wamp = banner_top_wave_amp();
             let b_top_wrot = banner_top_word_rot();
             let b_top_wcut = banner_top_word_cut();
+            let b_top_wspace = (banner_top_word_spacing() as f32) / 100.0;
             let b_top_ransom = banner_top_ransom_note();
             let b_top_adapt = banner_top_adapt_preset();
 
@@ -659,6 +663,7 @@ pub fn App() -> Element {
                             t.wave_amplitude = b_top_wamp as f32;
                             t.word_jitter_rotation = b_top_wrot as i16;
                             t.word_tarja_cut = b_top_wcut || (b_top_wrot > 0);
+                            t.word_spacing = b_top_wspace;
                         }
                     }
                 }
@@ -720,6 +725,7 @@ pub fn App() -> Element {
                             t.wave_amplitude = b_wamp as f32;
                             t.word_jitter_rotation = b_wrot as i16;
                             t.word_tarja_cut = b_wcut || (b_wrot > 0);
+                            t.word_spacing = b_wspace;
                         }
                     }
                 }
@@ -964,6 +970,9 @@ pub fn App() -> Element {
         }
         if banner_word_rot() > 0 {
             flags.push_str(&format!(" --palavra-rot {}", banner_word_rot()));
+        }
+        if banner_word_spacing() != 100 {
+            flags.push_str(&format!(" --palavra-espacamento {:.2}", (banner_word_spacing() as f32) / 100.0));
         }
         flags
     };
@@ -2246,6 +2255,51 @@ pub fn App() -> Element {
                                                         "✂️ Colagem de Revista / Ransom Note (Fontes e cores alternadas por palavra)"
                                                     }
                                                 }
+
+                                                // Controle de Espaçamento entre Palavras (Ticket #24)
+                                                div { class: "stepper-slider-box", style: "margin-top: 8px;",
+                                                    div { class: "stepper-header-row",
+                                                        span { class: "stepper-title", "📐 ESPAÇAMENTO DE PALAVRAS: {banner_top_word_spacing}%" }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper-reset",
+                                                            onclick: move |_| banner_top_word_spacing.set(100),
+                                                            "↺ 100%"
+                                                        }
+                                                    }
+                                                    div { class: "slider-stepper-combo",
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            onclick: move |_| {
+                                                                let curr = banner_top_word_spacing();
+                                                                if curr > 50 { banner_top_word_spacing.set(curr.saturating_sub(10)); }
+                                                            },
+                                                            "−"
+                                                        }
+                                                        input {
+                                                            r#type: "range",
+                                                            min: "50",
+                                                            max: "250",
+                                                            step: "5",
+                                                            value: "{banner_top_word_spacing}",
+                                                            class: "slider-punk-zoom",
+                                                            style: "flex: 1;",
+                                                            oninput: move |e| {
+                                                                if let Ok(v) = e.value().parse::<u32>() { banner_top_word_spacing.set(v); }
+                                                            }
+                                                        }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            onclick: move |_| {
+                                                                let curr = banner_top_word_spacing();
+                                                                if curr < 250 { banner_top_word_spacing.set(curr + 10); }
+                                                            },
+                                                            "+"
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     } else {
@@ -2695,6 +2749,51 @@ pub fn App() -> Element {
                                                         r#for: "banner-ransom-note-cb",
                                                         style: "font-size: 0.72rem; color: #ff007f; font-weight: bold; cursor: pointer; text-transform: uppercase;",
                                                         "✂️ Colagem de Revista / Ransom Note (Fontes e cores alternadas por palavra)"
+                                                    }
+                                                }
+
+                                                // Controle de Espaçamento entre Palavras (Ticket #24)
+                                                div { class: "stepper-slider-box", style: "margin-top: 8px;",
+                                                    div { class: "stepper-header-row",
+                                                        span { class: "stepper-title", "📐 ESPAÇAMENTO DE PALAVRAS: {banner_word_spacing}%" }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper-reset",
+                                                            onclick: move |_| banner_word_spacing.set(100),
+                                                            "↺ 100%"
+                                                        }
+                                                    }
+                                                    div { class: "slider-stepper-combo",
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            onclick: move |_| {
+                                                                let curr = banner_word_spacing();
+                                                                if curr > 50 { banner_word_spacing.set(curr.saturating_sub(10)); }
+                                                            },
+                                                            "−"
+                                                        }
+                                                        input {
+                                                            r#type: "range",
+                                                            min: "50",
+                                                            max: "250",
+                                                            step: "5",
+                                                            value: "{banner_word_spacing}",
+                                                            class: "slider-punk-zoom",
+                                                            style: "flex: 1;",
+                                                            oninput: move |e| {
+                                                                if let Ok(v) = e.value().parse::<u32>() { banner_word_spacing.set(v); }
+                                                            }
+                                                        }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            onclick: move |_| {
+                                                                let curr = banner_word_spacing();
+                                                                if curr < 250 { banner_word_spacing.set(curr + 10); }
+                                                            },
+                                                            "+"
+                                                        }
                                                     }
                                                 }
                                             }

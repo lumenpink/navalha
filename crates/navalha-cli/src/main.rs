@@ -179,6 +179,10 @@ enum Commands {
         #[arg(long = "ransom-note", default_value_t = false)]
         ransom_note: bool,
 
+        /// Fator multiplicador de espaçamento entre palavras em recortes/ransom note (padrão: 1.0)
+        #[arg(long = "palavra-espacamento", alias = "word-spacing")]
+        palavra_espacamento: Option<f32>,
+
         /// Desativa/remove totalmente as faixas decorativas de texto
         #[arg(long = "sem-faixa", default_value_t = false)]
         sem_faixa: bool,
@@ -322,6 +326,10 @@ enum Commands {
         /// Modo fanzine / ransom note (colagem de letras/palavras com fontes e cores alternadas)
         #[arg(long = "ransom-note", default_value_t = false)]
         ransom_note: bool,
+
+        /// Fator multiplicador de espaçamento entre palavras em recortes/ransom note (padrão: 1.0)
+        #[arg(long = "palavra-espacamento", alias = "word-spacing")]
+        palavra_espacamento: Option<f32>,
 
         /// Danos e marcas de intervenção física. Aceita nome simples (tiro) ou especificador completo
         /// "tipo:posX:posY:escala" onde posição é 0.0–1.0 e escala é multiplicador (1.0 = padrão).
@@ -531,6 +539,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             palavra_rot,
             palavra_tarja,
             ransom_note,
+            palavra_espacamento,
             sem_faixa,
             sem_recorte,
             recorte,
@@ -652,6 +661,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(cut) = palavra_tarja {
                     t.word_tarja_cut = cut;
                 }
+                if let Some(sp) = palavra_espacamento {
+                    t.word_spacing = sp;
+                }
             }
 
             if let Some(ref bf) = banner_fonte {
@@ -760,6 +772,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             tarja_baixo,
             distorcao_vertical,
             ransom_note,
+            palavra_espacamento,
             dano,
             sticker,
             sticker_borda,
@@ -831,6 +844,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     rotation: 0,
                     tarja_effect: TarjaEffect::Solida,
                     ransom_note,
+                    word_spacing: palavra_espacamento.unwrap_or(1.0),
                     ..Default::default()
                 });
             }
