@@ -268,6 +268,7 @@ pub fn App() -> Element {
     let mut banner_word_rot = use_signal(|| 0u32);
     let mut banner_word_cut = use_signal(|| false);
     let mut banner_word_spacing = use_signal(|| 100u32); // 100% = 1.0x (50% a 250%)
+    let mut banner_line_spacing = use_signal(|| 100u32); // 100% = 1.0x (50% a 250%)
     let mut banner_ransom_note = use_signal(|| false); // Ticket #18
     let mut banner_adapt_preset = use_signal(|| true);
 
@@ -288,6 +289,7 @@ pub fn App() -> Element {
     let mut banner_top_word_rot = use_signal(|| 0u32);
     let mut banner_top_word_cut = use_signal(|| false);
     let mut banner_top_word_spacing = use_signal(|| 100u32);
+    let mut banner_top_line_spacing = use_signal(|| 100u32);
     let mut banner_top_ransom_note = use_signal(|| false);
     let mut banner_top_adapt_preset = use_signal(|| true);
 
@@ -422,6 +424,7 @@ pub fn App() -> Element {
             let b_wrot = banner_word_rot();
             let b_wcut = banner_word_cut();
             let b_wspace = (banner_word_spacing() as f32) / 100.0;
+            let b_lspace = (banner_line_spacing() as f32) / 100.0;
             let b_ransom = banner_ransom_note();
             let b_adapt = banner_adapt_preset();
             let b_sem_faixa = banner_sem_faixa();
@@ -442,6 +445,7 @@ pub fn App() -> Element {
             let b_top_wrot = banner_top_word_rot();
             let b_top_wcut = banner_top_word_cut();
             let b_top_wspace = (banner_top_word_spacing() as f32) / 100.0;
+            let b_top_lspace = (banner_top_line_spacing() as f32) / 100.0;
             let b_top_ransom = banner_top_ransom_note();
             let b_top_adapt = banner_top_adapt_preset();
 
@@ -701,6 +705,7 @@ pub fn App() -> Element {
                             t.word_jitter_rotation = b_top_wrot as i16;
                             t.word_tarja_cut = b_top_wcut || (b_top_wrot > 0);
                             t.word_spacing = b_top_wspace;
+                            t.line_spacing = b_top_lspace;
                         }
                     }
                 }
@@ -763,6 +768,7 @@ pub fn App() -> Element {
                             t.word_jitter_rotation = b_wrot as i16;
                             t.word_tarja_cut = b_wcut || (b_wrot > 0);
                             t.word_spacing = b_wspace;
+                            t.line_spacing = b_lspace;
                         }
                     }
                 }
@@ -1010,6 +1016,9 @@ pub fn App() -> Element {
         }
         if banner_word_spacing() != 100 {
             flags.push_str(&format!(" --palavra-espacamento {:.2}", (banner_word_spacing() as f32) / 100.0));
+        }
+        if banner_line_spacing() != 100 {
+            flags.push_str(&format!(" --linha-espacamento {:.2}", (banner_line_spacing() as f32) / 100.0));
         }
         flags
     };
@@ -2700,6 +2709,51 @@ pub fn App() -> Element {
                                                         }
                                                     }
                                                 }
+
+                                                // Controle de Espaçamento Vertical entre Linhas (Ticket #28)
+                                                div { class: "stepper-slider-box", style: "margin-top: 8px;",
+                                                    div { class: "stepper-header-row",
+                                                        span { class: "stepper-title", "📏 ESPAÇAMENTO VERTICAL (LINHAS): {banner_top_line_spacing}%" }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper-reset",
+                                                            onclick: move |_| banner_top_line_spacing.set(100),
+                                                            "↺ 100%"
+                                                        }
+                                                    }
+                                                    div { class: "slider-stepper-combo",
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            onclick: move |_| {
+                                                                let curr = banner_top_line_spacing();
+                                                                if curr > 50 { banner_top_line_spacing.set(curr.saturating_sub(10)); }
+                                                            },
+                                                            "−"
+                                                        }
+                                                        input {
+                                                            r#type: "range",
+                                                            min: "50",
+                                                            max: "250",
+                                                            step: "5",
+                                                            value: "{banner_top_line_spacing}",
+                                                            class: "slider-punk-zoom",
+                                                            style: "flex: 1;",
+                                                            oninput: move |e| {
+                                                                if let Ok(v) = e.value().parse::<u32>() { banner_top_line_spacing.set(v); }
+                                                            }
+                                                        }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            onclick: move |_| {
+                                                                let curr = banner_top_line_spacing();
+                                                                if curr < 250 { banner_top_line_spacing.set(curr + 10); }
+                                                            },
+                                                            "+"
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     } else {
@@ -3193,6 +3247,51 @@ pub fn App() -> Element {
                                                             onclick: move |_| {
                                                                 let curr = banner_word_spacing();
                                                                 if curr < 250 { banner_word_spacing.set(curr + 10); }
+                                                            },
+                                                            "+"
+                                                        }
+                                                    }
+                                                }
+
+                                                // Controle de Espaçamento Vertical entre Linhas (Ticket #28)
+                                                div { class: "stepper-slider-box", style: "margin-top: 8px;",
+                                                    div { class: "stepper-header-row",
+                                                        span { class: "stepper-title", "📏 ESPAÇAMENTO VERTICAL (LINHAS): {banner_line_spacing}%" }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper-reset",
+                                                            onclick: move |_| banner_line_spacing.set(100),
+                                                            "↺ 100%"
+                                                        }
+                                                    }
+                                                    div { class: "slider-stepper-combo",
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            onclick: move |_| {
+                                                                let curr = banner_line_spacing();
+                                                                if curr > 50 { banner_line_spacing.set(curr.saturating_sub(10)); }
+                                                            },
+                                                            "−"
+                                                        }
+                                                        input {
+                                                            r#type: "range",
+                                                            min: "50",
+                                                            max: "250",
+                                                            step: "5",
+                                                            value: "{banner_line_spacing}",
+                                                            class: "slider-punk-zoom",
+                                                            style: "flex: 1;",
+                                                            oninput: move |e| {
+                                                                if let Ok(v) = e.value().parse::<u32>() { banner_line_spacing.set(v); }
+                                                            }
+                                                        }
+                                                        button {
+                                                            r#type: "button",
+                                                            class: "btn-stepper",
+                                                            onclick: move |_| {
+                                                                let curr = banner_line_spacing();
+                                                                if curr < 250 { banner_line_spacing.set(curr + 10); }
                                                             },
                                                             "+"
                                                         }

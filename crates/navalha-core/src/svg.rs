@@ -49,7 +49,7 @@ pub fn generate_poster_svg(composition: &PosterComposition, image_base64_png: Op
             raw_lines
         };
         let max_line_len = lines.iter().map(|l| l.chars().count()).max().unwrap_or(1);
-        let line_height = fs * 1.05;
+        let line_height = fs * 1.05 * fg_text.line_spacing.clamp(0.4, 3.0);
 
         let rot = fg_text.rotation;
         let has_transform = rot != 0;

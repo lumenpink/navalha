@@ -1671,6 +1671,50 @@ mod tests {
     }
 
     #[test]
+    fn test_multiline_line_spacing_control_and_determinism() {
+        use crate::press::TextElement;
+
+        let elem_compact = TextElement {
+            text: String::from("LINHA UM\nLINHA DOIS\nLINHA TRES"),
+            ransom_note: true,
+            font_size: 40.0,
+            line_spacing: 0.6,
+            ..Default::default()
+        };
+
+        let mut elem_loose = elem_compact.clone();
+        elem_loose.line_spacing = 1.8;
+
+        let comp1 = PosterComposition {
+            canvas_width: 800,
+            canvas_height: 1100,
+            foreground_texts: vec![elem_compact],
+            ..Default::default()
+        };
+
+        let comp2 = PosterComposition {
+            canvas_width: 800,
+            canvas_height: 1100,
+            foreground_texts: vec![elem_loose],
+            ..Default::default()
+        };
+
+        let poster1 = render_poster(&comp1, None);
+        let poster2 = render_poster(&comp2, None);
+        let poster1_repeat = render_poster(&comp1, None);
+
+        assert_eq!(poster1.as_raw(), poster1_repeat.as_raw(), "Renderização com line_spacing deve ser estritamente determinística");
+
+        let diff_pixels = poster1
+            .pixels()
+            .zip(poster2.pixels())
+            .filter(|(p1, p2)| p1 != p2)
+            .count();
+
+        assert!(diff_pixels > 0, "Deveria haver diferenca visual entre line_spacing 0.6 e 1.8");
+    }
+
+    #[test]
     fn test_protest_phrases_collection() {
         assert!(PROTEST_PHRASES.len() >= 50, "Coleção deve conter cerca de 50 frases de protesto");
         assert!(PROTEST_PHRASES.contains(&FALLBACK_DEFAULT_PHRASE), "Coleção deve conter o fallback seguro");

@@ -166,9 +166,16 @@ pub struct TextElement {
     /// Fator multiplicador de espaçamento e prevenção de sobreposição de palavras (padrão: 1.0)
     #[serde(default = "default_word_spacing")]
     pub word_spacing: f32,
+    /// Fator multiplicador de espaçamento vertical entre linhas (line-height, padrão: 1.0)
+    #[serde(default = "default_line_spacing")]
+    pub line_spacing: f32,
 }
 
 fn default_word_spacing() -> f32 {
+    1.0
+}
+
+fn default_line_spacing() -> f32 {
     1.0
 }
 
@@ -198,6 +205,7 @@ impl Default for TextElement {
             word_tarja_cut: false,
             ransom_note: false,
             word_spacing: 1.0,
+            line_spacing: 1.0,
         }
     }
 }
@@ -1377,7 +1385,8 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
 
     let scaled_font = font.as_scaled(scale);
     let v_metrics = scaled_font.height();
-    let line_height = v_metrics * 1.05;
+    let line_spacing_factor = elem.line_spacing.clamp(0.4, 3.0);
+    let line_height = v_metrics * 1.05 * line_spacing_factor;
 
     // Converte pos_x e pos_y
     let base_x = if elem.pos_x <= 1.0 {

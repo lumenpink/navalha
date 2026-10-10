@@ -183,6 +183,10 @@ enum Commands {
         #[arg(long = "palavra-espacamento", alias = "word-spacing")]
         palavra_espacamento: Option<f32>,
 
+        /// Fator multiplicador de espaçamento vertical entre linhas (line-height, padrão: 1.0)
+        #[arg(long = "linha-espacamento", alias = "line-spacing")]
+        linha_espacamento: Option<f32>,
+
         /// Desativa/remove totalmente as faixas decorativas de texto
         #[arg(long = "sem-faixa", default_value_t = false)]
         sem_faixa: bool,
@@ -330,6 +334,10 @@ enum Commands {
         /// Fator multiplicador de espaçamento entre palavras em recortes/ransom note (padrão: 1.0)
         #[arg(long = "palavra-espacamento", alias = "word-spacing")]
         palavra_espacamento: Option<f32>,
+
+        /// Fator multiplicador de espaçamento vertical entre linhas (line-height, padrão: 1.0)
+        #[arg(long = "linha-espacamento", alias = "line-spacing")]
+        linha_espacamento: Option<f32>,
 
         /// Danos e marcas de intervenção física. Aceita nome simples (tiro) ou especificador completo
         /// "tipo:posX:posY:escala" onde posição é 0.0–1.0 e escala é multiplicador (1.0 = padrão).
@@ -540,6 +548,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             palavra_tarja,
             ransom_note,
             palavra_espacamento,
+            linha_espacamento,
             sem_faixa,
             sem_recorte,
             recorte,
@@ -664,6 +673,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(sp) = palavra_espacamento {
                     t.word_spacing = sp;
                 }
+                if let Some(lsp) = linha_espacamento {
+                    t.line_spacing = lsp;
+                }
             }
 
             if let Some(ref bf) = banner_fonte {
@@ -773,6 +785,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             distorcao_vertical,
             ransom_note,
             palavra_espacamento,
+            linha_espacamento,
             dano,
             sticker,
             sticker_borda,
@@ -845,6 +858,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     tarja_effect: TarjaEffect::Solida,
                     ransom_note,
                     word_spacing: palavra_espacamento.unwrap_or(1.0),
+                    line_spacing: linha_espacamento.unwrap_or(1.0),
                     ..Default::default()
                 });
             }
