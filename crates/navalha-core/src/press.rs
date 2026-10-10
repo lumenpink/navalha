@@ -1304,7 +1304,7 @@ fn render_words_cut<'a>(
                     }
                 } else if data.word_finish == TarjaBorderFinish::Rasgado {
                     let tear_salt = lcg_hash(0u32 ^ (sub_w * 31), 0u32 ^ (sub_h * 37), data.word_border_w ^ 7771);
-                    let max_depth = (data.word_border_w as f32 * 1.8).clamp(4.0, 14.0).min(sub_w as f32 * 0.25).min(sub_h as f32 * 0.25);
+                    let max_depth = (data.word_border_w as f32 * 2.8).clamp(8.0, 24.0).min(data.word_pad * 0.85).min(sub_w as f32 * 0.22).min(sub_h as f32 * 0.25);
                     for ty in 0..sub_h {
                         for tx in 0..sub_w {
                             let px = tx as f32 + 0.5;
@@ -1576,7 +1576,7 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
                 }
             } else if border_finish == TarjaBorderFinish::Rasgado {
                 let tear_salt = lcg_hash(0u32 ^ (sub_w * 31), 0u32 ^ (sub_h * 37), border_w ^ 7771);
-                let max_depth = (border_w as f32 * 1.8).clamp(4.0, 14.0).min(sub_w as f32 * 0.25).min(sub_h as f32 * 0.25);
+                let max_depth = (border_w as f32 * 2.8).clamp(8.0, 24.0).min(pad * 0.85).min(sub_w as f32 * 0.22).min(sub_h as f32 * 0.25);
                 for ty in 0..sub_h {
                     for tx in 0..sub_w {
                         let px = tx as f32 + 0.5;
@@ -1822,16 +1822,17 @@ pub fn draw_tarja_border(
             }
         }
         TarjaBorderFinish::Rasgado => {
-            // Efeito de papel rasgado à mão: borda branca de polpa irregular, denteada e fibrosa
+            // Efeito de papel rasgado à mão: silhueta orgânica, polpa branca espessa e irregular
             let w = (x1 - x0) as f32;
             let h = (y1 - y0) as f32;
             let tear_salt = lcg_hash(x0 ^ (x1 * 31), y0 ^ (y1 * 37), width ^ 7771);
-            let max_depth = (width as f32 * 1.8).clamp(4.0, 14.0).min(w * 0.25).min(h * 0.25);
-            let pulp_thick = (width as f32 * 1.4).clamp(3.0, 8.0);
+            let max_depth = (width as f32 * 2.8).clamp(8.0, 24.0).min(w * 0.22).min(h * 0.25);
+            let pulp_thick = (width as f32 * 2.0).clamp(5.0, 14.0);
             
             let white_paper = Rgba([255, 255, 255, 255]);
-            let pulp_fiber = Rgba([245, 242, 232, 255]);
-            let fiber_shade = Rgba([230, 225, 212, 255]);
+            let pulp_fiber = Rgba([246, 243, 234, 255]);
+            let fiber_shade = Rgba([232, 226, 214, 255]);
+            let pulp_dense = Rgba([252, 250, 245, 255]);
 
             for y in y0..y1 {
                 if y >= ch { break; }
@@ -1863,12 +1864,28 @@ pub fn draw_tarja_border(
 
                         if min_dist <= pulp_thick {
                             let fiber_seed = lcg_hash(x, y, tear_salt);
-                            let col = if fiber_seed % 5 == 0 {
-                                fiber_shade
-                            } else if fiber_seed % 2 == 0 {
-                                pulp_fiber
+                            let col = if min_dist <= pulp_thick * 0.4 {
+                                if fiber_seed % 4 == 0 {
+                                    pulp_dense
+                                } else {
+                                    white_paper
+                                }
+                            } else if min_dist <= pulp_thick * 0.75 {
+                                if fiber_seed % 3 == 0 {
+                                    fiber_shade
+                                } else if fiber_seed % 2 == 0 {
+                                    pulp_fiber
+                                } else {
+                                    white_paper
+                                }
                             } else {
-                                white_paper
+                                if fiber_seed % 5 == 0 {
+                                    fiber_shade
+                                } else if fiber_seed % 3 == 0 {
+                                    pulp_fiber
+                                } else {
+                                    white_paper
+                                }
                             };
                             canvas.put_pixel(x, y, col);
                         }
@@ -2068,20 +2085,21 @@ pub fn torn_edge_offset(coord: f32, length: f32, max_depth: f32, salt: u32) -> f
     let t = if length > 0.0 { coord / length } else { 0.0 };
     let phase = ((salt % 1000) as f32) / 1000.0;
     
-    // 1. Ondulação macro de baixa frequência (fratura sinuosa do papel rasgado)
-    let wave1 = (t * std::f32::consts::PI * 2.0 * 2.3 + phase * 6.28).sin() * 0.45;
-    let wave2 = (t * std::f32::consts::PI * 2.0 * 5.1 + phase * 3.14).sin() * 0.25;
+    // 1. Ondulação e fratura macro (formato irregular/sinuoso da caixa, rasgo de fora a fora)
+    let wave1 = (t * std::f32::consts::PI * 2.0 * 1.7 + phase * 6.28).sin() * 0.40;
+    let wave2 = (t * std::f32::consts::PI * 2.0 * 3.4 + phase * 3.14).sin() * 0.25;
+    let wave3 = ((t * 7.0 + phase * 2.0).floor() % 3.0 - 1.0) * 0.15; // quebras facetadas de tesoura/rasgamento
     
-    // 2. Ruptura de média frequência (fração em pedaços e dentes de fibra)
-    let seg = (coord / 6.0).floor() as u32;
+    // 2. Ruptura de média frequência (fração em pedaços e dentes de fibra de papelão)
+    let seg = (coord / 5.0).floor() as u32;
     let seg_hash = (lcg_hash(seg, salt, 7771) % 1000) as f32 / 1000.0;
-    let rough = (seg_hash - 0.5) * 0.35;
+    let rough = (seg_hash - 0.48) * 0.35;
     
-    // 3. Micro-fibras pontiagudas de alta frequência
-    let micro = ((lcg_hash(coord.round() as u32, salt, 9993) % 1000) as f32 / 1000.0 - 0.5) * 0.20;
+    // 3. Micro-fibras pontiagudas de alta frequência e textura felpuda
+    let micro = ((lcg_hash(coord.round() as u32, salt, 9993) % 1000) as f32 / 1000.0 - 0.5) * 0.25;
     
-    let total = wave1 + wave2 + rough + micro;
-    // O rasgo penetra para dentro do papel em profundidades variáveis
+    let total = wave1 + wave2 + wave3 + rough + micro;
+    // O rasgo penetra para dentro do papel em profundidades orgânicas variáveis
     (total.abs() * max_depth).min(max_depth)
 }
 
