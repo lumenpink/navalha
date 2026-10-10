@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Features
+  - (ui) lista de frases aleatorias de protesto para texto padrao (#22)
   - (layout) controle de espacamento e prevencao de sobreposicao de palavras (#24)
   - (layout) suporte a formatos e orientacoes horizontal (1100x800) e quadrado (1000x1000) (#23)
   - (core) separacao de chapas para impressao risografia e silk-screen (#3)

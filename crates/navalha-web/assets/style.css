@@ -480,6 +480,26 @@ html:has(.navalha-app), body:has(.navalha-app) {
     border-color: #fff;
 }
 
+.btn-phrase-random {
+    background: #111;
+    color: #ff0033;
+    border: 1px solid #444;
+    padding: 2px 8px;
+    font-size: 9px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    text-transform: uppercase;
+    transition: all 0.1s ease;
+    border-radius: 0;
+}
+
+.btn-phrase-random:hover {
+    background: #ff0033;
+    color: #000;
+    border-color: #ff0033;
+}
+
 .stepper-row {
     display: flex;
     align-items: center;

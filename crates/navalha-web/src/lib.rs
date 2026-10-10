@@ -139,6 +139,33 @@ pub fn pick_random_background_index() -> usize {
     }
 }
 
+/// Sorteia aleatoriamente uma frase temática de protesto da coleção (Issue #22)
+pub fn pick_random_protest_phrase() -> &'static str {
+    #[cfg(target_arch = "wasm32")]
+    {
+        let rand = js_sys::Math::random();
+        let idx = (rand * (navalha_core::PROTEST_PHRASES.len() as f64)).floor() as usize;
+        let idx = idx.min(navalha_core::PROTEST_PHRASES.len() - 1);
+        navalha_core::PROTEST_PHRASES
+            .get(idx)
+            .copied()
+            .unwrap_or(navalha_core::FALLBACK_DEFAULT_PHRASE)
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        use std::time::SystemTime;
+        let nanos = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .map(|d| d.subsec_nanos())
+            .unwrap_or(42);
+        let idx = (nanos as usize) % navalha_core::PROTEST_PHRASES.len();
+        navalha_core::PROTEST_PHRASES
+            .get(idx)
+            .copied()
+            .unwrap_or(navalha_core::FALLBACK_DEFAULT_PHRASE)
+    }
+}
+
 
 
 fn trigger_download(href: &str, filename: &str) {
@@ -217,7 +244,7 @@ pub fn App() -> Element {
 
     // Controles principais do Pôster Relâmpago
     let mut poster_format = use_signal(|| String::from("vertical"));
-    let mut phrase = use_signal(|| String::from("EU SOBREVIVO AO MUNDO"));
+    let mut phrase = use_signal(|| pick_random_protest_phrase().to_string());
     let mut phrase_top = use_signal(|| String::new());
     let mut aesthetic_id = use_signal(|| String::from("punk-riot"));
 
@@ -1790,7 +1817,15 @@ pub fn App() -> Element {
                                         }
                                     }
                                     div {
-                                        label { style: "font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; font-weight: bold;", "⬇️ Faixa Inferior (Suporta Multilinha)" }
+                                        div { style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;",
+                                            label { style: "font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;", "⬇️ Faixa Inferior (Suporta Multilinha)" }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-phrase-random",
+                                                onclick: move |_| phrase.set(pick_random_protest_phrase().to_string()),
+                                                "🎲 SORTEAR FRASE"
+                                            }
+                                        }
                                         textarea {
                                             class: "text-input-punk",
                                             rows: "2",
@@ -4430,6 +4465,16 @@ mod tests {
         // Garante que o fallback tem pixels renderizados
         let has_non_zero_alpha = img.pixels().any(|p| p.0[3] == 255);
         assert!(has_non_zero_alpha, "O gráfico de fallback deve ter pixels visíveis");
+    }
+
+    #[test]
+    fn test_pick_random_protest_phrase() {
+        let p = pick_random_protest_phrase();
+        assert!(!p.is_empty(), "Frase sorteada não pode ser vazia");
+        assert!(
+            navalha_core::PROTEST_PHRASES.contains(&p),
+            "Frase sorteada deve pertencer à coleção de frases de protesto"
+        );
     }
 }
 

@@ -28,7 +28,7 @@ pub use prep::{
     apply_image_crop, apply_image_orientation_and_zoom, apply_image_orientation_zoom_and_crop,
     apply_image_zoom, compute_otsu_threshold, prepare_plate, PrepConfig,
 };
-pub use presets::AestheticPreset;
+pub use presets::{AestheticPreset, FALLBACK_DEFAULT_PHRASE, PROTEST_PHRASES};
 pub use press::{
     apply_sticker_border, compute_subject_seed, lcg_hash, render_manual_drawings, render_poster,
     render_poster_cancellable, BannerFontFamily, DamageEffect, DamageElement, DrawingTool,
@@ -1664,6 +1664,16 @@ mod tests {
             .count();
 
         assert!(diff_pixels > 0, "Deveria haver diferenca visual entre word_spacing 1.0 e 2.0");
+    }
+
+    #[test]
+    fn test_protest_phrases_collection() {
+        assert!(PROTEST_PHRASES.len() >= 50, "Coleção deve conter cerca de 50 frases de protesto");
+        assert!(PROTEST_PHRASES.contains(&FALLBACK_DEFAULT_PHRASE), "Coleção deve conter o fallback seguro");
+        for phrase in PROTEST_PHRASES {
+            assert!(!phrase.trim().is_empty(), "Frase não pode ser vazia");
+            assert_eq!(*phrase, phrase.to_uppercase(), "Frase deve estar em caixa alta para pôsteres");
+        }
     }
 }
 
