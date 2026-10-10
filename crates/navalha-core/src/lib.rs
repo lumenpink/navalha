@@ -1421,6 +1421,24 @@ mod tests {
     }
 
     #[test]
+    fn test_torn_paper_border_masking() {
+        let (_, _, _, _, _, mut comp) = AestheticPreset::PunkRiot.build_pipeline_and_composition("PAPEL RASGADO");
+        if let Some(ref mut elem) = comp.foreground_texts.get_mut(0) {
+            elem.border_finish = TarjaBorderFinish::Rasgado;
+            elem.border_width = 4;
+            elem.bg_tarja = Some(RgbColor::new(0, 0, 0));
+            elem.color = RgbColor::new(255, 255, 255);
+        }
+
+        let test_img = create_test_image(80, 80);
+        let poster1 = render_poster(&comp, Some(&test_img));
+        let poster2 = render_poster(&comp, Some(&test_img));
+
+        assert_eq!(poster1.as_raw(), poster2.as_raw(), "Rasgo de papel deve ser 100% determinístico");
+        assert_eq!(poster1.dimensions(), (800, 1100));
+    }
+
+    #[test]
     fn test_raw_image_seed_stability_across_filter_changes() {
         let raw_img = create_test_image(100, 100);
         let phrase = "RESISTÊNCIA SUBVERSIVA";

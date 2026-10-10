@@ -1287,6 +1287,18 @@ fn render_words_cut<'a>(
                             }
                         }
                     }
+                } else if data.word_finish == TarjaBorderFinish::Rasgado {
+                    let tear_salt = lcg_hash(0u32 ^ (sub_w * 31), 0u32 ^ (sub_h * 37), data.word_border_w ^ 7771);
+                    let max_depth = (data.word_border_w as f32 * 1.8).clamp(4.0, 14.0).min(sub_w as f32 * 0.25).min(sub_h as f32 * 0.25);
+                    for ty in 0..sub_h {
+                        for tx in 0..sub_w {
+                            let px = tx as f32 + 0.5;
+                            let py = ty as f32 + 0.5;
+                            if !point_in_torn_rect(px, py, 0.0, 0.0, sub_w as f32, sub_h as f32, max_depth, tear_salt) {
+                                sub_canvas.put_pixel(tx, ty, Rgba([0, 0, 0, 0]));
+                            }
+                        }
+                    }
                 }
 
                 draw_tarja_border(
@@ -1465,8 +1477,12 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
     let wavelength = if elem.wave_wavelength > 0.0 { elem.wave_wavelength } else { 200.0 };
     let phase = ((seed % 1000) as f32) / 1000.0;
 
-    // Modo com rotação global, ondulação não-linear contínua ou corte poligonal recortado
-    if elem.rotation != 0 || elem.wave_amplitude > 0.0 || elem.border_finish == TarjaBorderFinish::Poligonal {
+    // Modo com rotação global, ondulação não-linear contínua ou acabamento irregular (Poligonal / Rasgado)
+    if elem.rotation != 0
+        || elem.wave_amplitude > 0.0
+        || elem.border_finish == TarjaBorderFinish::Poligonal
+        || elem.border_finish == TarjaBorderFinish::Rasgado
+    {
         let pad = elem.tarja_padding as f32;
         let wave_pad = elem.wave_amplitude * 2.0;
         let sub_w = (text_width + pad * 2.0).ceil().max(1.0) as u32;
@@ -1515,7 +1531,7 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
                 elem.border_width
             };
 
-            // Se o acabamento for Poligonal, recorta os pixels de fundo fora do polígono
+            // Se o acabamento for Poligonal ou Rasgado, recorta os pixels de fundo fora do contorno
             if border_finish == TarjaBorderFinish::Poligonal {
                 let poly_salt = lcg_hash(0u32 ^ (sub_w * 31), 0u32 ^ (sub_h * 37), border_w ^ 9991);
                 let poly = generate_irregular_polygon(0.0, 0.0, sub_w as f32, sub_h as f32, poly_salt);
@@ -1524,6 +1540,18 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
                         let px = tx as f32 + 0.5;
                         let py = ty as f32 + 0.5;
                         if !point_in_polygon(px, py, &poly) {
+                            sub_canvas.put_pixel(tx, ty, Rgba([0, 0, 0, 0]));
+                        }
+                    }
+                }
+            } else if border_finish == TarjaBorderFinish::Rasgado {
+                let tear_salt = lcg_hash(0u32 ^ (sub_w * 31), 0u32 ^ (sub_h * 37), border_w ^ 7771);
+                let max_depth = (border_w as f32 * 1.8).clamp(4.0, 14.0).min(sub_w as f32 * 0.25).min(sub_h as f32 * 0.25);
+                for ty in 0..sub_h {
+                    for tx in 0..sub_w {
+                        let px = tx as f32 + 0.5;
+                        let py = ty as f32 + 0.5;
+                        if !point_in_torn_rect(px, py, 0.0, 0.0, sub_w as f32, sub_h as f32, max_depth, tear_salt) {
                             sub_canvas.put_pixel(tx, ty, Rgba([0, 0, 0, 0]));
                         }
                     }
@@ -1764,43 +1792,56 @@ pub fn draw_tarja_border(
             }
         }
         TarjaBorderFinish::Rasgado => {
-            // Efeito de papel rasgado à mão: borda branca irregular, fibrosa e desfiada
-            let bw = width.min((x1 - x0) / 2).min((y1 - y0) / 2).max(2);
+            // Efeito de papel rasgado à mão: borda branca de polpa irregular, denteada e fibrosa
+            let w = (x1 - x0) as f32;
+            let h = (y1 - y0) as f32;
+            let tear_salt = lcg_hash(x0 ^ (x1 * 31), y0 ^ (y1 * 37), width ^ 7771);
+            let max_depth = (width as f32 * 1.8).clamp(4.0, 14.0).min(w * 0.25).min(h * 0.25);
+            let pulp_thick = (width as f32 * 1.4).clamp(3.0, 8.0);
+            
             let white_paper = Rgba([255, 255, 255, 255]);
-            let pulp_fiber = Rgba([242, 239, 230, 240]);
+            let pulp_fiber = Rgba([245, 242, 232, 255]);
+            let fiber_shade = Rgba([230, 225, 212, 255]);
 
-            // Top edge e Bottom edge
-            for x in x0..x1 {
-                let jitter_t = (lcg_hash(x, y0, 101) % (bw + 2)) as u32;
-                let jitter_b = (lcg_hash(x, y1, 202) % (bw + 2)) as u32;
-                for y in y0..(y0 + bw + jitter_t).min(y1) {
-                    if x < cw && y < ch {
-                        let c = if (x + y) % 3 == 0 { pulp_fiber } else { white_paper };
-                        canvas.put_pixel(x, y, c);
-                    }
-                }
-                for y in (y1.saturating_sub(bw + jitter_b)).max(y0)..y1 {
-                    if x < cw && y < ch {
-                        let c = if (x + y) % 3 == 0 { pulp_fiber } else { white_paper };
-                        canvas.put_pixel(x, y, c);
-                    }
-                }
-            }
-
-            // Left edge e Right edge
             for y in y0..y1 {
-                let jitter_l = (lcg_hash(x0, y, 303) % (bw + 2)) as u32;
-                let jitter_r = (lcg_hash(x1, y, 404) % (bw + 2)) as u32;
-                for x in x0..(x0 + bw + jitter_l).min(x1) {
-                    if x < cw && y < ch {
-                        let c = if (x + y) % 3 == 0 { pulp_fiber } else { white_paper };
-                        canvas.put_pixel(x, y, c);
-                    }
-                }
-                for x in (x1.saturating_sub(bw + jitter_r)).max(x0)..x1 {
-                    if x < cw && y < ch {
-                        let c = if (x + y) % 3 == 0 { pulp_fiber } else { white_paper };
-                        canvas.put_pixel(x, y, c);
+                if y >= ch { break; }
+                let py = y as f32 + 0.5;
+                let d_left = torn_edge_offset(py - y0 as f32, h, max_depth, tear_salt ^ 303);
+                let d_right = torn_edge_offset(py - y0 as f32, h, max_depth, tear_salt ^ 404);
+
+                let x_tear_start = x0 as f32 + d_left;
+                let x_tear_end = x1 as f32 - d_right;
+
+                for x in x0..x1 {
+                    if x >= cw { break; }
+                    let px = x as f32 + 0.5;
+
+                    let d_top = torn_edge_offset(px - x0 as f32, w, max_depth, tear_salt ^ 101);
+                    let d_bot = torn_edge_offset(px - x0 as f32, w, max_depth, tear_salt ^ 202);
+
+                    let y_tear_start = y0 as f32 + d_top;
+                    let y_tear_end = y1 as f32 - d_bot;
+
+                    // Se estiver dentro da área rasgada do papel
+                    if px >= x_tear_start && px <= x_tear_end && py >= y_tear_start && py <= y_tear_end {
+                        // Calcula distância até a borda de ruptura mais próxima
+                        let dist_l = px - x_tear_start;
+                        let dist_r = x_tear_end - px;
+                        let dist_t = py - y_tear_start;
+                        let dist_b = y_tear_end - py;
+                        let min_dist = dist_l.min(dist_r).min(dist_t).min(dist_b);
+
+                        if min_dist <= pulp_thick {
+                            let fiber_seed = lcg_hash(x, y, tear_salt);
+                            let col = if fiber_seed % 5 == 0 {
+                                fiber_shade
+                            } else if fiber_seed % 2 == 0 {
+                                pulp_fiber
+                            } else {
+                                white_paper
+                            };
+                            canvas.put_pixel(x, y, col);
+                        }
                     }
                 }
             }
@@ -1965,6 +2006,52 @@ pub fn dist_point_to_segment_sq(px: f32, py: f32, x1: f32, y1: f32, x2: f32, y2:
     let proj_x = x1 + t * dx;
     let proj_y = y1 + t * dy;
     (px - proj_x).powi(2) + (py - proj_y).powi(2)
+}
+
+/// Calcula o deslocamento do rasgo para uma coordenada ao longo de uma borda
+pub fn torn_edge_offset(coord: f32, length: f32, max_depth: f32, salt: u32) -> f32 {
+    let t = if length > 0.0 { coord / length } else { 0.0 };
+    let phase = ((salt % 1000) as f32) / 1000.0;
+    
+    // 1. Ondulação macro de baixa frequência (fratura sinuosa do papel rasgado)
+    let wave1 = (t * std::f32::consts::PI * 2.0 * 2.3 + phase * 6.28).sin() * 0.45;
+    let wave2 = (t * std::f32::consts::PI * 2.0 * 5.1 + phase * 3.14).sin() * 0.25;
+    
+    // 2. Ruptura de média frequência (fração em pedaços e dentes de fibra)
+    let seg = (coord / 6.0).floor() as u32;
+    let seg_hash = (lcg_hash(seg, salt, 7771) % 1000) as f32 / 1000.0;
+    let rough = (seg_hash - 0.5) * 0.35;
+    
+    // 3. Micro-fibras pontiagudas de alta frequência
+    let micro = ((lcg_hash(coord.round() as u32, salt, 9993) % 1000) as f32 / 1000.0 - 0.5) * 0.20;
+    
+    let total = wave1 + wave2 + rough + micro;
+    // O rasgo penetra para dentro do papel em profundidades variáveis
+    (total.abs() * max_depth).min(max_depth)
+}
+
+/// Testa se um ponto está dentro do retângulo com bordas rasgadas
+pub fn point_in_torn_rect(
+    px: f32,
+    py: f32,
+    x0: f32,
+    y0: f32,
+    x1: f32,
+    y1: f32,
+    max_depth: f32,
+    salt: u32,
+) -> bool {
+    let w = x1 - x0;
+    let h = y1 - y0;
+    if w <= 0.0 || h <= 0.0 {
+        return false;
+    }
+    let d_top = torn_edge_offset(px - x0, w, max_depth, salt ^ 101);
+    let d_bot = torn_edge_offset(px - x0, w, max_depth, salt ^ 202);
+    let d_left = torn_edge_offset(py - y0, h, max_depth, salt ^ 303);
+    let d_right = torn_edge_offset(py - y0, h, max_depth, salt ^ 404);
+
+    px >= (x0 + d_left) && px <= (x1 - d_right) && py >= (y0 + d_top) && py <= (y1 - d_bot)
 }
 
 pub fn lcg_hash(x: u32, y: u32, salt: u32) -> u32 {
