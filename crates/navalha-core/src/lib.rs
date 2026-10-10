@@ -1410,6 +1410,7 @@ mod tests {
             elem.border_finish = TarjaBorderFinish::Poligonal;
             elem.border_width = 3;
             elem.bg_tarja = Some(RgbColor::new(255, 255, 255));
+            elem.color = RgbColor::new(0, 0, 0);
         }
 
         let test_img = create_test_image(80, 80);
@@ -1418,6 +1419,10 @@ mod tests {
 
         assert_eq!(poster1.as_raw(), poster2.as_raw(), "Corte poligonal deve ser 100% determinístico");
         assert_eq!(poster1.dimensions(), (800, 1100));
+
+        // As letras devem estar intactas e renderizadas em preto no pôster
+        let black_glyph_pixels = poster1.pixels().filter(|p| p[0] == 0 && p[1] == 0 && p[2] == 0).count();
+        assert!(black_glyph_pixels > 100, "Os glifos do texto devem ser renderizados sem serem cortados");
     }
 
     #[test]

@@ -1103,7 +1103,7 @@ fn render_words_cut<'a>(
                         _ => (RgbColor::new(255, 255, 255), RgbColor::new(255, 0, 127)),
                     };
 
-                    let w_pad = 8.0 + ((lcg_hash(seed as u32, word_idx as u32, 5555) % 7) as f32);
+                    let mut w_pad = 8.0 + ((lcg_hash(seed as u32, word_idx as u32, 5555) % 7) as f32);
                     let finish = match lcg_hash(seed as u32, word_idx as u32, 8888) % 5 {
                         0 => TarjaBorderFinish::Solida,
                         1 => TarjaBorderFinish::FitaDurex,
@@ -1111,6 +1111,9 @@ fn render_words_cut<'a>(
                         3 => TarjaBorderFinish::Poligonal,
                         _ => TarjaBorderFinish::Tracejada,
                     };
+                    if finish == TarjaBorderFinish::Poligonal {
+                        w_pad = w_pad.max(14.0);
+                    }
                     let b_col = if col_idx == 1 || col_idx == 5 {
                         RgbColor::new(0, 0, 0)
                     } else {
@@ -1129,12 +1132,16 @@ fn render_words_cut<'a>(
                     } else {
                         elem.border_width
                     };
+                    let mut final_pad = pad;
+                    if finish == TarjaBorderFinish::Poligonal {
+                        final_pad = final_pad.max(14.0);
+                    }
                     (
                         scaled_font.scale,
                         v_metrics,
                         elem.color,
                         elem.bg_tarja,
-                        pad,
+                        final_pad,
                         finish,
                         b_w,
                         b_col,
@@ -1277,7 +1284,15 @@ fn render_words_cut<'a>(
                 // Se o acabamento for Poligonal, recorta os pixels de fundo fora do polígono
                 if data.word_finish == TarjaBorderFinish::Poligonal {
                     let poly_salt = lcg_hash(0u32 ^ (sub_w * 31), 0u32 ^ (sub_h * 37), data.word_border_w ^ 9991);
-                    let poly = generate_irregular_polygon(0.0, 0.0, sub_w as f32, sub_h as f32, poly_salt);
+                    let poly = generate_irregular_polygon_with_bounds(
+                        0.0,
+                        0.0,
+                        sub_w as f32,
+                        sub_h as f32,
+                        data.word_pad,
+                        data.word_pad,
+                        poly_salt,
+                    );
                     for ty in 0..sub_h {
                         for tx in 0..sub_w {
                             let px = tx as f32 + 0.5;
@@ -1483,7 +1498,14 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
         || elem.border_finish == TarjaBorderFinish::Poligonal
         || elem.border_finish == TarjaBorderFinish::Rasgado
     {
-        let pad = elem.tarja_padding as f32;
+        let base_pad = elem.tarja_padding as f32;
+        let pad = if elem.border_finish == TarjaBorderFinish::Poligonal {
+            base_pad.max(20.0)
+        } else if elem.border_finish == TarjaBorderFinish::Rasgado {
+            base_pad.max(16.0)
+        } else {
+            base_pad
+        };
         let wave_pad = elem.wave_amplitude * 2.0;
         let sub_w = (text_width + pad * 2.0).ceil().max(1.0) as u32;
         let sub_h = (text_height + pad * 2.0 + wave_pad).ceil().max(1.0) as u32;
@@ -1534,7 +1556,15 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
             // Se o acabamento for Poligonal ou Rasgado, recorta os pixels de fundo fora do contorno
             if border_finish == TarjaBorderFinish::Poligonal {
                 let poly_salt = lcg_hash(0u32 ^ (sub_w * 31), 0u32 ^ (sub_h * 37), border_w ^ 9991);
-                let poly = generate_irregular_polygon(0.0, 0.0, sub_w as f32, sub_h as f32, poly_salt);
+                let poly = generate_irregular_polygon_with_bounds(
+                    0.0,
+                    0.0,
+                    sub_w as f32,
+                    sub_h as f32,
+                    pad,
+                    pad,
+                    poly_salt,
+                );
                 for ty in 0..sub_h {
                     for tx in 0..sub_w {
                         let px = tx as f32 + 0.5;
@@ -1849,7 +1879,11 @@ pub fn draw_tarja_border(
         TarjaBorderFinish::Poligonal => {
             // Efeito de corte angular descuidado de revista (4, 5 ou 6 lados irregulares)
             let poly_salt = lcg_hash(x0 ^ (x1 * 31), y0 ^ (y1 * 37), width ^ 9991);
-            let poly = generate_irregular_polygon(x0 as f32, y0 as f32, x1 as f32, y1 as f32, poly_salt);
+            let w_box = (x1 - x0) as f32;
+            let h_box = (y1 - y0) as f32;
+            let pad_x = (w_box * 0.15).max(12.0);
+            let pad_y = (h_box * 0.20).max(8.0);
+            let poly = generate_irregular_polygon_with_bounds(x0 as f32, y0 as f32, x1 as f32, y1 as f32, pad_x, pad_y, poly_salt);
             let bw_sq = (width as f32).max(1.5).powi(2);
             let n = poly.len();
 
@@ -1881,10 +1915,24 @@ pub fn draw_tarja_border(
 }
 
 /// Determina deterministicamente um polígono irregular de corte de fanzine (4 a 6 lados)
-pub fn generate_irregular_polygon(x0: f32, y0: f32, x1: f32, y1: f32, salt: u32) -> Vec<(f32, f32)> {
+/// com limites de invasão controlados por pad_x e pad_y para nunca cortar o texto.
+pub fn generate_irregular_polygon_with_bounds(
+    x0: f32,
+    y0: f32,
+    x1: f32,
+    y1: f32,
+    pad_x: f32,
+    pad_y: f32,
+    salt: u32,
+) -> Vec<(f32, f32)> {
     let w = (x1 - x0).max(10.0);
     let h = (y1 - y0).max(10.0);
     let mode = (salt % 4) as usize;
+
+    // Fator de corte seguro: o corte nunca deve ultrapassar 75% do padding disponível,
+    // garantindo que o retângulo interno do texto permaneça 100% preservado.
+    let max_dx = (pad_x * 0.75).min(w * 0.25).max(0.0);
+    let max_dy = (pad_y * 0.75).min(h * 0.25).max(0.0);
 
     match mode {
         0 => {
@@ -1892,27 +1940,27 @@ pub fn generate_irregular_polygon(x0: f32, y0: f32, x1: f32, y1: f32, salt: u32)
             let corner = ((salt >> 2) % 4) as usize;
             match corner {
                 0 => vec![
-                    (x0, y0), // ponta aguda superior-esquerda no limite
-                    (x1, y0 + h * 0.18),
-                    (x1 - w * 0.08, y1),
-                    (x0 + w * 0.15, y1 - h * 0.12),
+                    (x0, y0), // ponta aguda superior-esquerda no limite externo
+                    (x1, y0 + max_dy * 0.9),
+                    (x1 - max_dx * 0.4, y1),
+                    (x0 + max_dx * 0.8, y1 - max_dy * 0.6),
                 ],
                 1 => vec![
-                    (x0 + w * 0.12, y0 + h * 0.15),
+                    (x0 + max_dx * 0.6, y0 + max_dy * 0.75),
                     (x1, y0), // ponta aguda superior-direita
-                    (x1 - w * 0.15, y1),
-                    (x0, y1 - h * 0.18),
+                    (x1 - max_dx * 0.8, y1),
+                    (x0, y1 - max_dy * 0.9),
                 ],
                 2 => vec![
-                    (x0, y0 + h * 0.16),
-                    (x1 - w * 0.14, y0),
+                    (x0, y0 + max_dy * 0.8),
+                    (x1 - max_dx * 0.7, y0),
                     (x1, y1), // ponta aguda inferior-direita
-                    (x0 + w * 0.10, y1 - h * 0.14),
+                    (x0 + max_dx * 0.5, y1 - max_dy * 0.7),
                 ],
                 _ => vec![
-                    (x0 + w * 0.14, y0),
-                    (x1, y0 + h * 0.15),
-                    (x1 - w * 0.12, y1 - h * 0.16),
+                    (x0 + max_dx * 0.7, y0),
+                    (x1, y0 + max_dy * 0.75),
+                    (x1 - max_dx * 0.6, y1 - max_dy * 0.8),
                     (x0, y1), // ponta aguda inferior-esquerda
                 ],
             }
@@ -1922,30 +1970,30 @@ pub fn generate_irregular_polygon(x0: f32, y0: f32, x1: f32, y1: f32, salt: u32)
             let side = ((salt >> 3) % 2) as usize;
             if side == 0 {
                 vec![
-                    (x0 + w * 0.10, y0),
-                    (x1 - w * 0.05, y0 + h * 0.12),
+                    (x0 + max_dx * 0.5, y0),
+                    (x1 - max_dx * 0.3, y0 + max_dy * 0.6),
                     (x1, y0 + h * 0.65),
-                    (x1 - w * 0.20, y1),
-                    (x0, y1 - h * 0.15),
+                    (x1 - max_dx, y1),
+                    (x0, y1 - max_dy * 0.75),
                 ]
             } else {
                 vec![
-                    (x0, y0 + h * 0.20),
+                    (x0, y0 + max_dy * 0.9),
                     (x0 + w * 0.60, y0),
-                    (x1, y0 + h * 0.25),
-                    (x1 - w * 0.08, y1),
-                    (x0 + w * 0.15, y1 - h * 0.10),
+                    (x1, y0 + max_dy),
+                    (x1 - max_dx * 0.4, y1),
+                    (x0 + max_dx * 0.8, y1 - max_dy * 0.5),
                 ]
             }
         }
         2 => {
             // 6 lados irregulares (recorte descuidado e rápido de fanzine / estilete)
             vec![
-                (x0 + w * 0.15, y0),
-                (x1 - w * 0.10, y0),
+                (x0 + max_dx * 0.75, y0),
+                (x1 - max_dx * 0.5, y0),
                 (x1, y0 + h * 0.40),
-                (x1 - w * 0.06, y1),
-                (x0 + w * 0.20, y1),
+                (x1 - max_dx * 0.3, y1),
+                (x0 + max_dx, y1),
                 (x0, y0 + h * 0.60),
             ]
         }
@@ -1954,21 +2002,28 @@ pub fn generate_irregular_polygon(x0: f32, y0: f32, x1: f32, y1: f32, salt: u32)
             let flip = ((salt >> 4) % 2) == 0;
             if flip {
                 vec![
-                    (x0, y0 + h * 0.22),
+                    (x0, y0 + max_dy),
                     (x1, y0),
-                    (x1 - w * 0.08, y1),
-                    (x0 + w * 0.14, y1 - h * 0.10),
+                    (x1 - max_dx * 0.4, y1),
+                    (x0 + max_dx * 0.7, y1 - max_dy * 0.5),
                 ]
             } else {
                 vec![
-                    (x0 + w * 0.12, y0),
-                    (x1, y0 + h * 0.20),
-                    (x1 - w * 0.14, y1 - h * 0.12),
+                    (x0 + max_dx * 0.6, y0),
+                    (x1, y0 + max_dy),
+                    (x1 - max_dx * 0.7, y1 - max_dy * 0.6),
                     (x0, y1),
                 ]
             }
         }
     }
+}
+
+/// Determina deterministicamente um polígono irregular de corte de fanzine (4 a 6 lados)
+pub fn generate_irregular_polygon(x0: f32, y0: f32, x1: f32, y1: f32, salt: u32) -> Vec<(f32, f32)> {
+    let w = (x1 - x0).max(10.0);
+    let h = (y1 - y0).max(10.0);
+    generate_irregular_polygon_with_bounds(x0, y0, x1, y1, w * 0.15, h * 0.18, salt)
 }
 
 /// Testa se um ponto está dentro de um polígono 2D simples
