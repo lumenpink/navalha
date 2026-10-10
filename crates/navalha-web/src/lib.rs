@@ -1307,7 +1307,7 @@ pub fn App() -> Element {
                         }
                     }
 
-                    // Abas de controle tátil
+                    // Abas de controle tátil (Issue #25)
                     div { class: "controls-tab-bar",
                         button {
                             class: if active_tab() == "poster" { "tab-btn active" } else { "tab-btn" },
@@ -1315,14 +1315,19 @@ pub fn App() -> Element {
                             "⚡ PÔSTER"
                         }
                         button {
-                            class: if active_tab() == "intervencao" { "tab-btn active" } else { "tab-btn" },
-                            onclick: move |_| active_tab.set("intervencao".into()),
-                            "🎨 INTERVENÇÃO"
+                            class: if active_tab() == "imagem" { "tab-btn active" } else { "tab-btn" },
+                            onclick: move |_| active_tab.set("imagem".into()),
+                            "🖼️ IMAGEM"
                         }
                         button {
-                            class: if active_tab() == "ajustes" { "tab-btn active" } else { "tab-btn" },
-                            onclick: move |_| active_tab.set("ajustes".into()),
-                            "⚙️ AJUSTES"
+                            class: if active_tab() == "banners" { "tab-btn active" } else { "tab-btn" },
+                            onclick: move |_| active_tab.set("banners".into()),
+                            "🏷️ BANNERS"
+                        }
+                        button {
+                            class: if active_tab() == "extras" { "tab-btn active" } else { "tab-btn" },
+                            onclick: move |_| active_tab.set("extras".into()),
+                            "🎨 EXTRAS"
                         }
                     }
 
@@ -1350,7 +1355,7 @@ pub fn App() -> Element {
                                 }
                             }
                             div { class: "control-box",
-                                label { class: "section-tag", "1. CARREGAR FOTO & EDIÇÃO DA CHAPA" }
+                                label { class: "section-tag", "1. CARREGAR FOTO (BASE DO PÔSTER)" }
                                 input {
                                     r#type: "file",
                                     id: "image-uploader",
@@ -1372,6 +1377,173 @@ pub fn App() -> Element {
                                     }
 
                                 }
+                            }
+                            div { class: "control-box",
+                                label { class: "section-tag", "2. MANCHETE & FAIXAS DE TEXTO" }
+                                div { style: "display: flex; flex-direction: column; gap: 10px;",
+                                    div {
+                                        label { style: "font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; font-weight: bold;", "⬆️ Faixa Superior (Opcional - Suporta Multilinha)" }
+                                        textarea {
+                                            class: "text-input-punk",
+                                            rows: "2",
+                                            style: "resize: vertical; font-family: inherit;",
+                                            value: "{phrase_top}",
+                                            placeholder: "DIGITE A MANCHETE SUPERIOR (SUPORTA QUEBRA DE LINHA)...",
+                                            oninput: move |evt| phrase_top.set(evt.value()),
+                                        }
+                                    }
+                                    div {
+                                        div { style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;",
+                                            label { style: "font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;", "⬇️ Faixa Inferior (Suporta Multilinha)" }
+                                            button {
+                                                r#type: "button",
+                                                class: "btn-phrase-random",
+                                                onclick: move |_| phrase.set(pick_random_protest_phrase().to_string()),
+                                                "🎲 SORTEAR FRASE"
+                                            }
+                                        }
+                                        textarea {
+                                            class: "text-input-punk",
+                                            rows: "2",
+                                            style: "resize: vertical; font-family: inherit;",
+                                            value: "{phrase}",
+                                            placeholder: "DIGITE A FRASE PRINCIPAL (SUPORTA QUEBRA DE LINHA)...",
+                                            oninput: move |evt| phrase.set(evt.value()),
+                                        }
+                                    }
+                                }
+                            }
+                            div { class: "control-box",
+                                label { class: "section-tag", "3. ESTÉTICA ANTI-DESIGN (24 PRESETS CANÔNICOS)" }
+                                div { class: "preset-carousel-container",
+                                    div { class: "preset-carousel-scroll",
+                                        {AestheticPreset::all().iter().enumerate().map(|(idx, p)| {
+                                            let pid = p.id().to_string();
+                                            let is_sel = aesthetic_id() == pid;
+                                            let pal = Palette::find_preset(p.id()).unwrap_or_else(Palette::classic_punk);
+                                            let colors = pal.colors.clone();
+                                            let num = format!("{:02}", idx + 1);
+                                            let short_title = preset_short_name(*p);
+                                            let p_target = pid.clone();
+                                            rsx! {
+                                                button {
+                                                    key: "{pid}",
+                                                    r#type: "button",
+                                                    class: if is_sel { "preset-chip active" } else { "preset-chip" },
+                                                    onclick: move |_| aesthetic_id.set(p_target.clone()),
+                                                    div { class: "preset-chip-header",
+                                                        span { class: "preset-chip-num", "{num}" }
+                                                        div { class: "preset-chip-dots",
+                                                            {colors.iter().take(3).map(|c| {
+                                                                let hex = c.to_hex();
+                                                                rsx! {
+                                                                    span {
+                                                                        key: "{hex}",
+                                                                        class: "preset-color-dot",
+                                                                        style: "background-color: {hex};",
+                                                                    }
+                                                                }
+                                                            })}
+                                                        }
+                                                    }
+                                                    span { class: "preset-chip-name", "{short_title}" }
+                                                }
+                                            }
+                                        })}
+                                    }
+                                }
+                                select {
+                                    class: "select-preset-punk",
+                                    value: "{aesthetic_id}",
+                                    onchange: move |e| aesthetic_id.set(e.value()),
+                                    option { value: "punk-riot",        "01. PUNK RIOT // Claudia Wonder" }
+                                    option { value: "navalha-sata",     "02. NAVALHA SATÃ // Madame Satã" }
+                                    option { value: "xerox-podre",      "03. XEROX PODRE // Indianarae Siqueira" }
+                                    option { value: "viagem-solitaria", "04. VIAGEM SOLITÁRIA // João W. Nery" }
+                                    option { value: "lapa-noturna",     "05. LAPA NOTURNA // Linn da Quebrada" }
+                                    option { value: "teatro-operario",  "06. TEATRO OPERÁRIO // Leo Moreira Sá" }
+                                    option { value: "risografia",       "07. RISOGRAFIA // Erika Hilton" }
+                                    option { value: "fanzine-digital",  "08. FANZINE DIGITAL // Amara Moira" }
+                                    option { value: "asfalto-alerta",   "09. ASFALTO & OURO // Kátia Tapety" }
+                                    option { value: "vga256",           "10. VGA 256 (13H) // Márcia Pantera" }
+                                    option { value: "cga",              "11. CGA (1981) // Neon Cunha" }
+                                    option { value: "old-mac-pop-art",  "12. OLD MAC POP ART // Rogéria" }
+                                    option { value: "ascii-art",        "13. ASCII ART (1971) // Laerte Coutinho" }
+                                    option { value: "tabloide-popular", "14. TABLÓIDE POPULAR // Luana Muniz" }
+                                    option { value: "brutalismo",       "15. BRUTALISMO // Drica D'arc Meirelles" }
+                                    option { value: "trash-polka",      "16. TRASH POLKA // Renata Carvalho" }
+                                    option { value: "atari-gaming",     "17. ATARI GAMING // Jovanna Baby" }
+                                    option { value: "mimeografo",       "18. MIMEÓGRAFO // Keila Simpson" }
+                                    option { value: "xilogravura",      "19. XILOGRAVURA // Xica Manicongo" }
+                                    option { value: "glitch-crt",       "20. GLITCH CRT // Robeyoncé Lima" }
+                                    option { value: "punk-80-br",       "21. PUNK 80 BR // Marina Mathey" }
+                                    option { value: "anarco-zine",      "22. ANARCO-ZINE // Jaqueline Gomes de Jesus" }
+                                    option { value: "paulete-furacao",  "23. COMUNICAÇÃO POPULAR // Paulete Furacão" }
+                                    option { value: "symmy-larrat",     "24. IMPRENSA AMAZÔNICA // Symmy Larrat" }
+                                }
+                                div { class: "preset-badge-summary",
+                                    span { class: "preset-summary-tag", "⚡ {preset_summary}" }
+                                }
+                                button {
+                                    r#type: "button",
+                                    class: "btn-reset-preset",
+                                    onclick: move |_| {
+                                        banner_adapt_preset.set(true);
+                                        banner_sem_faixa.set(false);
+                                        recorte_adapt_preset.set(true);
+                                        recorte_ativo.set(true);
+                                        recorte_threshold.set(85);
+                                        recorte_inverter.set(true);
+                                        image_zoom.set(100);
+                                        image_pos_x.set(50);
+                                        image_pos_y.set(50);
+                                        rotation_deg.set(0);
+                                        banner_pos_x.set(50);
+                                        banner_pos_y.set(85);
+                                        banner_rotation.set(0);
+                                        banner_font_size.set(48);
+                                        banner_font_family.set(String::from("impact"));
+                                        banner_fg_color.set(String::from("auto"));
+                                        banner_bg_color.set(String::from("auto"));
+                                        banner_effect.set(String::from("solida"));
+                                        banner_border_finish.set(String::from("nenhuma"));
+                                        banner_border_width.set(3);
+                                        banner_wave_amp.set(0);
+                                        banner_word_rot.set(0);
+                                        banner_word_cut.set(false);
+                                        banner_ransom_note.set(false);
+                                        banner_top_adapt_preset.set(true);
+                                        banner_top_pos_x.set(50);
+                                        banner_top_pos_y.set(10);
+                                        banner_top_rotation.set(0);
+                                        banner_top_font_size.set(48);
+                                        banner_top_font_family.set(String::from("impact"));
+                                        banner_top_fg_color.set(String::from("auto"));
+                                        banner_top_bg_color.set(String::from("auto"));
+                                        banner_top_effect.set(String::from("solida"));
+                                        banner_top_border_finish.set(String::from("nenhuma"));
+                                        banner_top_border_width.set(3);
+                                        banner_top_wave_amp.set(0);
+                                        banner_top_word_rot.set(0);
+                                        banner_top_word_cut.set(false);
+                                        banner_top_ransom_note.set(false);
+                                        image_crop_top.set(0);
+                                        image_crop_bottom.set(0);
+                                        image_crop_left.set(0);
+                                        image_crop_right.set(0);
+                                        dither_override.set(String::from("auto"));
+                                        palette_override.set(String::from("auto"));
+                                        show_advanced.set(false);
+                                        threshold_slider.set(85);
+                                        unsharp_slider.set(22);
+                                        stretch_y_slider.set(15);
+                                    },
+                                    "↺ RESTAURAR PADRÃO DO PRESET"
+                                }
+                            }
+                        } else if active_tab() == "imagem" {
+                            div { class: "control-box",
+                                label { class: "section-tag", "1. ENQUADRAMENTO, ROTAÇÃO & RECORTE" }
                                 div { class: "img-edit-tools-row",
 
                                     button {
@@ -1787,9 +1959,221 @@ pub fn App() -> Element {
 
                                 span { class: "help-text", "Suporta PNG com alfa, JPEG e WebP." }
                             }
-
                             div { class: "control-box",
-                                label { class: "section-tag", "2. FAIXAS DE TEXTO" }
+                                label { class: "section-tag", "4. MARCAS, DANOS & INTERVENÇÃO FÍSICA" }
+                                div { class: "damage-selector-grid",
+                                    {DamageEffect::all().iter().map(|dmg| {
+                                        let dmg_id = dmg.as_str().to_string();
+                                        let is_active = active_damages().contains(&dmg_id);
+                                        let d_id = dmg_id.clone();
+                                        rsx! {
+                                            button {
+                                                key: "{dmg_id}",
+                                                class: if is_active { "btn-damage active" } else { "btn-damage" },
+                                                onclick: move |_| {
+                                                    let mut list = active_damages();
+                                                    if list.contains(&d_id) {
+                                                        list.retain(|x| x != &d_id);
+                                                        // Remove seleção se era o item sendo editado
+                                                        if selected_damage() == Some(d_id.clone()) {
+                                                            selected_damage.set(None);
+                                                        }
+                                                    } else {
+                                                        list.push(d_id.clone());
+                                                        selected_damage.set(Some(d_id.clone()));
+                                                    }
+                                                    active_damages.set(list);
+                                                },
+                                                "{dmg.display_name()}"
+                                            }
+                                        }
+                                    })}
+                                }
+
+                                // Subpainel de ajuste do dano selecionado
+                                if !active_damages().is_empty() {
+                                    div { class: "item-ajuste-panel",
+                                        // Chips de seleção do dano a editar
+                                        div { class: "item-ajuste-chips",
+                                            {active_damages().into_iter().map(|d_str| {
+                                                let d_str2 = d_str.clone();
+                                                let is_selected = selected_damage() == Some(d_str.clone());
+                                                rsx! {
+                                                    button {
+                                                        key: "{d_str}",
+                                                        class: if is_selected { "chip-ajuste active" } else { "chip-ajuste" },
+                                                        onclick: move |_| selected_damage.set(Some(d_str2.clone())),
+                                                        "{d_str}"
+                                                    }
+                                                }
+                                            })}
+                                        }
+
+                                        // Sliders para o dano selecionado
+                                        if let Some(dmg_sel) = selected_damage() {
+                                            {
+                                                let params = damage_params().get(&dmg_sel).copied()
+                                                    .unwrap_or_else(|| {
+                                                        let def = DamageEffect::parse(&dmg_sel)
+                                                            .map(DamageElement::default_for)
+                                                            .unwrap_or_else(|| DamageElement::new(DamageEffect::Tiro, 0.5, 0.5, 1.0));
+                                                        ((def.pos_x * 100.0).round() as u32,
+                                                         (def.pos_y * 100.0).round() as u32,
+                                                         100u32)
+                                                    });
+                                                let (px100, py100, sc100) = params;
+                                                let d_x_minus = dmg_sel.clone();
+                                                let d_x_input = dmg_sel.clone();
+                                                let d_x_plus = dmg_sel.clone();
+                                                let d_y_minus = dmg_sel.clone();
+                                                let d_y_input = dmg_sel.clone();
+                                                let d_y_plus = dmg_sel.clone();
+                                                let d_sc_minus = dmg_sel.clone();
+                                                let d_sc_input = dmg_sel.clone();
+                                                let d_sc_plus = dmg_sel.clone();
+                                                let d_reset = dmg_sel.clone();
+                                                rsx! {
+                                                    div { class: "item-ajuste-sliders",
+                                                        div { class: "slider-group",
+                                                            label { "POSIÇÃO X: {px100}%" }
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
+                                                                        let mut map = damage_params();
+                                                                        let entry = map.entry(d_x_minus.clone()).or_insert((50, 50, 100));
+                                                                        entry.0 = entry.0.saturating_sub(5);
+                                                                        damage_params.set(map);
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "0", max: "100",
+                                                                    value: "{px100}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() {
+                                                                            let mut map = damage_params();
+                                                                            let entry = map.entry(d_x_input.clone()).or_insert((50, 50, 100));
+                                                                            entry.0 = v;
+                                                                            damage_params.set(map);
+                                                                        }
+                                                                    }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
+                                                                        let mut map = damage_params();
+                                                                        let entry = map.entry(d_x_plus.clone()).or_insert((50, 50, 100));
+                                                                        entry.0 = (entry.0 + 5).min(100);
+                                                                        damage_params.set(map);
+                                                                    },
+                                                                    "+"
+                                                                }
+                                                            }
+                                                        }
+                                                        div { class: "slider-group",
+                                                            label { "POSIÇÃO Y: {py100}%" }
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
+                                                                        let mut map = damage_params();
+                                                                        let entry = map.entry(d_y_minus.clone()).or_insert((50, 50, 100));
+                                                                        entry.1 = entry.1.saturating_sub(5);
+                                                                        damage_params.set(map);
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "0", max: "100",
+                                                                    value: "{py100}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() {
+                                                                            let mut map = damage_params();
+                                                                            let entry = map.entry(d_y_input.clone()).or_insert((50, 50, 100));
+                                                                            entry.1 = v;
+                                                                            damage_params.set(map);
+                                                                        }
+                                                                    }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
+                                                                        let mut map = damage_params();
+                                                                        let entry = map.entry(d_y_plus.clone()).or_insert((50, 50, 100));
+                                                                        entry.1 = (entry.1 + 5).min(100);
+                                                                        damage_params.set(map);
+                                                                    },
+                                                                    "+"
+                                                                }
+                                                            }
+                                                        }
+                                                        div { class: "slider-group",
+                                                            label { "ESCALA: {sc100}% ({sc100 as f32 / 100.0:.1}x)" }
+                                                            div { class: "stepper-row",
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
+                                                                        let mut map = damage_params();
+                                                                        let entry = map.entry(d_sc_minus.clone()).or_insert((50, 50, 100));
+                                                                        entry.2 = entry.2.saturating_sub(10).max(25);
+                                                                        damage_params.set(map);
+                                                                    },
+                                                                    "−"
+                                                                }
+                                                                input {
+                                                                    r#type: "range", min: "25", max: "400",
+                                                                    value: "{sc100}",
+                                                                    class: "slider-punk-zoom",
+                                                                    oninput: move |e| {
+                                                                        if let Ok(v) = e.value().parse::<u32>() {
+                                                                            let mut map = damage_params();
+                                                                            let entry = map.entry(d_sc_input.clone()).or_insert((50, 50, 100));
+                                                                            entry.2 = v;
+                                                                            damage_params.set(map);
+                                                                        }
+                                                                    }
+                                                                }
+                                                                button {
+                                                                    r#type: "button",
+                                                                    class: "btn-stepper",
+                                                                    onclick: move |_| {
+                                                                        let mut map = damage_params();
+                                                                        let entry = map.entry(d_sc_plus.clone()).or_insert((50, 50, 100));
+                                                                        entry.2 = (entry.2 + 10).min(400);
+                                                                        damage_params.set(map);
+                                                                    },
+                                                                    "+"
+                                                                }
+                                                            }
+                                                        }
+                                                        button {
+                                                            class: "btn-edit-action",
+                                                            style: "margin-top:4px;",
+                                                            onclick: move |_| {
+                                                                let mut map = damage_params();
+                                                                map.remove(&d_reset);
+                                                                damage_params.set(map);
+                                                            },
+                                                            "↺ RESETAR POSIÇÃO"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else if active_tab() == "banners" {
+                            div { class: "control-box",
+                                label { class: "section-tag", "1. ESTILIZAÇÃO & TIPOGRAFIA DAS FAIXAS" }
                                 div { style: "display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(0, 0, 0, 0.4); border: 1px dashed #ff0033; margin-bottom: 10px;",
                                     div { style: "display: flex; align-items: center; gap: 8px;",
                                         input {
@@ -1805,37 +2189,6 @@ pub fn App() -> Element {
                                     }
                                 }
                                 div { style: "display: flex; flex-direction: column; gap: 10px;",
-                                    div {
-                                        label { style: "font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; font-weight: bold;", "⬆️ Faixa Superior (Opcional - Suporta Multilinha)" }
-                                        textarea {
-                                            class: "text-input-punk",
-                                            rows: "2",
-                                            style: "resize: vertical; font-family: inherit;",
-                                            value: "{phrase_top}",
-                                            placeholder: "DIGITE A MANCHETE SUPERIOR (SUPORTA QUEBRA DE LINHA)...",
-                                            oninput: move |evt| phrase_top.set(evt.value()),
-                                        }
-                                    }
-                                    div {
-                                        div { style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;",
-                                            label { style: "font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;", "⬇️ Faixa Inferior (Suporta Multilinha)" }
-                                            button {
-                                                r#type: "button",
-                                                class: "btn-phrase-random",
-                                                onclick: move |_| phrase.set(pick_random_protest_phrase().to_string()),
-                                                "🎲 SORTEAR FRASE"
-                                            }
-                                        }
-                                        textarea {
-                                            class: "text-input-punk",
-                                            rows: "2",
-                                            style: "resize: vertical; font-family: inherit;",
-                                            value: "{phrase}",
-                                            placeholder: "DIGITE A FRASE PRINCIPAL (SUPORTA QUEBRA DE LINHA)...",
-                                            oninput: move |evt| phrase.set(evt.value()),
-                                        }
-                                    }
-
                                     div { class: "banner-tabs-container",
                                         button {
                                             r#type: "button",
@@ -2846,349 +3199,147 @@ pub fn App() -> Element {
                                     }
                                 }
                             }
-
+                        } else {
                             div { class: "control-box",
-                                label { class: "section-tag", "3. ESTÉTICA ANTI-DESIGN (24 PRESETS CANÔNICOS)" }
-                                div { class: "preset-carousel-container",
-                                    div { class: "preset-carousel-scroll",
-                                        {AestheticPreset::all().iter().enumerate().map(|(idx, p)| {
-                                            let pid = p.id().to_string();
-                                            let is_sel = aesthetic_id() == pid;
-                                            let pal = Palette::find_preset(p.id()).unwrap_or_else(Palette::classic_punk);
-                                            let colors = pal.colors.clone();
-                                            let num = format!("{:02}", idx + 1);
-                                            let short_title = preset_short_name(*p);
-                                            let p_target = pid.clone();
-                                            rsx! {
-                                                button {
-                                                    key: "{pid}",
-                                                    r#type: "button",
-                                                    class: if is_sel { "preset-chip active" } else { "preset-chip" },
-                                                    onclick: move |_| aesthetic_id.set(p_target.clone()),
-                                                    div { class: "preset-chip-header",
-                                                        span { class: "preset-chip-num", "{num}" }
-                                                        div { class: "preset-chip-dots",
-                                                            {colors.iter().take(3).map(|c| {
-                                                                let hex = c.to_hex();
-                                                                rsx! {
-                                                                    span {
-                                                                        key: "{hex}",
-                                                                        class: "preset-color-dot",
-                                                                        style: "background-color: {hex};",
-                                                                    }
-                                                                }
-                                                            })}
-                                                        }
-                                                    }
-                                                    span { class: "preset-chip-name", "{short_title}" }
-                                                }
-                                            }
-                                        })}
+                                label { class: "section-tag", "7. INTERVENÇÃO MANUAL & DESENHO NO CANVAS" }
+                                div { class: "manual-drawing-controls",
+                                    button {
+                                        class: if drawing_active() { "btn-edit-action active" } else { "btn-edit-action" },
+                                        style: "width: 100%; margin-bottom: 8px; font-weight: 900;",
+                                        onclick: move |_| {
+                                            let curr = drawing_active();
+                                            drawing_active.set(!curr);
+                                        },
+                                        if drawing_active() { "✏️ MODO DESENHO ATIVO [CLIQUE/ARRASTE NO CARTAZ]" } else { "✏️ ATIVAR DESENHO MANUAL NO CANVAS" }
                                     }
-                                }
-                                select {
-                                    class: "select-preset-punk",
-                                    value: "{aesthetic_id}",
-                                    onchange: move |e| aesthetic_id.set(e.value()),
-                                    option { value: "punk-riot",        "01. PUNK RIOT // Claudia Wonder" }
-                                    option { value: "navalha-sata",     "02. NAVALHA SATÃ // Madame Satã" }
-                                    option { value: "xerox-podre",      "03. XEROX PODRE // Indianarae Siqueira" }
-                                    option { value: "viagem-solitaria", "04. VIAGEM SOLITÁRIA // João W. Nery" }
-                                    option { value: "lapa-noturna",     "05. LAPA NOTURNA // Linn da Quebrada" }
-                                    option { value: "teatro-operario",  "06. TEATRO OPERÁRIO // Leo Moreira Sá" }
-                                    option { value: "risografia",       "07. RISOGRAFIA // Erika Hilton" }
-                                    option { value: "fanzine-digital",  "08. FANZINE DIGITAL // Amara Moira" }
-                                    option { value: "asfalto-alerta",   "09. ASFALTO & OURO // Kátia Tapety" }
-                                    option { value: "vga256",           "10. VGA 256 (13H) // Márcia Pantera" }
-                                    option { value: "cga",              "11. CGA (1981) // Neon Cunha" }
-                                    option { value: "old-mac-pop-art",  "12. OLD MAC POP ART // Rogéria" }
-                                    option { value: "ascii-art",        "13. ASCII ART (1971) // Laerte Coutinho" }
-                                    option { value: "tabloide-popular", "14. TABLÓIDE POPULAR // Luana Muniz" }
-                                    option { value: "brutalismo",       "15. BRUTALISMO // Drica D'arc Meirelles" }
-                                    option { value: "trash-polka",      "16. TRASH POLKA // Renata Carvalho" }
-                                    option { value: "atari-gaming",     "17. ATARI GAMING // Jovanna Baby" }
-                                    option { value: "mimeografo",       "18. MIMEÓGRAFO // Keila Simpson" }
-                                    option { value: "xilogravura",      "19. XILOGRAVURA // Xica Manicongo" }
-                                    option { value: "glitch-crt",       "20. GLITCH CRT // Robeyoncé Lima" }
-                                    option { value: "punk-80-br",       "21. PUNK 80 BR // Marina Mathey" }
-                                    option { value: "anarco-zine",      "22. ANARCO-ZINE // Jaqueline Gomes de Jesus" }
-                                    option { value: "paulete-furacao",  "23. COMUNICAÇÃO POPULAR // Paulete Furacão" }
-                                    option { value: "symmy-larrat",     "24. IMPRENSA AMAZÔNICA // Symmy Larrat" }
-                                }
-                                div { class: "preset-badge-summary",
-                                    span { class: "preset-summary-tag", "⚡ {preset_summary}" }
-                                }
-                                button {
-                                    r#type: "button",
-                                    class: "btn-reset-preset",
-                                    onclick: move |_| {
-                                        banner_adapt_preset.set(true);
-                                        banner_sem_faixa.set(false);
-                                        recorte_adapt_preset.set(true);
-                                        recorte_ativo.set(true);
-                                        recorte_threshold.set(85);
-                                        recorte_inverter.set(true);
-                                        image_zoom.set(100);
-                                        image_pos_x.set(50);
-                                        image_pos_y.set(50);
-                                        rotation_deg.set(0);
-                                        banner_pos_x.set(50);
-                                        banner_pos_y.set(85);
-                                        banner_rotation.set(0);
-                                        banner_font_size.set(48);
-                                        banner_font_family.set(String::from("impact"));
-                                        banner_fg_color.set(String::from("auto"));
-                                        banner_bg_color.set(String::from("auto"));
-                                        banner_effect.set(String::from("solida"));
-                                        banner_border_finish.set(String::from("nenhuma"));
-                                        banner_border_width.set(3);
-                                        banner_wave_amp.set(0);
-                                        banner_word_rot.set(0);
-                                        banner_word_cut.set(false);
-                                        banner_ransom_note.set(false);
-                                        banner_top_adapt_preset.set(true);
-                                        banner_top_pos_x.set(50);
-                                        banner_top_pos_y.set(10);
-                                        banner_top_rotation.set(0);
-                                        banner_top_font_size.set(48);
-                                        banner_top_font_family.set(String::from("impact"));
-                                        banner_top_fg_color.set(String::from("auto"));
-                                        banner_top_bg_color.set(String::from("auto"));
-                                        banner_top_effect.set(String::from("solida"));
-                                        banner_top_border_finish.set(String::from("nenhuma"));
-                                        banner_top_border_width.set(3);
-                                        banner_top_wave_amp.set(0);
-                                        banner_top_word_rot.set(0);
-                                        banner_top_word_cut.set(false);
-                                        banner_top_ransom_note.set(false);
-                                        image_crop_top.set(0);
-                                        image_crop_bottom.set(0);
-                                        image_crop_left.set(0);
-                                        image_crop_right.set(0);
-                                        dither_override.set(String::from("auto"));
-                                        palette_override.set(String::from("auto"));
-                                        show_advanced.set(false);
-                                        threshold_slider.set(85);
-                                        unsharp_slider.set(22);
-                                        stretch_y_slider.set(15);
-                                    },
-                                    "↺ RESTAURAR PADRÃO DO PRESET"
-                                }
-                            }
-                        } else if active_tab() == "intervencao" {
-                            div { class: "control-box",
-                                label { class: "section-tag", "4. MARCAS, DANOS & INTERVENÇÃO FÍSICA" }
-                                div { class: "damage-selector-grid",
-                                    {DamageEffect::all().iter().map(|dmg| {
-                                        let dmg_id = dmg.as_str().to_string();
-                                        let is_active = active_damages().contains(&dmg_id);
-                                        let d_id = dmg_id.clone();
-                                        rsx! {
+
+                                    if drawing_active() {
+                                        div { class: "drawing-tool-selector", style: "display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px;",
                                             button {
-                                                key: "{dmg_id}",
-                                                class: if is_active { "btn-damage active" } else { "btn-damage" },
-                                                onclick: move |_| {
-                                                    let mut list = active_damages();
-                                                    if list.contains(&d_id) {
-                                                        list.retain(|x| x != &d_id);
-                                                        // Remove seleção se era o item sendo editado
-                                                        if selected_damage() == Some(d_id.clone()) {
-                                                            selected_damage.set(None);
-                                                        }
-                                                    } else {
-                                                        list.push(d_id.clone());
-                                                        selected_damage.set(Some(d_id.clone()));
-                                                    }
-                                                    active_damages.set(list);
-                                                },
-                                                "{dmg.display_name()}"
+                                                class: if drawing_tool() == "freehand" { "btn-edit-action active" } else { "btn-edit-action" },
+                                                style: "font-size: 0.75rem; padding: 6px 2px;",
+                                                onclick: move |_| drawing_tool.set("freehand".into()),
+                                                "✏️ Livre"
+                                            }
+                                            button {
+                                                class: if drawing_tool() == "cross" { "btn-edit-action active" } else { "btn-edit-action" },
+                                                style: "font-size: 0.75rem; padding: 6px 2px;",
+                                                onclick: move |_| drawing_tool.set("cross".into()),
+                                                "❌ Cruz"
+                                            }
+                                            button {
+                                                class: if drawing_tool() == "arrow" { "btn-edit-action active" } else { "btn-edit-action" },
+                                                style: "font-size: 0.75rem; padding: 6px 2px;",
+                                                onclick: move |_| drawing_tool.set("arrow".into()),
+                                                "➡️ Seta"
+                                            }
+                                            button {
+                                                class: if drawing_tool() == "line" { "btn-edit-action active" } else { "btn-edit-action" },
+                                                style: "font-size: 0.75rem; padding: 6px 2px;",
+                                                onclick: move |_| drawing_tool.set("line".into()),
+                                                "📏 Reta"
                                             }
                                         }
-                                    })}
-                                }
 
-                                // Subpainel de ajuste do dano selecionado
-                                if !active_damages().is_empty() {
-                                    div { class: "item-ajuste-panel",
-                                        // Chips de seleção do dano a editar
-                                        div { class: "item-ajuste-chips",
-                                            {active_damages().into_iter().map(|d_str| {
-                                                let d_str2 = d_str.clone();
-                                                let is_selected = selected_damage() == Some(d_str.clone());
-                                                rsx! {
-                                                    button {
-                                                        key: "{d_str}",
-                                                        class: if is_selected { "chip-ajuste active" } else { "chip-ajuste" },
-                                                        onclick: move |_| selected_damage.set(Some(d_str2.clone())),
-                                                        "{d_str}"
-                                                    }
+                                        // Seletor de cores e amostras
+                                        div { class: "drawing-colors-row", style: "display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;",
+                                            span { style: "font-size: 0.75rem; font-weight: bold; color: #888;", "COR:" }
+                                            for (hex_val, label_col) in [
+                                                ("#000000", "Preto"),
+                                                ("#ffffff", "Branco"),
+                                                ("#ff0033", "Vermelho"),
+                                                ("#ffee00", "Amarelo"),
+                                                ("#00f0ff", "Ciano"),
+                                                ("#ff0055", "Magenta"),
+                                            ] {
+                                                button {
+                                                    r#type: "button",
+                                                    class: if drawing_color() == hex_val { "swatch-btn selected" } else { "swatch-btn" },
+                                                    style: format!("background-color: {}; width: 24px; height: 24px; border: 2px solid {}; cursor: pointer;", hex_val, if drawing_color() == hex_val { "#fff" } else { "#333" }),
+                                                    title: label_col,
+                                                    onclick: move |_| drawing_color.set(hex_val.into()),
                                                 }
-                                            })}
+                                            }
+                                            input {
+                                                r#type: "color",
+                                                value: "{drawing_color}",
+                                                style: "width: 32px; height: 26px; border: 1px solid #444; background: none; cursor: pointer; padding: 0;",
+                                                title: "Cor personalizada",
+                                                oninput: move |e| drawing_color.set(e.value()),
+                                            }
                                         }
 
-                                        // Sliders para o dano selecionado
-                                        if let Some(dmg_sel) = selected_damage() {
-                                            {
-                                                let params = damage_params().get(&dmg_sel).copied()
-                                                    .unwrap_or_else(|| {
-                                                        let def = DamageEffect::parse(&dmg_sel)
-                                                            .map(DamageElement::default_for)
-                                                            .unwrap_or_else(|| DamageElement::new(DamageEffect::Tiro, 0.5, 0.5, 1.0));
-                                                        ((def.pos_x * 100.0).round() as u32,
-                                                         (def.pos_y * 100.0).round() as u32,
-                                                         100u32)
-                                                    });
-                                                let (px100, py100, sc100) = params;
-                                                let d_x_minus = dmg_sel.clone();
-                                                let d_x_input = dmg_sel.clone();
-                                                let d_x_plus = dmg_sel.clone();
-                                                let d_y_minus = dmg_sel.clone();
-                                                let d_y_input = dmg_sel.clone();
-                                                let d_y_plus = dmg_sel.clone();
-                                                let d_sc_minus = dmg_sel.clone();
-                                                let d_sc_input = dmg_sel.clone();
-                                                let d_sc_plus = dmg_sel.clone();
-                                                let d_reset = dmg_sel.clone();
-                                                rsx! {
-                                                    div { class: "item-ajuste-sliders",
-                                                        div { class: "slider-group",
-                                                            label { "POSIÇÃO X: {px100}%" }
-                                                            div { class: "stepper-row",
-                                                                button {
-                                                                    r#type: "button",
-                                                                    class: "btn-stepper",
-                                                                    onclick: move |_| {
-                                                                        let mut map = damage_params();
-                                                                        let entry = map.entry(d_x_minus.clone()).or_insert((50, 50, 100));
-                                                                        entry.0 = entry.0.saturating_sub(5);
-                                                                        damage_params.set(map);
-                                                                    },
-                                                                    "−"
-                                                                }
-                                                                input {
-                                                                    r#type: "range", min: "0", max: "100",
-                                                                    value: "{px100}",
-                                                                    class: "slider-punk-zoom",
-                                                                    oninput: move |e| {
-                                                                        if let Ok(v) = e.value().parse::<u32>() {
-                                                                            let mut map = damage_params();
-                                                                            let entry = map.entry(d_x_input.clone()).or_insert((50, 50, 100));
-                                                                            entry.0 = v;
-                                                                            damage_params.set(map);
-                                                                        }
-                                                                    }
-                                                                }
-                                                                button {
-                                                                    r#type: "button",
-                                                                    class: "btn-stepper",
-                                                                    onclick: move |_| {
-                                                                        let mut map = damage_params();
-                                                                        let entry = map.entry(d_x_plus.clone()).or_insert((50, 50, 100));
-                                                                        entry.0 = (entry.0 + 5).min(100);
-                                                                        damage_params.set(map);
-                                                                    },
-                                                                    "+"
-                                                                }
-                                                            }
-                                                        }
-                                                        div { class: "slider-group",
-                                                            label { "POSIÇÃO Y: {py100}%" }
-                                                            div { class: "stepper-row",
-                                                                button {
-                                                                    r#type: "button",
-                                                                    class: "btn-stepper",
-                                                                    onclick: move |_| {
-                                                                        let mut map = damage_params();
-                                                                        let entry = map.entry(d_y_minus.clone()).or_insert((50, 50, 100));
-                                                                        entry.1 = entry.1.saturating_sub(5);
-                                                                        damage_params.set(map);
-                                                                    },
-                                                                    "−"
-                                                                }
-                                                                input {
-                                                                    r#type: "range", min: "0", max: "100",
-                                                                    value: "{py100}",
-                                                                    class: "slider-punk-zoom",
-                                                                    oninput: move |e| {
-                                                                        if let Ok(v) = e.value().parse::<u32>() {
-                                                                            let mut map = damage_params();
-                                                                            let entry = map.entry(d_y_input.clone()).or_insert((50, 50, 100));
-                                                                            entry.1 = v;
-                                                                            damage_params.set(map);
-                                                                        }
-                                                                    }
-                                                                }
-                                                                button {
-                                                                    r#type: "button",
-                                                                    class: "btn-stepper",
-                                                                    onclick: move |_| {
-                                                                        let mut map = damage_params();
-                                                                        let entry = map.entry(d_y_plus.clone()).or_insert((50, 50, 100));
-                                                                        entry.1 = (entry.1 + 5).min(100);
-                                                                        damage_params.set(map);
-                                                                    },
-                                                                    "+"
-                                                                }
-                                                            }
-                                                        }
-                                                        div { class: "slider-group",
-                                                            label { "ESCALA: {sc100}% ({sc100 as f32 / 100.0:.1}x)" }
-                                                            div { class: "stepper-row",
-                                                                button {
-                                                                    r#type: "button",
-                                                                    class: "btn-stepper",
-                                                                    onclick: move |_| {
-                                                                        let mut map = damage_params();
-                                                                        let entry = map.entry(d_sc_minus.clone()).or_insert((50, 50, 100));
-                                                                        entry.2 = entry.2.saturating_sub(10).max(25);
-                                                                        damage_params.set(map);
-                                                                    },
-                                                                    "−"
-                                                                }
-                                                                input {
-                                                                    r#type: "range", min: "25", max: "400",
-                                                                    value: "{sc100}",
-                                                                    class: "slider-punk-zoom",
-                                                                    oninput: move |e| {
-                                                                        if let Ok(v) = e.value().parse::<u32>() {
-                                                                            let mut map = damage_params();
-                                                                            let entry = map.entry(d_sc_input.clone()).or_insert((50, 50, 100));
-                                                                            entry.2 = v;
-                                                                            damage_params.set(map);
-                                                                        }
-                                                                    }
-                                                                }
-                                                                button {
-                                                                    r#type: "button",
-                                                                    class: "btn-stepper",
-                                                                    onclick: move |_| {
-                                                                        let mut map = damage_params();
-                                                                        let entry = map.entry(d_sc_plus.clone()).or_insert((50, 50, 100));
-                                                                        entry.2 = (entry.2 + 10).min(400);
-                                                                        damage_params.set(map);
-                                                                    },
-                                                                    "+"
-                                                                }
-                                                            }
-                                                        }
-                                                        button {
-                                                            class: "btn-edit-action",
-                                                            style: "margin-top:4px;",
-                                                            onclick: move |_| {
-                                                                let mut map = damage_params();
-                                                                map.remove(&d_reset);
-                                                                damage_params.set(map);
-                                                            },
-                                                            "↺ RESETAR POSIÇÃO"
-                                                        }
+                                        // Controle de espessura (stepper + slider)
+                                        div { class: "slider-group", style: "margin-bottom: 8px;",
+                                            div { class: "stepper-header-row",
+                                                span { class: "stepper-title", "ESPESSURA: {drawing_width}px" }
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper-reset",
+                                                    onclick: move |_| drawing_width.set(4),
+                                                    "↺ 4px"
+                                                }
+                                            }
+                                            div { class: "stepper-row",
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper",
+                                                    onclick: move |_| {
+                                                        let curr = drawing_width();
+                                                        if curr > 1 { drawing_width.set(curr.saturating_sub(1).max(1)); }
+                                                    },
+                                                    "−"
+                                                }
+                                                input {
+                                                    r#type: "range", min: "1", max: "30",
+                                                    value: "{drawing_width}",
+                                                    class: "slider-punk-zoom",
+                                                    oninput: move |e| {
+                                                        if let Ok(v) = e.value().parse::<u32>() { drawing_width.set(v); }
                                                     }
                                                 }
+                                                button {
+                                                    r#type: "button",
+                                                    class: "btn-stepper",
+                                                    onclick: move |_| {
+                                                        let curr = drawing_width();
+                                                        if curr < 30 { drawing_width.set((curr + 1).min(30)); }
+                                                    },
+                                                    "+"
+                                                }
+                                            }
+                                        }
+
+                                        // Botões de Ação (Desfazer, Limpar) e Contador
+                                        div { style: "display: flex; gap: 6px; align-items: center; justify-content: space-between; margin-top: 6px;",
+                                            div { style: "display: flex; gap: 6px;",
+                                                button {
+                                                    class: "btn-edit-action",
+                                                    disabled: manual_drawings().is_empty(),
+                                                    onclick: move |_| {
+                                                        let mut list = manual_drawings();
+                                                        list.pop();
+                                                        manual_drawings.set(list);
+                                                    },
+                                                    "↩️ DESFAZER"
+                                                }
+                                                button {
+                                                    class: "btn-edit-action",
+                                                    style: "color: #ff0033;",
+                                                    disabled: manual_drawings().is_empty(),
+                                                    onclick: move |_| {
+                                                        manual_drawings.set(Vec::new());
+                                                    },
+                                                    "🗑️ LIMPAR"
+                                                }
+                                            }
+                                            span { style: "font-size: 0.75rem; color: #888; font-family: monospace;",
+                                                "{manual_drawings().len()} traço(s)"
                                             }
                                         }
                                     }
                                 }
                             }
-
                             div { class: "control-box",
                                 label { class: "section-tag", "5. STICKERS & ADESIVOS PUNK" }
                                 div { class: "damage-selector-grid",
@@ -3536,7 +3687,6 @@ pub fn App() -> Element {
                                     }
                                 }
                             }
-
                             div { class: "control-box",
                                 label { class: "section-tag", "6. CAIXAS DE TEXTO EXTRA" }
                                 div { class: "texto-extra-form",
@@ -3796,149 +3946,8 @@ pub fn App() -> Element {
                                     }
                                 }
                             }
-
                             div { class: "control-box",
-                                label { class: "section-tag", "7. INTERVENÇÃO MANUAL & DESENHO NO CANVAS" }
-                                div { class: "manual-drawing-controls",
-                                    button {
-                                        class: if drawing_active() { "btn-edit-action active" } else { "btn-edit-action" },
-                                        style: "width: 100%; margin-bottom: 8px; font-weight: 900;",
-                                        onclick: move |_| {
-                                            let curr = drawing_active();
-                                            drawing_active.set(!curr);
-                                        },
-                                        if drawing_active() { "✏️ MODO DESENHO ATIVO [CLIQUE/ARRASTE NO CARTAZ]" } else { "✏️ ATIVAR DESENHO MANUAL NO CANVAS" }
-                                    }
-
-                                    if drawing_active() {
-                                        div { class: "drawing-tool-selector", style: "display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px;",
-                                            button {
-                                                class: if drawing_tool() == "freehand" { "btn-edit-action active" } else { "btn-edit-action" },
-                                                style: "font-size: 0.75rem; padding: 6px 2px;",
-                                                onclick: move |_| drawing_tool.set("freehand".into()),
-                                                "✏️ Livre"
-                                            }
-                                            button {
-                                                class: if drawing_tool() == "cross" { "btn-edit-action active" } else { "btn-edit-action" },
-                                                style: "font-size: 0.75rem; padding: 6px 2px;",
-                                                onclick: move |_| drawing_tool.set("cross".into()),
-                                                "❌ Cruz"
-                                            }
-                                            button {
-                                                class: if drawing_tool() == "arrow" { "btn-edit-action active" } else { "btn-edit-action" },
-                                                style: "font-size: 0.75rem; padding: 6px 2px;",
-                                                onclick: move |_| drawing_tool.set("arrow".into()),
-                                                "➡️ Seta"
-                                            }
-                                            button {
-                                                class: if drawing_tool() == "line" { "btn-edit-action active" } else { "btn-edit-action" },
-                                                style: "font-size: 0.75rem; padding: 6px 2px;",
-                                                onclick: move |_| drawing_tool.set("line".into()),
-                                                "📏 Reta"
-                                            }
-                                        }
-
-                                        // Seletor de cores e amostras
-                                        div { class: "drawing-colors-row", style: "display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;",
-                                            span { style: "font-size: 0.75rem; font-weight: bold; color: #888;", "COR:" }
-                                            for (hex_val, label_col) in [
-                                                ("#000000", "Preto"),
-                                                ("#ffffff", "Branco"),
-                                                ("#ff0033", "Vermelho"),
-                                                ("#ffee00", "Amarelo"),
-                                                ("#00f0ff", "Ciano"),
-                                                ("#ff0055", "Magenta"),
-                                            ] {
-                                                button {
-                                                    r#type: "button",
-                                                    class: if drawing_color() == hex_val { "swatch-btn selected" } else { "swatch-btn" },
-                                                    style: format!("background-color: {}; width: 24px; height: 24px; border: 2px solid {}; cursor: pointer;", hex_val, if drawing_color() == hex_val { "#fff" } else { "#333" }),
-                                                    title: label_col,
-                                                    onclick: move |_| drawing_color.set(hex_val.into()),
-                                                }
-                                            }
-                                            input {
-                                                r#type: "color",
-                                                value: "{drawing_color}",
-                                                style: "width: 32px; height: 26px; border: 1px solid #444; background: none; cursor: pointer; padding: 0;",
-                                                title: "Cor personalizada",
-                                                oninput: move |e| drawing_color.set(e.value()),
-                                            }
-                                        }
-
-                                        // Controle de espessura (stepper + slider)
-                                        div { class: "slider-group", style: "margin-bottom: 8px;",
-                                            div { class: "stepper-header-row",
-                                                span { class: "stepper-title", "ESPESSURA: {drawing_width}px" }
-                                                button {
-                                                    r#type: "button",
-                                                    class: "btn-stepper-reset",
-                                                    onclick: move |_| drawing_width.set(4),
-                                                    "↺ 4px"
-                                                }
-                                            }
-                                            div { class: "stepper-row",
-                                                button {
-                                                    r#type: "button",
-                                                    class: "btn-stepper",
-                                                    onclick: move |_| {
-                                                        let curr = drawing_width();
-                                                        if curr > 1 { drawing_width.set(curr.saturating_sub(1).max(1)); }
-                                                    },
-                                                    "−"
-                                                }
-                                                input {
-                                                    r#type: "range", min: "1", max: "30",
-                                                    value: "{drawing_width}",
-                                                    class: "slider-punk-zoom",
-                                                    oninput: move |e| {
-                                                        if let Ok(v) = e.value().parse::<u32>() { drawing_width.set(v); }
-                                                    }
-                                                }
-                                                button {
-                                                    r#type: "button",
-                                                    class: "btn-stepper",
-                                                    onclick: move |_| {
-                                                        let curr = drawing_width();
-                                                        if curr < 30 { drawing_width.set((curr + 1).min(30)); }
-                                                    },
-                                                    "+"
-                                                }
-                                            }
-                                        }
-
-                                        // Botões de Ação (Desfazer, Limpar) e Contador
-                                        div { style: "display: flex; gap: 6px; align-items: center; justify-content: space-between; margin-top: 6px;",
-                                            div { style: "display: flex; gap: 6px;",
-                                                button {
-                                                    class: "btn-edit-action",
-                                                    disabled: manual_drawings().is_empty(),
-                                                    onclick: move |_| {
-                                                        let mut list = manual_drawings();
-                                                        list.pop();
-                                                        manual_drawings.set(list);
-                                                    },
-                                                    "↩️ DESFAZER"
-                                                }
-                                                button {
-                                                    class: "btn-edit-action",
-                                                    style: "color: #ff0033;",
-                                                    disabled: manual_drawings().is_empty(),
-                                                    onclick: move |_| {
-                                                        manual_drawings.set(Vec::new());
-                                                    },
-                                                    "🗑️ LIMPAR"
-                                                }
-                                            }
-                                            span { style: "font-size: 0.75rem; color: #888; font-family: monospace;",
-                                                "{manual_drawings().len()} traço(s)"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            // Aba de Ajustes Finos
+                                label { class: "section-tag", "4. AJUSTES FINOS DA PRENSA (AVANÇADO)" }
                             div { class: "advanced-panel",
                                 button {
                                     class: if show_advanced() { "btn-edit-action active" } else { "btn-edit-action" },
@@ -4122,6 +4131,7 @@ pub fn App() -> Element {
                                         option { value: "4x", "4x (Poster Gigante)" }
                                     }
                                 }
+                            }
                             }
                         }
                     }

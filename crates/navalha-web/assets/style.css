@@ -217,13 +217,15 @@ html:has(.navalha-app), body:has(.navalha-app) {
     color: #888899;
     border: 1px solid #333340;
     padding: 7px 4px;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 900;
     letter-spacing: 0.5px;
     text-align: center;
     cursor: pointer;
     font-family: inherit;
     transition: all 0.1s ease;
+    white-space: nowrap;
+    touch-action: manipulation;
 }
 
 .tab-btn:hover {
@@ -243,6 +245,9 @@ html:has(.navalha-app), body:has(.navalha-app) {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -500,11 +505,16 @@ html:has(.navalha-app), body:has(.navalha-app) {
     border-color: #ff0033;
 }
 
+.stepper-slider-box, .slider-group {
+    touch-action: pan-y;
+}
+
 .stepper-row {
     display: flex;
     align-items: center;
     gap: 6px;
     width: 100%;
+    touch-action: pan-y;
 }
 
 .btn-stepper {
