@@ -1274,6 +1274,21 @@ fn render_words_cut<'a>(
                     }
                 }
 
+                // Se o acabamento for Poligonal, recorta os pixels de fundo fora do polígono
+                if data.word_finish == TarjaBorderFinish::Poligonal {
+                    let poly_salt = lcg_hash(0u32 ^ (sub_w * 31), 0u32 ^ (sub_h * 37), data.word_border_w ^ 9991);
+                    let poly = generate_irregular_polygon(0.0, 0.0, sub_w as f32, sub_h as f32, poly_salt);
+                    for ty in 0..sub_h {
+                        for tx in 0..sub_w {
+                            let px = tx as f32 + 0.5;
+                            let py = ty as f32 + 0.5;
+                            if !point_in_polygon(px, py, &poly) {
+                                sub_canvas.put_pixel(tx, ty, Rgba([0, 0, 0, 0]));
+                            }
+                        }
+                    }
+                }
+
                 draw_tarja_border(
                     &mut sub_canvas,
                     0,
@@ -1450,8 +1465,8 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
     let wavelength = if elem.wave_wavelength > 0.0 { elem.wave_wavelength } else { 200.0 };
     let phase = ((seed % 1000) as f32) / 1000.0;
 
-    // Modo com rotação global ou com ondulação não-linear contínua
-    if elem.rotation != 0 || elem.wave_amplitude > 0.0 {
+    // Modo com rotação global, ondulação não-linear contínua ou corte poligonal recortado
+    if elem.rotation != 0 || elem.wave_amplitude > 0.0 || elem.border_finish == TarjaBorderFinish::Poligonal {
         let pad = elem.tarja_padding as f32;
         let wave_pad = elem.wave_amplitude * 2.0;
         let sub_w = (text_width + pad * 2.0).ceil().max(1.0) as u32;
@@ -1499,6 +1514,22 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
             } else {
                 elem.border_width
             };
+
+            // Se o acabamento for Poligonal, recorta os pixels de fundo fora do polígono
+            if border_finish == TarjaBorderFinish::Poligonal {
+                let poly_salt = lcg_hash(0u32 ^ (sub_w * 31), 0u32 ^ (sub_h * 37), border_w ^ 9991);
+                let poly = generate_irregular_polygon(0.0, 0.0, sub_w as f32, sub_h as f32, poly_salt);
+                for ty in 0..sub_h {
+                    for tx in 0..sub_w {
+                        let px = tx as f32 + 0.5;
+                        let py = ty as f32 + 0.5;
+                        if !point_in_polygon(px, py, &poly) {
+                            sub_canvas.put_pixel(tx, ty, Rgba([0, 0, 0, 0]));
+                        }
+                    }
+                }
+            }
+
             draw_tarja_border(&mut sub_canvas, 0, 0, sub_w, sub_h, border_finish, border_w, border_col);
         }
 
@@ -1775,53 +1806,165 @@ pub fn draw_tarja_border(
             }
         }
         TarjaBorderFinish::Poligonal => {
-            // Efeito de corte angular de estilete: chanfros assimétricos nos 4 cantos e contorno sólido estilizado
-            let bw = width.min((x1 - x0) / 2).min((y1 - y0) / 2).max(1);
-            let w = x1 - x0;
-            let h = y1 - y0;
-            let c_tl = (lcg_hash(x0, y0, 505) % 11 + 6).min(w / 3).min(h / 3);
-            let c_tr = (lcg_hash(x1, y0, 606) % 9 + 4).min(w / 3).min(h / 3);
-            let c_bl = (lcg_hash(x0, y1, 707) % 8 + 5).min(w / 3).min(h / 3);
-            let c_br = (lcg_hash(x1, y1, 808) % 12 + 7).min(w / 3).min(h / 3);
+            // Efeito de corte angular descuidado de revista (4, 5 ou 6 lados irregulares)
+            let poly_salt = lcg_hash(x0 ^ (x1 * 31), y0 ^ (y1 * 37), width ^ 9991);
+            let poly = generate_irregular_polygon(x0 as f32, y0 as f32, x1 as f32, y1 as f32, poly_salt);
+            let bw_sq = (width as f32).max(1.5).powi(2);
+            let n = poly.len();
 
-            for x in x0..x1 {
-                for y in y0..(y0 + bw).min(y1) {
-                    let dx_l = x - x0;
-                    let dx_r = x1 - 1 - x;
-                    let dy_t = y - y0;
-                    if dx_l + dy_t >= c_tl && dx_r + dy_t >= c_tr && x < cw && y < ch {
-                        canvas.put_pixel(x, y, border_rgba);
-                    }
-                }
-                for y in (y1.saturating_sub(bw)).max(y0)..y1 {
-                    let dx_l = x - x0;
-                    let dx_r = x1 - 1 - x;
-                    let dy_b = y1 - 1 - y;
-                    if dx_l + dy_b >= c_bl && dx_r + dy_b >= c_br && x < cw && y < ch {
-                        canvas.put_pixel(x, y, border_rgba);
-                    }
-                }
-            }
             for y in y0..y1 {
-                for x in x0..(x0 + bw).min(x1) {
-                    let dx_l = x - x0;
-                    let dy_t = y - y0;
-                    let dy_b = y1 - 1 - y;
-                    if dx_l + dy_t >= c_tl && dx_l + dy_b >= c_bl && x < cw && y < ch {
-                        canvas.put_pixel(x, y, border_rgba);
-                    }
-                }
-                for x in (x1.saturating_sub(bw)).max(x0)..x1 {
-                    let dx_r = x1 - 1 - x;
-                    let dy_t = y - y0;
-                    let dy_b = y1 - 1 - y;
-                    if dx_r + dy_t >= c_tr && dx_r + dy_b >= c_br && x < cw && y < ch {
-                        canvas.put_pixel(x, y, border_rgba);
+                if y >= ch { break; }
+                for x in x0..x1 {
+                    if x >= cw { break; }
+                    let px = x as f32 + 0.5;
+                    let py = y as f32 + 0.5;
+                    if point_in_polygon(px, py, &poly) {
+                        // Verifica se está próximo de alguma aresta do polígono (borda)
+                        let mut min_d_sq = f32::MAX;
+                        for i in 0..n {
+                            let (x_a, y_a) = poly[i];
+                            let (x_b, y_b) = poly[(i + 1) % n];
+                            let d2 = dist_point_to_segment_sq(px, py, x_a, y_a, x_b, y_b);
+                            if d2 < min_d_sq {
+                                min_d_sq = d2;
+                            }
+                        }
+                        if min_d_sq <= bw_sq {
+                            canvas.put_pixel(x, y, border_rgba);
+                        }
                     }
                 }
             }
         }
     }
+}
+
+/// Determina deterministicamente um polígono irregular de corte de fanzine (4 a 6 lados)
+pub fn generate_irregular_polygon(x0: f32, y0: f32, x1: f32, y1: f32, salt: u32) -> Vec<(f32, f32)> {
+    let w = (x1 - x0).max(10.0);
+    let h = (y1 - y0).max(10.0);
+    let mode = (salt % 4) as usize;
+
+    match mode {
+        0 => {
+            // 4 lados com uma ponta aguçada esticada e outro lado chanfrado (corte rápido descuidado)
+            let corner = ((salt >> 2) % 4) as usize;
+            match corner {
+                0 => vec![
+                    (x0, y0), // ponta aguda superior-esquerda no limite
+                    (x1, y0 + h * 0.18),
+                    (x1 - w * 0.08, y1),
+                    (x0 + w * 0.15, y1 - h * 0.12),
+                ],
+                1 => vec![
+                    (x0 + w * 0.12, y0 + h * 0.15),
+                    (x1, y0), // ponta aguda superior-direita
+                    (x1 - w * 0.15, y1),
+                    (x0, y1 - h * 0.18),
+                ],
+                2 => vec![
+                    (x0, y0 + h * 0.16),
+                    (x1 - w * 0.14, y0),
+                    (x1, y1), // ponta aguda inferior-direita
+                    (x0 + w * 0.10, y1 - h * 0.14),
+                ],
+                _ => vec![
+                    (x0 + w * 0.14, y0),
+                    (x1, y0 + h * 0.15),
+                    (x1 - w * 0.12, y1 - h * 0.16),
+                    (x0, y1), // ponta aguda inferior-esquerda
+                ],
+            }
+        }
+        1 => {
+            // 5 lados irregulares com corte chanfrado pronunciado de tesoura
+            let side = ((salt >> 3) % 2) as usize;
+            if side == 0 {
+                vec![
+                    (x0 + w * 0.10, y0),
+                    (x1 - w * 0.05, y0 + h * 0.12),
+                    (x1, y0 + h * 0.65),
+                    (x1 - w * 0.20, y1),
+                    (x0, y1 - h * 0.15),
+                ]
+            } else {
+                vec![
+                    (x0, y0 + h * 0.20),
+                    (x0 + w * 0.60, y0),
+                    (x1, y0 + h * 0.25),
+                    (x1 - w * 0.08, y1),
+                    (x0 + w * 0.15, y1 - h * 0.10),
+                ]
+            }
+        }
+        2 => {
+            // 6 lados irregulares (recorte descuidado e rápido de fanzine / estilete)
+            vec![
+                (x0 + w * 0.15, y0),
+                (x1 - w * 0.10, y0),
+                (x1, y0 + h * 0.40),
+                (x1 - w * 0.06, y1),
+                (x0 + w * 0.20, y1),
+                (x0, y0 + h * 0.60),
+            ]
+        }
+        _ => {
+            // 4 lados trapezoidais com forte inclinação de corte manual
+            let flip = ((salt >> 4) % 2) == 0;
+            if flip {
+                vec![
+                    (x0, y0 + h * 0.22),
+                    (x1, y0),
+                    (x1 - w * 0.08, y1),
+                    (x0 + w * 0.14, y1 - h * 0.10),
+                ]
+            } else {
+                vec![
+                    (x0 + w * 0.12, y0),
+                    (x1, y0 + h * 0.20),
+                    (x1 - w * 0.14, y1 - h * 0.12),
+                    (x0, y1),
+                ]
+            }
+        }
+    }
+}
+
+/// Testa se um ponto está dentro de um polígono 2D simples
+pub fn point_in_polygon(px: f32, py: f32, poly: &[(f32, f32)]) -> bool {
+    let n = poly.len();
+    let mut inside = false;
+    let (mut p1x, mut p1y) = poly[0];
+    for i in 1..=n {
+        let (p2x, p2y) = poly[i % n];
+        if py > p1y.min(p2y) && py <= p1y.max(p2y) && px <= p1x.max(p2x) {
+            let xints = if p1y != p2y {
+                (py - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+            } else {
+                p1x
+            };
+            if p1x == p2x || px <= xints {
+                inside = !inside;
+            }
+        }
+        p1x = p2x;
+        p1y = p2y;
+    }
+    inside
+}
+
+/// Distância ao quadrado entre um ponto (px, py) e um segmento de reta [(x1,y1), (x2,y2)]
+pub fn dist_point_to_segment_sq(px: f32, py: f32, x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
+    let dx = x2 - x1;
+    let dy = y2 - y1;
+    let l2 = dx * dx + dy * dy;
+    if l2 == 0.0 {
+        return (px - x1).powi(2) + (py - y1).powi(2);
+    }
+    let t = (((px - x1) * dx + (py - y1) * dy) / l2).clamp(0.0, 1.0);
+    let proj_x = x1 + t * dx;
+    let proj_y = y1 + t * dy;
+    (px - proj_x).powi(2) + (py - proj_y).powi(2)
 }
 
 pub fn lcg_hash(x: u32, y: u32, salt: u32) -> u32 {

@@ -1404,6 +1404,23 @@ mod tests {
     }
 
     #[test]
+    fn test_polygonal_border_masking() {
+        let (_, _, _, _, _, mut comp) = AestheticPreset::PunkRiot.build_pipeline_and_composition("CORTE POLIGONAL");
+        if let Some(ref mut elem) = comp.foreground_texts.get_mut(0) {
+            elem.border_finish = TarjaBorderFinish::Poligonal;
+            elem.border_width = 3;
+            elem.bg_tarja = Some(RgbColor::new(255, 255, 255));
+        }
+
+        let test_img = create_test_image(80, 80);
+        let poster1 = render_poster(&comp, Some(&test_img));
+        let poster2 = render_poster(&comp, Some(&test_img));
+
+        assert_eq!(poster1.as_raw(), poster2.as_raw(), "Corte poligonal deve ser 100% determinístico");
+        assert_eq!(poster1.dimensions(), (800, 1100));
+    }
+
+    #[test]
     fn test_raw_image_seed_stability_across_filter_changes() {
         let raw_img = create_test_image(100, 100);
         let phrase = "RESISTÊNCIA SUBVERSIVA";
