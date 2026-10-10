@@ -2483,6 +2483,8 @@ pub fn App() -> Element {
                                                             option { value: "tracejada", "TRACEJADA" }
                                                             option { value: "picote", "PICOTE // Serrilhado" }
                                                             option { value: "durex", "FITA DUREX // Adesiva" }
+                                                            option { value: "rasgado", "PAPEL RASGADO // Branco" }
+                                                            option { value: "poligonal", "CORTE POLIGONAL // Tesoura" }
                                                         }
                                                     }
                                                     div {
@@ -2979,6 +2981,8 @@ pub fn App() -> Element {
                                                             option { value: "tracejada", "TRACEJADA" }
                                                             option { value: "picote", "PICOTE // Serrilhado" }
                                                             option { value: "durex", "FITA DUREX // Adesiva" }
+                                                            option { value: "rasgado", "PAPEL RASGADO // Branco" }
+                                                            option { value: "poligonal", "CORTE POLIGONAL // Tesoura" }
                                                         }
                                                     }
                                                     div {

@@ -80,6 +80,8 @@ pub fn generate_poster_svg(composition: &PosterComposition, image_base64_png: Op
                     crate::press::TarjaBorderFinish::Tracejada => " stroke-dasharray=\"12,6\"",
                     crate::press::TarjaBorderFinish::Picote => " stroke-dasharray=\"4,4\"",
                     crate::press::TarjaBorderFinish::FitaDurex => " stroke-dasharray=\"2,2\"",
+                    crate::press::TarjaBorderFinish::Rasgado => " stroke-dasharray=\"6,3,2,3\"",
+                    crate::press::TarjaBorderFinish::Poligonal => "",
                     _ => "",
                 };
                 format!(" stroke=\"{bc}\" stroke-width=\"{bw}\"{dash}")

@@ -652,8 +652,10 @@ mod tests {
         ];
 
         let poster = render_poster(&comp, Some(&test_img));
+        let poster2 = render_poster(&comp, Some(&test_img));
         assert_eq!(poster.width(), 300);
         assert_eq!(poster.height(), 400);
+        assert_eq!(poster.as_raw(), poster2.as_raw(), "Dano Rasgo realista deve ser estritamente determinístico");
     }
 
     #[test]
@@ -1034,6 +1036,8 @@ mod tests {
         assert_eq!(TarjaBorderFinish::parse("tracejada"), Some(TarjaBorderFinish::Tracejada));
         assert_eq!(TarjaBorderFinish::parse("picote"), Some(TarjaBorderFinish::Picote));
         assert_eq!(TarjaBorderFinish::parse("durex"), Some(TarjaBorderFinish::FitaDurex));
+        assert_eq!(TarjaBorderFinish::parse("rasgado"), Some(TarjaBorderFinish::Rasgado));
+        assert_eq!(TarjaBorderFinish::parse("poligonal"), Some(TarjaBorderFinish::Poligonal));
         assert_eq!(RgbColor::parse_color_str("amarelo"), Some(RgbColor::new(255, 238, 0)));
         assert_eq!(RgbColor::parse_color_str("#FF0033"), Some(RgbColor::new(255, 0, 51)));
     }

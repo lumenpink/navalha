@@ -97,6 +97,8 @@ pub enum TarjaBorderFinish {
     Tracejada,
     Picote,
     FitaDurex,
+    Rasgado,
+    Poligonal,
 }
 
 impl TarjaBorderFinish {
@@ -107,6 +109,8 @@ impl TarjaBorderFinish {
             "tracejada" | "dashed" => Some(Self::Tracejada),
             "picote" | "serrilhado" | "dotted" => Some(Self::Picote),
             "durex" | "tape" | "fita" => Some(Self::FitaDurex),
+            "rasgado" | "torn" | "rasgo" => Some(Self::Rasgado),
+            "poligonal" | "angular" | "corte" => Some(Self::Poligonal),
             _ => None,
         }
     }
@@ -1092,9 +1096,11 @@ fn render_words_cut<'a>(
                     };
 
                     let w_pad = 8.0 + ((lcg_hash(seed as u32, word_idx as u32, 5555) % 7) as f32);
-                    let finish = match lcg_hash(seed as u32, word_idx as u32, 8888) % 3 {
+                    let finish = match lcg_hash(seed as u32, word_idx as u32, 8888) % 5 {
                         0 => TarjaBorderFinish::Solida,
                         1 => TarjaBorderFinish::FitaDurex,
+                        2 => TarjaBorderFinish::Rasgado,
+                        3 => TarjaBorderFinish::Poligonal,
                         _ => TarjaBorderFinish::Tracejada,
                     };
                     let b_col = if col_idx == 1 || col_idx == 5 {
@@ -1717,6 +1723,95 @@ pub fn draw_tarja_border(
                 if x1.saturating_sub(i) < cw && y1.saturating_sub(i) < ch { canvas.put_pixel(x1.saturating_sub(i), y1.saturating_sub(i), col); }
             }
         }
+        TarjaBorderFinish::Rasgado => {
+            // Efeito de papel rasgado à mão: borda branca irregular, fibrosa e desfiada
+            let bw = width.min((x1 - x0) / 2).min((y1 - y0) / 2).max(2);
+            let white_paper = Rgba([255, 255, 255, 255]);
+            let pulp_fiber = Rgba([242, 239, 230, 240]);
+
+            // Top edge e Bottom edge
+            for x in x0..x1 {
+                let jitter_t = (lcg_hash(x, y0, 101) % (bw + 2)) as u32;
+                let jitter_b = (lcg_hash(x, y1, 202) % (bw + 2)) as u32;
+                for y in y0..(y0 + bw + jitter_t).min(y1) {
+                    if x < cw && y < ch {
+                        let c = if (x + y) % 3 == 0 { pulp_fiber } else { white_paper };
+                        canvas.put_pixel(x, y, c);
+                    }
+                }
+                for y in (y1.saturating_sub(bw + jitter_b)).max(y0)..y1 {
+                    if x < cw && y < ch {
+                        let c = if (x + y) % 3 == 0 { pulp_fiber } else { white_paper };
+                        canvas.put_pixel(x, y, c);
+                    }
+                }
+            }
+
+            // Left edge e Right edge
+            for y in y0..y1 {
+                let jitter_l = (lcg_hash(x0, y, 303) % (bw + 2)) as u32;
+                let jitter_r = (lcg_hash(x1, y, 404) % (bw + 2)) as u32;
+                for x in x0..(x0 + bw + jitter_l).min(x1) {
+                    if x < cw && y < ch {
+                        let c = if (x + y) % 3 == 0 { pulp_fiber } else { white_paper };
+                        canvas.put_pixel(x, y, c);
+                    }
+                }
+                for x in (x1.saturating_sub(bw + jitter_r)).max(x0)..x1 {
+                    if x < cw && y < ch {
+                        let c = if (x + y) % 3 == 0 { pulp_fiber } else { white_paper };
+                        canvas.put_pixel(x, y, c);
+                    }
+                }
+            }
+        }
+        TarjaBorderFinish::Poligonal => {
+            // Efeito de corte angular de estilete: chanfros assimétricos nos 4 cantos e contorno sólido estilizado
+            let bw = width.min((x1 - x0) / 2).min((y1 - y0) / 2).max(1);
+            let w = x1 - x0;
+            let h = y1 - y0;
+            let c_tl = (lcg_hash(x0, y0, 505) % 11 + 6).min(w / 3).min(h / 3);
+            let c_tr = (lcg_hash(x1, y0, 606) % 9 + 4).min(w / 3).min(h / 3);
+            let c_bl = (lcg_hash(x0, y1, 707) % 8 + 5).min(w / 3).min(h / 3);
+            let c_br = (lcg_hash(x1, y1, 808) % 12 + 7).min(w / 3).min(h / 3);
+
+            for x in x0..x1 {
+                for y in y0..(y0 + bw).min(y1) {
+                    let dx_l = x - x0;
+                    let dx_r = x1 - 1 - x;
+                    let dy_t = y - y0;
+                    if dx_l + dy_t >= c_tl && dx_r + dy_t >= c_tr && x < cw && y < ch {
+                        canvas.put_pixel(x, y, border_rgba);
+                    }
+                }
+                for y in (y1.saturating_sub(bw)).max(y0)..y1 {
+                    let dx_l = x - x0;
+                    let dx_r = x1 - 1 - x;
+                    let dy_b = y1 - 1 - y;
+                    if dx_l + dy_b >= c_bl && dx_r + dy_b >= c_br && x < cw && y < ch {
+                        canvas.put_pixel(x, y, border_rgba);
+                    }
+                }
+            }
+            for y in y0..y1 {
+                for x in x0..(x0 + bw).min(x1) {
+                    let dx_l = x - x0;
+                    let dy_t = y - y0;
+                    let dy_b = y1 - 1 - y;
+                    if dx_l + dy_t >= c_tl && dx_l + dy_b >= c_bl && x < cw && y < ch {
+                        canvas.put_pixel(x, y, border_rgba);
+                    }
+                }
+                for x in (x1.saturating_sub(bw)).max(x0)..x1 {
+                    let dx_r = x1 - 1 - x;
+                    let dy_t = y - y0;
+                    let dy_b = y1 - 1 - y;
+                    if dx_r + dy_t >= c_tr && dx_r + dy_b >= c_br && x < cw && y < ch {
+                        canvas.put_pixel(x, y, border_rgba);
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1941,26 +2036,87 @@ fn render_damage_tiro(canvas: &mut RgbaImage, cx: i32, cy: i32, scale: f32) {
 }
 
 fn render_damage_rasgo(canvas: &mut RgbaImage, cx: i32, cy: i32, scale: f32) {
-    let pulp = Rgba([245, 242, 232, 255]);
-    let shadow = Rgba([15, 15, 15, 230]);
-    let len_x = (80.0 * scale) as i32;
-    let len_y = (220.0 * scale) as i32;
-    let start_x = cx - len_x / 2;
-    let start_y = cy - len_y / 4;
-    let end_x   = cx + len_x / 2;
-    let end_y   = cy + len_y * 3 / 4;
+    let (cw, ch) = canvas.dimensions();
+    let s = scale.max(0.2);
 
-    let steps = 40;
+    let pure_white = Rgba([255, 255, 255, 255]);
+    let pulp_white = Rgba([245, 242, 235, 255]);
+    let tear_dark  = Rgba([12, 12, 12, 255]);
+    let tear_shadow = Rgba([20, 20, 20, 180]);
+
+    let len_y = (240.0 * s) as i32;
+    let len_x = (90.0 * s) as i32;
+    let start_x = cx - len_x / 2;
+    let start_y = cy - len_y / 2;
+    let end_x   = cx + len_x / 2;
+    let end_y   = cy + len_y / 2;
+
+    let steps = ((len_y.abs() as f32) * 1.5).max(60.0) as usize;
+
+    // 1. Passada de Sombra e Desnível do Papel (borda levantada)
     for i in 0..=steps {
         let t = i as f32 / steps as f32;
-        let bx = start_x as f32 + (end_x - start_x) as f32 * t;
-        let by = start_y as f32 + (end_y - start_y) as f32 * t;
-        let jitter = ((i * 7) % 11) as f32 - 5.0;
-        let x = (bx + jitter) as i32;
-        let y = (by + jitter) as i32;
+        let base_x = start_x as f32 + (end_x - start_x) as f32 * t;
+        let base_y = start_y as f32 + (end_y - start_y) as f32 * t;
 
-        draw_filled_circle(canvas, x, y + 3, (5.0 * scale) as i32, shadow);
-        draw_filled_circle(canvas, x, y, (4.0 * scale) as i32, pulp);
+        // Ruído fractal para o trajeto da fratura do papel
+        let wave = (t * 18.0).sin() * 7.0 * s;
+        let noise1 = ((lcg_hash(i as u32, 777, 101) % 15) as f32 - 7.0) * s;
+        let noise2 = ((lcg_hash(i as u32, 999, 202) % 7) as f32 - 3.0) * s;
+        let fx = base_x + wave + noise1 + noise2;
+        let fy = base_y;
+
+        let shadow_off = (5.0 * s).round() as i32;
+        draw_filled_circle(canvas, (fx + shadow_off as f32) as i32, fy as i32, (10.0 * s) as i32, tear_shadow);
+    }
+
+    // 2. Passada de Margem Branca Fibrosa / Papel Desfiado (Tear Fringe)
+    for i in 0..=steps {
+        let t = i as f32 / steps as f32;
+        let base_x = start_x as f32 + (end_x - start_x) as f32 * t;
+        let base_y = start_y as f32 + (end_y - start_y) as f32 * t;
+
+        let wave = (t * 18.0).sin() * 7.0 * s;
+        let noise1 = ((lcg_hash(i as u32, 777, 101) % 15) as f32 - 7.0) * s;
+        let noise2 = ((lcg_hash(i as u32, 999, 202) % 7) as f32 - 3.0) * s;
+        let fx = base_x + wave + noise1 + noise2;
+        let fy = base_y;
+
+        // Camada externa de desfiamento branco
+        let fringe_w = (7.0 + (lcg_hash(i as u32, 333, 404) % 9) as f32) * s;
+        draw_filled_circle(canvas, (fx - fringe_w * 0.5) as i32, fy as i32, (fringe_w * 0.8) as i32, pure_white);
+        draw_filled_circle(canvas, (fx + fringe_w * 0.5) as i32, fy as i32, (fringe_w * 0.8) as i32, pulp_white);
+
+        // Fibras individuais saindo do rasgo
+        if i % 3 == 0 {
+            let fiber_dx = ((lcg_hash(i as u32, 111, 505) % 17) as f32 - 8.0) * s * 1.5;
+            let fiber_dy = ((lcg_hash(i as u32, 222, 606) % 9) as f32 - 4.0) * s;
+            let px = (fx + fiber_dx) as i32;
+            let py = (fy + fiber_dy) as i32;
+            if px >= 0 && px < cw as i32 && py >= 0 && py < ch as i32 {
+                canvas.put_pixel(px as u32, py as u32, pure_white);
+                if px + 1 < cw as i32 {
+                    canvas.put_pixel((px + 1) as u32, py as u32, pulp_white);
+                }
+            }
+        }
+    }
+
+    // 3. Passada de Fissura Central Escura (o vazio do papel rasgado)
+    for i in 0..=steps {
+        let t = i as f32 / steps as f32;
+        let base_x = start_x as f32 + (end_x - start_x) as f32 * t;
+        let base_y = start_y as f32 + (end_y - start_y) as f32 * t;
+
+        let wave = (t * 18.0).sin() * 7.0 * s;
+        let noise1 = ((lcg_hash(i as u32, 777, 101) % 15) as f32 - 7.0) * s;
+        let noise2 = ((lcg_hash(i as u32, 999, 202) % 7) as f32 - 3.0) * s;
+        let fx = base_x + wave + noise1 + noise2;
+        let fy = base_y;
+
+        // Fissura irregular mais estreita no centro
+        let core_r = (2.5 + (lcg_hash(i as u32, 555, 707) % 4) as f32) * s;
+        draw_filled_circle(canvas, fx as i32, fy as i32, core_r as i32, tear_dark);
     }
 }
 
