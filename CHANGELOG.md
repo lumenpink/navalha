@@ -9,6 +9,7 @@
   - (core) consolidar motor deterministico navalha com 20 presets canonicos (#1)
 
 ### Bug Fixes
+  - (ui) evitar flicker da imagem de perfil padrao durante o carregamento (#21)
   - (ci) garantir resiliencia no deploy e atualizar token cf (#2)
   - (ci) compatibilizar deploy no pages via script nativo para act_runner (#2)
   - (ci) segregar job test para o gate act e job deploy para forgejo (#2)

@@ -185,8 +185,8 @@ fn preset_short_name(preset: AestheticPreset) -> &'static str {
 
 #[component]
 pub fn App() -> Element {
-    // Imagem base decodificada
-    let raw_image = use_signal(|| create_default_graphic(360, 480));
+    // Imagem base decodificada (None durante o carregamento inicial para evitar flicker do avatar padrão)
+    let raw_image = use_signal(|| Option::<RgbaImage>::None);
     let current_bg_subject = use_signal(String::new);
 
 
@@ -198,8 +198,12 @@ pub fn App() -> Element {
             let idx = pick_random_background_index();
             let (path, name) = BACKGROUND_COLLECTION[idx];
             if let Some(img) = load_remote_image(path).await {
-                raw_setter.set(img);
+                raw_setter.set(Some(img));
                 subject_setter.set(name.to_string());
+            } else {
+                // Fallback de contingência caso a requisição de rede falhe
+                raw_setter.set(Some(create_default_graphic(360, 480)));
+                subject_setter.set(String::from("Gráfico Base"));
             }
         });
     });
@@ -343,7 +347,7 @@ pub fn App() -> Element {
         use_effect(move || {
             // Rastreamento explícito de todos os sinais que alteram a estética do pôster
             let m_drawings = manual_drawings();
-            let raw = raw_image();
+            let raw_opt = raw_image();
             let p_format = poster_format();
             let phr = phrase();
             let phr_top = phrase_top();
@@ -423,6 +427,12 @@ pub fn App() -> Element {
             let r_ativo = recorte_ativo();
             let r_th = recorte_threshold();
             let r_inv = recorte_inverter();
+
+            // Interrompe renderização se a imagem base ainda estiver carregando (Issue #21: evita flicker de avatar padrão)
+            let raw = match raw_opt {
+                Some(img) => img,
+                None => return,
+            };
 
             let my_seq = seq_ref.get() + 1;
             seq_ref.set(my_seq);
@@ -1050,7 +1060,7 @@ pub fn App() -> Element {
                                 let bytes = array.to_vec();
                                 if let Ok(img_reader) = ImageReader::new(Cursor::new(bytes)).with_guessed_format() {
                                     if let Ok(decoded) = img_reader.decode() {
-                                        raw_image_setter.set(decoded.to_rgba8());
+                                        raw_image_setter.set(Some(decoded.to_rgba8()));
                                         subject_setter.set(String::from("Foto do Usuário"));
                                     }
                                 }
@@ -1074,7 +1084,7 @@ pub fn App() -> Element {
             let idx = pick_random_background_index();
             let (path, name) = BACKGROUND_COLLECTION[idx];
             if let Some(img) = load_remote_image(path).await {
-                raw_setter.set(img);
+                raw_setter.set(Some(img));
                 subject_setter.set(name.to_string());
             }
         });
@@ -4410,6 +4420,16 @@ mod tests {
     fn test_pick_random_background_index_bounds() {
         let idx = pick_random_background_index();
         assert!(idx < BACKGROUND_COLLECTION.len());
+    }
+
+    #[test]
+    fn test_create_default_graphic_fallback() {
+        let img = create_default_graphic(360, 480);
+        assert_eq!(img.width(), 360);
+        assert_eq!(img.height(), 480);
+        // Garante que o fallback tem pixels renderizados
+        let has_non_zero_alpha = img.pixels().any(|p| p.0[3] == 255);
+        assert!(has_non_zero_alpha, "O gráfico de fallback deve ter pixels visíveis");
     }
 }
 
