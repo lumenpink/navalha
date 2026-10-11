@@ -164,14 +164,7 @@ pub fn pick_time_slice_aesthetic(offset: u64) -> &'static str {
     all_presets[idx].id()
 }
 
-/// Aliases compatíveis com testes e chamadas diretas
-pub fn pick_random_background_index() -> usize {
-    pick_time_slice_background_index(0)
-}
 
-pub fn pick_random_protest_phrase() -> &'static str {
-    pick_time_slice_protest_phrase(0)
-}
 
 
 
@@ -1385,9 +1378,9 @@ pub fn App() -> Element {
                                     class: "file-input-punk",
                                     onchange: on_file_upload,
                                 }
-                                div { class: "random-bg-row",
+                                div { class: "time-bg-row",
                                     button {
-                                        class: "btn-random-bg",
+                                        class: "btn-time-bg",
                                         r#type: "button",
                                         onclick: on_random_bg,
                                         "⚡ ALTERNAR IMAGEM (15MIN)"
@@ -1419,7 +1412,7 @@ pub fn App() -> Element {
                                             label { style: "font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;", "⬇️ Faixa Inferior (Suporta Multilinha)" }
                                             button {
                                                 r#type: "button",
-                                                class: "btn-phrase-random",
+                                                class: "btn-phrase-slice",
                                                 onclick: move |_| {
                                                     let off = phrase_offset() + 1;
                                                     phrase_offset.set(off);
@@ -4581,11 +4574,7 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_pick_random_background_index_bounds() {
-        let idx = pick_random_background_index();
-        assert!(idx < BACKGROUND_COLLECTION.len());
-    }
+
 
     #[test]
     fn test_time_slice_determinism_and_bounds() {
@@ -4615,14 +4604,6 @@ mod tests {
         assert!(has_non_zero_alpha, "O gráfico de fallback deve ter pixels visíveis");
     }
 
-    #[test]
-    fn test_pick_random_protest_phrase() {
-        let p = pick_random_protest_phrase();
-        assert!(!p.is_empty(), "Frase sorteada não pode ser vazia");
-        assert!(
-            navalha_core::PROTEST_PHRASES.contains(&p),
-            "Frase sorteada deve pertencer à coleção de frases de protesto"
-        );
-    }
+
 }
 

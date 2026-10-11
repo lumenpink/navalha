@@ -485,7 +485,7 @@ html:has(.navalha-app), body:has(.navalha-app) {
     border-color: #fff;
 }
 
-.btn-phrase-random {
+.btn-phrase-slice {
     background: #111;
     color: #ff0033;
     border: 1px solid #444;
@@ -499,7 +499,7 @@ html:has(.navalha-app), body:has(.navalha-app) {
     border-radius: 0;
 }
 
-.btn-phrase-random:hover {
+.btn-phrase-slice:hover {
     background: #ff0033;
     color: #000;
     border-color: #ff0033;
@@ -1602,8 +1602,8 @@ input[type="range"]::-moz-range-thumb {
     }
 }
 
-/* 🎲 Sorteador de Imagens do Acervo CC */
-.random-bg-row {
+/* ⚡ Seletor Temporal de Imagens do Acervo CC */
+.time-bg-row {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1612,7 +1612,7 @@ input[type="range"]::-moz-range-thumb {
     flex-wrap: wrap;
 }
 
-.btn-random-bg {
+.btn-time-bg {
     background: #ff0033;
     color: #ffffff;
     border: 2px solid #000000;
@@ -1627,13 +1627,13 @@ input[type="range"]::-moz-range-thumb {
     transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
 }
 
-.btn-random-bg:hover {
+.btn-time-bg:hover {
     background: #000000;
     color: #ffff00;
     box-shadow: 3px 3px 0px #ff0033;
 }
 
-.btn-random-bg:active {
+.btn-time-bg:active {
     transform: translate(2px, 2px);
     box-shadow: none;
 }
