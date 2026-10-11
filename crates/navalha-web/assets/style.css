@@ -954,17 +954,36 @@ html:has(.navalha-app), body:has(.navalha-app) {
     background-color: #000000;
     border: 1px solid #222;
     padding: 8px 14px;
-    overflow-x: auto;
+    overflow: hidden;
+    min-width: 0;
 }
 
 .cli-prompt {
     color: #e2f835;
     font-weight: 900;
     font-size: 16px;
+    flex-shrink: 0;
+}
+
+.cli-code-wrap {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: thin;
+    scrollbar-color: #333 #000;
+}
+
+.cli-code-wrap::-webkit-scrollbar {
+    height: 4px;
+}
+
+.cli-code-wrap::-webkit-scrollbar-thumb {
+    background: #333;
 }
 
 .cli-code {
-    flex: 1;
+    display: inline-block;
     color: #00f0ff;
     font-size: 13px;
     white-space: nowrap;
@@ -982,6 +1001,7 @@ html:has(.navalha-app), body:has(.navalha-app) {
     cursor: pointer;
     font-family: inherit;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .btn-copy-cli:hover {

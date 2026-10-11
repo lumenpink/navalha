@@ -1043,6 +1043,8 @@ pub fn App() -> Element {
         String::new()
     };
 
+    let aesthetic_flag = format!(" -e {}", aesthetic_id());
+
     let cli_cmd = if !show_advanced() {
         format!(
             "navalha poster foto.jpg --frase \"{}\"{}{}{}{}{}{}{}{}{}{}{}{} -o poster.png",
@@ -1052,7 +1054,7 @@ pub fn App() -> Element {
             sem_faixa_flag,
             recorte_flags,
             banner_style_flags,
-            aesthetic_id(),
+            aesthetic_flag,
             rotacao_flag,
             zoom_flag,
             offset_flag,
@@ -4527,7 +4529,9 @@ pub fn App() -> Element {
             footer { class: "navalha-footer",
                 div { class: "cli-mirror-box",
                     span { class: "cli-prompt", "$" }
-                    code { class: "cli-code", "{cli_cmd}" }
+                    div { class: "cli-code-wrap",
+                        code { class: "cli-code", "{cli_cmd}" }
+                    }
                     button {
                         class: "btn-copy-cli",
                         onclick: copy_cmd,
