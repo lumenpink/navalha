@@ -215,7 +215,10 @@ pub fn App() -> Element {
     // Imagem base decodificada (None durante o carregamento inicial para evitar flicker do avatar padrão)
     let raw_image = use_signal(|| Option::<RgbaImage>::None);
     let current_bg_subject = use_signal(String::new);
-
+    let current_bg_filename = use_signal(|| {
+        let (path, _) = BACKGROUND_COLLECTION[0];
+        path.split('/').last().unwrap_or("foto.jpg").to_string()
+    });
 
     // Offset para avanço manual sequencial em relação à fatia horária (Ticket #30)
     let mut bg_offset = use_signal(|| 0u64);
@@ -225,16 +228,20 @@ pub fn App() -> Element {
     use_hook(|| {
         let mut raw_setter = raw_image;
         let mut subject_setter = current_bg_subject;
+        let mut file_setter = current_bg_filename;
         spawn(async move {
             let idx = pick_time_slice_background_index(0);
             let (path, name) = BACKGROUND_COLLECTION[idx];
+            let filename = path.split('/').last().unwrap_or("foto.jpg").to_string();
             if let Some(img) = load_remote_image(path).await {
                 raw_setter.set(Some(img));
                 subject_setter.set(name.to_string());
+                file_setter.set(filename);
             } else {
                 // Fallback de contingência caso a requisição de rede falhe
                 raw_setter.set(Some(create_default_graphic(360, 480)));
                 subject_setter.set(String::from("Gráfico Base"));
+                file_setter.set(filename);
             }
         });
     });
@@ -1047,7 +1054,8 @@ pub fn App() -> Element {
 
     let cli_cmd = if !show_advanced() {
         format!(
-            "navalha poster foto.jpg --frase \"{}\"{}{}{}{}{}{}{}{}{}{}{}{} -o poster.png",
+            "navalha poster {} --frase \"{}\"{}{}{}{}{}{}{}{}{}{}{}{} -o poster.png",
+            current_bg_filename(),
             phrase(),
             frase_superior_flag,
             formato_flag,
@@ -1064,7 +1072,8 @@ pub fn App() -> Element {
         )
     } else {
         format!(
-            "navalha compor foto.jpg --recorte --recorte-threshold {:.2} --dither {} --paleta {} --escala {}{}{}{}{}{} --tarja-baixo \"{}\" --distorcao-vertical {:.1}{}{}{} -o poster.png",
+            "navalha compor {} --recorte --recorte-threshold {:.2} --dither {} --paleta {} --escala {}{}{}{}{}{} --tarja-baixo \"{}\" --distorcao-vertical {:.1}{}{}{} -o poster.png",
+            current_bg_filename(),
             (threshold_slider() as f32) / 100.0,
             dither_label,
             palette_label,
@@ -1095,6 +1104,7 @@ pub fn App() -> Element {
                         let r_clone = reader.clone();
                         let mut raw_image_setter = raw_image;
                         let mut subject_setter = current_bg_subject;
+                        let mut file_setter = current_bg_filename;
 
                         let onload = Closure::wrap(Box::new(move |_: web_sys::Event| {
                             if let Ok(result) = r_clone.result() {
@@ -1104,6 +1114,7 @@ pub fn App() -> Element {
                                     if let Ok(decoded) = img_reader.decode() {
                                         raw_image_setter.set(Some(decoded.to_rgba8()));
                                         subject_setter.set(String::from("Foto do Usuário"));
+                                        file_setter.set(String::from("./minha-foto.png"));
                                     }
                                 }
                             }
@@ -1122,14 +1133,17 @@ pub fn App() -> Element {
     let on_random_bg = move |_| {
         let mut raw_setter = raw_image;
         let mut subject_setter = current_bg_subject;
+        let mut file_setter = current_bg_filename;
         let off = bg_offset() + 1;
         bg_offset.set(off);
         spawn(async move {
             let idx = pick_time_slice_background_index(off);
             let (path, name) = BACKGROUND_COLLECTION[idx];
+            let filename = path.split('/').last().unwrap_or("foto.jpg").to_string();
             if let Some(img) = load_remote_image(path).await {
                 raw_setter.set(Some(img));
                 subject_setter.set(name.to_string());
+                file_setter.set(filename);
             }
         });
     };
