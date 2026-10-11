@@ -219,6 +219,7 @@ pub fn App() -> Element {
         let (path, _) = BACKGROUND_COLLECTION[0];
         path.split('/').last().unwrap_or("foto.jpg").to_string()
     });
+    let mut license_choice = use_signal(|| String::from("cc-by-sa"));
 
     // Offset para avanço manual sequencial em relação à fatia horária (Ticket #30)
     let mut bg_offset = use_signal(|| 0u64);
@@ -1136,6 +1137,9 @@ pub fn App() -> Element {
         let mut file_setter = current_bg_filename;
         let off = bg_offset() + 1;
         bg_offset.set(off);
+        if license_choice() == "sem-licenca" || license_choice() == "copyright" {
+            license_choice.set(String::from("cc-by-sa"));
+        }
         spawn(async move {
             let idx = pick_time_slice_background_index(off);
             let (path, name) = BACKGROUND_COLLECTION[idx];
@@ -1321,6 +1325,62 @@ pub fn App() -> Element {
 
                     // Ações de Download e Exportação fixas no topo
                     div { class: "export-box",
+                        // Seletor de Licença Prominente (Tickets #36 e #37)
+                        div { class: "license-selector-box",
+                            div { class: "license-header",
+                                span { class: "license-title", "📜 LICENÇA DA ARTE GERADA" }
+                                a {
+                                    href: "https://creativecommons.org/about/cclicenses/",
+                                    target: "_blank",
+                                    rel: "noopener noreferrer",
+                                    class: "license-link-help",
+                                    title: "Entenda as diferenças entre as licenças Creative Commons",
+                                    "O que é isso? ↗"
+                                }
+                            }
+                            select {
+                                class: "license-dropdown",
+                                value: "{license_choice}",
+                                onchange: move |e| {
+                                    let val = e.value();
+                                    // Se a foto for do acervo CC, não permite opções restritivas (Ticket #37)
+                                    let is_gallery = current_bg_filename() != "./minha-foto.png";
+                                    if is_gallery && (val == "sem-licenca" || val == "copyright") {
+                                        license_choice.set(String::from("cc-by-sa"));
+                                    } else {
+                                        license_choice.set(val);
+                                    }
+                                },
+                                option { value: "cc-by-sa", "CC BY-SA 4.0 (Atribuição-CompartilhaIgual) [Padrão]" }
+                                option { value: "cc-by", "CC BY 4.0 (Atribuição)" }
+                                option { value: "cc-by-nc", "CC BY-NC 4.0 (Atribuição-NãoComercial)" }
+                                option { value: "cc-by-nd", "CC BY-ND 4.0 (Atribuição-SemDerivações)" }
+                                option {
+                                    value: "sem-licenca",
+                                    disabled: current_bg_filename() != "./minha-foto.png",
+                                    if current_bg_filename() != "./minha-foto.png" {
+                                        "Sem licença (desativado: acervo CC exige liberdade)"
+                                    } else {
+                                        "Sem licença"
+                                    }
+                                }
+                                option {
+                                    value: "copyright",
+                                    disabled: current_bg_filename() != "./minha-foto.png",
+                                    if current_bg_filename() != "./minha-foto.png" {
+                                        "Todos os direitos reservados / Copyright (blargh) [desativado: acervo CC]"
+                                    } else {
+                                        "Todos os direitos reservados / Copyright (blargh)"
+                                    }
+                                }
+                            }
+                            if current_bg_filename() != "./minha-foto.png" {
+                                span { class: "license-hint-notice",
+                                    "ℹ️ Obras baseadas no acervo CC público exigem licenças livres."
+                                }
+                            }
+                        }
+
                         button {
                             class: "btn-download-primary",
                             onclick: download_png,
