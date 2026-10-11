@@ -802,6 +802,73 @@ html:has(.navalha-app), body:has(.navalha-app) {
     flex-shrink: 0;
 }
 
+/* Seletor Visual de Licença */
+.license-selector-box {
+    background-color: #16161a;
+    border: 1px solid #33333d;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.license-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.license-title {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    color: #00f0ff;
+    text-transform: uppercase;
+}
+
+.license-link-help {
+    font-size: 10px;
+    font-weight: 700;
+    color: #e2f835;
+    text-decoration: underline;
+    letter-spacing: 0.3px;
+    transition: color 0.15s ease;
+}
+
+.license-link-help:hover {
+    color: #ff0033;
+}
+
+.license-dropdown {
+    width: 100%;
+    background-color: #000000;
+    color: #e2f835;
+    border: 1.5px solid #ff0033;
+    padding: 7px 8px;
+    font-size: 11.5px;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 2px 2px 0px #000;
+    outline: none;
+}
+
+.license-dropdown:focus {
+    border-color: #e2f835;
+}
+
+.license-dropdown option:disabled {
+    color: #555566;
+    background-color: #111116;
+}
+
+.license-hint-notice {
+    font-size: 9.5px;
+    color: #ff0033;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
 .btn-download-primary, .btn-gilete {
     background-color: #e2f835;
     color: #000000;
@@ -954,17 +1021,36 @@ html:has(.navalha-app), body:has(.navalha-app) {
     background-color: #000000;
     border: 1px solid #222;
     padding: 8px 14px;
-    overflow-x: auto;
+    overflow: hidden;
+    min-width: 0;
 }
 
 .cli-prompt {
     color: #e2f835;
     font-weight: 900;
     font-size: 16px;
+    flex-shrink: 0;
+}
+
+.cli-code-wrap {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: thin;
+    scrollbar-color: #333 #000;
+}
+
+.cli-code-wrap::-webkit-scrollbar {
+    height: 4px;
+}
+
+.cli-code-wrap::-webkit-scrollbar-thumb {
+    background: #333;
 }
 
 .cli-code {
-    flex: 1;
+    display: inline-block;
     color: #00f0ff;
     font-size: 13px;
     white-space: nowrap;
@@ -982,6 +1068,7 @@ html:has(.navalha-app), body:has(.navalha-app) {
     cursor: pointer;
     font-family: inherit;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .btn-copy-cli:hover {
