@@ -1529,7 +1529,29 @@ fn save_output(
         }
     }
 
-    poster.save_with_format(saida, ImageFormat::Png)?;
+    let mut raw_png = Vec::new();
+    poster.write_to(&mut Cursor::new(&mut raw_png), ImageFormat::Png)?;
+
+    // Gera o comando CLI de reprodução fiel baseado nos argumentos fornecidos
+    let args: Vec<String> = std::env::args().collect();
+    let cmd_str = if !args.is_empty() {
+        args.join(" ")
+    } else {
+        String::from("navalha poster")
+    };
+
+    let metadata = [
+        ("Software", "Navalha CLI / Navalha Core"),
+        ("Generator", "Navalha Motor Anti-Design"),
+        ("Command", cmd_str.as_str()),
+        ("License", "CC BY-SA 4.0"),
+    ];
+
+    let final_bytes = navalha_core::inject_png_metadata(&raw_png, &metadata)
+        .unwrap_or(raw_png);
+
+    let mut f = File::create(saida)?;
+    f.write_all(&final_bytes)?;
     Ok(())
 }
 

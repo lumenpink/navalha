@@ -1195,24 +1195,51 @@ pub fn App() -> Element {
         }
     };
 
-    // Callbacks de download PNG
-    let download_png = move |_| {
+    // Callbacks de download PNG com injeção de metadados tEXt (Tickets #35 e #36)
+    let cli_cmd_for_dl = cli_cmd.clone();
+    let trigger_download_with_metadata = std::rc::Rc::new(move || {
+        if let Some(poster) = latest_poster() {
+            let mut raw_png = Vec::new();
+            if poster.write_to(&mut Cursor::new(&mut raw_png), ImageFormat::Png).is_ok() {
+                let lic_label = match license_choice().as_str() {
+                    "cc-by" => "CC BY 4.0",
+                    "cc-by-nc" => "CC BY-NC 4.0",
+                    "cc-by-nd" => "CC BY-ND 4.0",
+                    "sem-licenca" => "Sem licença",
+                    "copyright" => "Todos os direitos reservados / Copyright (blargh)",
+                    _ => "CC BY-SA 4.0",
+                };
+                let cmd = cli_cmd_for_dl.clone();
+                let metadata = [
+                    ("Software", "Navalha Web / Navalha Core"),
+                    ("Generator", "Navalha Motor Anti-Design"),
+                    ("Command", cmd.as_str()),
+                    ("License", lic_label),
+                ];
+                let final_png = navalha_core::inject_png_metadata(&raw_png, &metadata).unwrap_or(raw_png);
+                let b64 = BASE64.encode(&final_png);
+                let uri = format!("data:image/png;base64,{b64}");
+                trigger_download(&uri, "navalha_poster.png");
+                return;
+            }
+        }
         let uri = rendered_png_uri();
         if !uri.is_empty() {
             trigger_download(&uri, "navalha_poster.png");
         }
+    });
+
+    let download_png = {
+        let trigger = trigger_download_with_metadata.clone();
+        move |_| trigger()
     };
-    let download_png_dock = move |_| {
-        let uri = rendered_png_uri();
-        if !uri.is_empty() {
-            trigger_download(&uri, "navalha_poster.png");
-        }
+    let download_png_dock = {
+        let trigger = trigger_download_with_metadata.clone();
+        move |_| trigger()
     };
-    let download_png_preview = move |_| {
-        let uri = rendered_png_uri();
-        if !uri.is_empty() {
-            trigger_download(&uri, "navalha_poster.png");
-        }
+    let download_png_preview = {
+        let trigger = trigger_download_with_metadata.clone();
+        move |_| trigger()
     };
 
     // Callback de download SVG
