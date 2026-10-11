@@ -120,50 +120,57 @@ pub async fn load_remote_image(url: &str) -> Option<RgbaImage> {
     Some(decoded.to_rgba8())
 }
 
-/// Sorteia um índice aleatório válido dentro do catálogo de backgrounds
-pub fn pick_random_background_index() -> usize {
+/// Retorna o slot de tempo determinístico atual (em blocos de 15 minutos / 900 segundos)
+pub fn current_time_slice() -> u64 {
     #[cfg(target_arch = "wasm32")]
     {
-        let rand = js_sys::Math::random();
-        let idx = (rand * (BACKGROUND_COLLECTION.len() as f64)).floor() as usize;
-        idx.min(BACKGROUND_COLLECTION.len() - 1)
+        let now_ms = js_sys::Date::now();
+        (now_ms / 1000.0 / 900.0).floor() as u64
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
         use std::time::SystemTime;
-        let nanos = SystemTime::now()
+        SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
-            .map(|d| d.subsec_nanos())
-            .unwrap_or(42);
-        (nanos as usize) % BACKGROUND_COLLECTION.len()
+            .map(|d| d.as_secs() / 900)
+            .unwrap_or(0)
     }
 }
 
-/// Sorteia aleatoriamente uma frase temática de protesto da coleção (Issue #22)
+/// Seleciona o índice de imagem de fundo baseado na fatia horária de 15 minutos
+pub fn pick_time_slice_background_index(offset: u64) -> usize {
+    let slot = current_time_slice().wrapping_add(offset);
+    (slot as usize) % BACKGROUND_COLLECTION.len()
+}
+
+/// Seleciona a frase de protesto baseada na fatia horária de 15 minutos (com hash decorrente)
+pub fn pick_time_slice_protest_phrase(offset: u64) -> &'static str {
+    let slot = current_time_slice().wrapping_add(offset);
+    // Hash determinístico simples estilo LCG para descorrelacionar frase do índice da imagem
+    let phrase_hash = slot.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+    let idx = (phrase_hash as usize) % navalha_core::PROTEST_PHRASES.len();
+    navalha_core::PROTEST_PHRASES
+        .get(idx)
+        .copied()
+        .unwrap_or(navalha_core::FALLBACK_DEFAULT_PHRASE)
+}
+
+/// Seleciona a estética canônica baseada na fatia horária de 15 minutos
+pub fn pick_time_slice_aesthetic(offset: u64) -> &'static str {
+    let slot = current_time_slice().wrapping_add(offset);
+    let aes_hash = slot.wrapping_mul(2862933555777941757).wrapping_add(3037000493);
+    let all_presets = navalha_core::AestheticPreset::all();
+    let idx = (aes_hash as usize) % all_presets.len();
+    all_presets[idx].id()
+}
+
+/// Aliases compatíveis com testes e chamadas diretas
+pub fn pick_random_background_index() -> usize {
+    pick_time_slice_background_index(0)
+}
+
 pub fn pick_random_protest_phrase() -> &'static str {
-    #[cfg(target_arch = "wasm32")]
-    {
-        let rand = js_sys::Math::random();
-        let idx = (rand * (navalha_core::PROTEST_PHRASES.len() as f64)).floor() as usize;
-        let idx = idx.min(navalha_core::PROTEST_PHRASES.len() - 1);
-        navalha_core::PROTEST_PHRASES
-            .get(idx)
-            .copied()
-            .unwrap_or(navalha_core::FALLBACK_DEFAULT_PHRASE)
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        use std::time::SystemTime;
-        let nanos = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .map(|d| d.subsec_nanos())
-            .unwrap_or(42);
-        let idx = (nanos as usize) % navalha_core::PROTEST_PHRASES.len();
-        navalha_core::PROTEST_PHRASES
-            .get(idx)
-            .copied()
-            .unwrap_or(navalha_core::FALLBACK_DEFAULT_PHRASE)
-    }
+    pick_time_slice_protest_phrase(0)
 }
 
 
@@ -217,12 +224,16 @@ pub fn App() -> Element {
     let current_bg_subject = use_signal(String::new);
 
 
-    // Carregamento aleatório inicial a partir do acervo CC de 20 retratos históricos
+    // Offset para avanço manual sequencial em relação à fatia horária (Ticket #30)
+    let mut bg_offset = use_signal(|| 0u64);
+    let mut phrase_offset = use_signal(|| 0u64);
+
+    // Carregamento determinístico inicial a partir da fatia de 15 minutos do acervo CC
     use_hook(|| {
         let mut raw_setter = raw_image;
         let mut subject_setter = current_bg_subject;
         spawn(async move {
-            let idx = pick_random_background_index();
+            let idx = pick_time_slice_background_index(0);
             let (path, name) = BACKGROUND_COLLECTION[idx];
             if let Some(img) = load_remote_image(path).await {
                 raw_setter.set(Some(img));
@@ -242,11 +253,11 @@ pub fn App() -> Element {
     let mut mobile_view = use_signal(|| String::from("controls"));
     let mut preview_collapsed = use_signal(|| false);
 
-    // Controles principais do Pôster Relâmpago
+    // Controles principais do Pôster Relâmpago com seleção determinística horária de 15 minutos (Ticket #30)
     let mut poster_format = use_signal(|| String::from("vertical"));
-    let mut phrase = use_signal(|| pick_random_protest_phrase().to_string());
+    let mut phrase = use_signal(|| pick_time_slice_protest_phrase(0).to_string());
     let mut phrase_top = use_signal(|| String::new());
-    let mut aesthetic_id = use_signal(|| String::from("punk-riot"));
+    let mut aesthetic_id = use_signal(|| pick_time_slice_aesthetic(0).to_string());
 
     // Aba ativa de faixa ("bottom" = Inferior, "top" = Superior - Ticket #16)
     let mut banner_active_tab = use_signal(|| String::from("bottom"));
@@ -1112,12 +1123,14 @@ pub fn App() -> Element {
         }
     };
 
-    // Callback para sortear outra imagem do acervo CC
+    // Callback para avançar deterministicamente a imagem do acervo CC (Ticket #30)
     let on_random_bg = move |_| {
         let mut raw_setter = raw_image;
         let mut subject_setter = current_bg_subject;
+        let off = bg_offset() + 1;
+        bg_offset.set(off);
         spawn(async move {
-            let idx = pick_random_background_index();
+            let idx = pick_time_slice_background_index(off);
             let (path, name) = BACKGROUND_COLLECTION[idx];
             if let Some(img) = load_remote_image(path).await {
                 raw_setter.set(Some(img));
@@ -1377,7 +1390,7 @@ pub fn App() -> Element {
                                         class: "btn-random-bg",
                                         r#type: "button",
                                         onclick: on_random_bg,
-                                        "🎲 IMAGEM ALEATÓRIA (ACERVO CC)"
+                                        "⚡ ALTERNAR IMAGEM (15MIN)"
                                     }
                                     if !current_bg_subject().is_empty() {
                                         span { class: "current-subject-badge",
@@ -1407,8 +1420,12 @@ pub fn App() -> Element {
                                             button {
                                                 r#type: "button",
                                                 class: "btn-phrase-random",
-                                                onclick: move |_| phrase.set(pick_random_protest_phrase().to_string()),
-                                                "🎲 SORTEAR FRASE"
+                                                onclick: move |_| {
+                                                    let off = phrase_offset() + 1;
+                                                    phrase_offset.set(off);
+                                                    phrase.set(pick_time_slice_protest_phrase(off).to_string());
+                                                },
+                                                "⚡ ALTERNAR FRASE (15MIN)"
                                             }
                                         }
                                         textarea {
@@ -4568,6 +4585,24 @@ mod tests {
     fn test_pick_random_background_index_bounds() {
         let idx = pick_random_background_index();
         assert!(idx < BACKGROUND_COLLECTION.len());
+    }
+
+    #[test]
+    fn test_time_slice_determinism_and_bounds() {
+        let idx0 = pick_time_slice_background_index(0);
+        let idx1 = pick_time_slice_background_index(1);
+        assert!(idx0 < BACKGROUND_COLLECTION.len());
+        assert!(idx1 < BACKGROUND_COLLECTION.len());
+
+        let p0 = pick_time_slice_protest_phrase(0);
+        let p1 = pick_time_slice_protest_phrase(1);
+        assert!(navalha_core::PROTEST_PHRASES.contains(&p0));
+        assert!(navalha_core::PROTEST_PHRASES.contains(&p1));
+
+        let a0 = pick_time_slice_aesthetic(0);
+        let a1 = pick_time_slice_aesthetic(1);
+        assert!(navalha_core::AestheticPreset::parse(a0).is_some());
+        assert!(navalha_core::AestheticPreset::parse(a1).is_some());
     }
 
     #[test]
