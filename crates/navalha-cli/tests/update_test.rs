@@ -62,3 +62,34 @@ fn test_resolve_channel_precedence() {
     let ch = resolve_channel(Some("nightly"), Some("stable"), Some(&config_file));
     assert_eq!(ch, "nightly");
 }
+
+#[test]
+fn test_get_download_url_and_pinning() {
+    use navalha_cli::update::get_download_url;
+
+    assert_eq!(
+        get_download_url("stable", None),
+        "https://banca.2lp.in/downloads/navalha/stable-latest/navalha"
+    );
+    assert_eq!(
+        get_download_url("nightly", None),
+        "https://banca.2lp.in/downloads/navalha/nightly-latest/navalha"
+    );
+    assert_eq!(
+        get_download_url("stable", Some("0.2.0")),
+        "https://banca.2lp.in/downloads/navalha/releases/v0.2.0/navalha"
+    );
+    assert_eq!(
+        get_download_url("stable", Some("v0.3.0")),
+        "https://banca.2lp.in/downloads/navalha/releases/v0.3.0/navalha"
+    );
+}
+
+#[test]
+fn test_semver_edge_cases_with_prefixes() {
+    assert!(semver_is_newer("v0.2.0", "0.1.0"));
+    assert!(semver_is_newer("0.2.0", "v0.1.0"));
+    assert!(!semver_is_newer("v0.1.0", "0.1.0"));
+    assert!(!semver_is_newer("0.1.0", "v0.1.0"));
+    assert!(semver_is_newer("0.2.0", "0.1.99"));
+}
