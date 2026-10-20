@@ -115,9 +115,9 @@ impl Palette {
         Self::new(
             "Navalha Clássica",
             vec![
-                RgbColor::new(0, 0, 0),         // #000000 Preto
-                RgbColor::new(255, 255, 255),   // #FFFFFF Branco
-                RgbColor::new(255, 0, 51),       // #FF0033 Vermelho Punk
+                RgbColor::new(0, 0, 0),       // #000000 Preto
+                RgbColor::new(255, 255, 255), // #FFFFFF Branco
+                RgbColor::new(255, 0, 51),    // #FF0033 Vermelho Punk
             ],
         )
     }
@@ -126,9 +126,9 @@ impl Palette {
         Self::new(
             "Lapa Noturna",
             vec![
-                RgbColor::new(11, 11, 14),      // #0B0B0E Preto asfalto
-                RgbColor::new(255, 0, 127),     // #FF007F Magenta neon
-                RgbColor::new(0, 240, 255),     // #00F0FF Ciano elétrico
+                RgbColor::new(11, 11, 14),  // #0B0B0E Preto asfalto
+                RgbColor::new(255, 0, 127), // #FF007F Magenta neon
+                RgbColor::new(0, 240, 255), // #00F0FF Ciano elétrico
             ],
         )
     }
@@ -137,8 +137,8 @@ impl Palette {
         Self::new(
             "Xerox Podre",
             vec![
-                RgbColor::new(28, 25, 23),      // #1C1917 Toner oxidado
-                RgbColor::new(245, 242, 235),   // #F5F2EB Papel jornal velho
+                RgbColor::new(28, 25, 23),    // #1C1917 Toner oxidado
+                RgbColor::new(245, 242, 235), // #F5F2EB Papel jornal velho
             ],
         )
     }
@@ -147,9 +147,9 @@ impl Palette {
         Self::new(
             "Risografia Crua",
             vec![
-                RgbColor::new(0, 56, 168),      // #0038A8 Azul Royal
-                RgbColor::new(255, 72, 176),    // #FF48B0 Rosa Fluorescente
-                RgbColor::new(255, 242, 0),     // #FFF200 Amarelo Médio
+                RgbColor::new(0, 56, 168),   // #0038A8 Azul Royal
+                RgbColor::new(255, 72, 176), // #FF48B0 Rosa Fluorescente
+                RgbColor::new(255, 242, 0),  // #FFF200 Amarelo Médio
             ],
         )
     }
@@ -158,8 +158,8 @@ impl Palette {
         Self::new(
             "Asfalto & Ouro",
             vec![
-                RgbColor::new(17, 17, 17),      // #111111 Preto piche
-                RgbColor::new(255, 204, 0),     // #FFCC00 Amarelo advertência
+                RgbColor::new(17, 17, 17),  // #111111 Preto piche
+                RgbColor::new(255, 204, 0), // #FFCC00 Amarelo advertência
             ],
         )
     }
@@ -213,10 +213,10 @@ impl Palette {
         Self::new(
             "CGA Paleta 1 (Alto Brilho - Neon Cunha)",
             vec![
-                RgbColor::new(0, 0, 0),        // #000000 Preto
-                RgbColor::new(85, 255, 255),   // #55FFFF Ciano Brilhante
-                RgbColor::new(255, 85, 255),   // #FF55FF Magenta Brilhante
-                RgbColor::new(255, 255, 255),  // #FFFFFF Branco
+                RgbColor::new(0, 0, 0),       // #000000 Preto
+                RgbColor::new(85, 255, 255),  // #55FFFF Ciano Brilhante
+                RgbColor::new(255, 85, 255),  // #FF55FF Magenta Brilhante
+                RgbColor::new(255, 255, 255), // #FFFFFF Branco
             ],
         )
     }
@@ -225,10 +225,10 @@ impl Palette {
         Self::new(
             "CGA Paleta 0 (Alto Brilho)",
             vec![
-                RgbColor::new(0, 0, 0),        // #000000 Preto
-                RgbColor::new(85, 255, 85),    // #55FF55 Verde Brilhante
-                RgbColor::new(255, 85, 85),    // #FF5555 Vermelho Brilhante
-                RgbColor::new(255, 255, 85),   // #FFFF55 Amarelo Brilhante
+                RgbColor::new(0, 0, 0),      // #000000 Preto
+                RgbColor::new(85, 255, 85),  // #55FF55 Verde Brilhante
+                RgbColor::new(255, 85, 85),  // #FF5555 Vermelho Brilhante
+                RgbColor::new(255, 255, 85), // #FFFF55 Amarelo Brilhante
             ],
         )
     }
@@ -237,11 +237,11 @@ impl Palette {
         Self::new(
             "Old Mac Pop Art",
             vec![
-                RgbColor::new(0, 0, 0),        // #000000 Preto
-                RgbColor::new(255, 255, 255),  // #FFFFFF Branco
-                RgbColor::new(255, 0, 127),    // #FF007F Rosa Pop Art
-                RgbColor::new(255, 230, 0),    // #FFE600 Amarelo Serigráfico
-                RgbColor::new(0, 210, 255),    // #00D2FF Azul Turquesa Amiga
+                RgbColor::new(0, 0, 0),       // #000000 Preto
+                RgbColor::new(255, 255, 255), // #FFFFFF Branco
+                RgbColor::new(255, 0, 127),   // #FF007F Rosa Pop Art
+                RgbColor::new(255, 230, 0),   // #FFE600 Amarelo Serigráfico
+                RgbColor::new(0, 210, 255),   // #00D2FF Azul Turquesa Amiga
             ],
         )
     }
@@ -250,9 +250,9 @@ impl Palette {
         Self::new(
             "Brutalismo Concreto (Drica D'arc Meirelles)",
             vec![
-                RgbColor::new(10, 10, 10),      // #0A0A0A Preto Piche
-                RgbColor::new(229, 229, 229),   // #E5E5E5 Fundo Concreto
-                RgbColor::new(250, 250, 250),   // #FAFAFA Branco Gesso
+                RgbColor::new(10, 10, 10),    // #0A0A0A Preto Piche
+                RgbColor::new(229, 229, 229), // #E5E5E5 Fundo Concreto
+                RgbColor::new(250, 250, 250), // #FAFAFA Branco Gesso
             ],
         )
     }
@@ -261,11 +261,11 @@ impl Palette {
         Self::new(
             "Trash Polka / Realismo & Sangue (Renata Carvalho)",
             vec![
-                RgbColor::new(17, 17, 17),      // #111111 Preto Carvão
-                RgbColor::new(122, 122, 122),   // #7A7A7A Cinza Meio-Tom
-                RgbColor::new(220, 220, 220),   // #DCDCDC Cinza Claro
-                RgbColor::new(255, 255, 255),   // #FFFFFF Branco Cirúrgico
-                RgbColor::new(186, 12, 47),     // #BA0C2F Vermelho Sangue Coagulado (Carmim)
+                RgbColor::new(17, 17, 17),    // #111111 Preto Carvão
+                RgbColor::new(122, 122, 122), // #7A7A7A Cinza Meio-Tom
+                RgbColor::new(220, 220, 220), // #DCDCDC Cinza Claro
+                RgbColor::new(255, 255, 255), // #FFFFFF Branco Cirúrgico
+                RgbColor::new(186, 12, 47),   // #BA0C2F Vermelho Sangue Coagulado (Carmim)
             ],
         )
     }
@@ -317,9 +317,9 @@ impl Palette {
         Self::new(
             "Mimeógrafo Violeta (Keila Simpson)",
             vec![
-                RgbColor::new(244, 239, 230),   // #F4EFE6 Papel Manilha/Palha
-                RgbColor::new(67, 44, 122),     // #432C7A Tinta Violeta Metil
-                RgbColor::new(42, 25, 84),      // #2A1954 Saturação de Álcool
+                RgbColor::new(244, 239, 230), // #F4EFE6 Papel Manilha/Palha
+                RgbColor::new(67, 44, 122),   // #432C7A Tinta Violeta Metil
+                RgbColor::new(42, 25, 84),    // #2A1954 Saturação de Álcool
             ],
         )
     }
@@ -328,8 +328,8 @@ impl Palette {
         Self::new(
             "Xilogravura Sertaneja (Xica Manicongo)",
             vec![
-                RgbColor::new(214, 196, 165),   // #D6C4A5 Papel Kraft Queimado
-                RgbColor::new(19, 17, 16),      // #131110 Preto de Fumo
+                RgbColor::new(214, 196, 165), // #D6C4A5 Papel Kraft Queimado
+                RgbColor::new(19, 17, 16),    // #131110 Preto de Fumo
             ],
         )
     }
@@ -338,10 +338,10 @@ impl Palette {
         Self::new(
             "Glitch CRT & Contrainformação (Robeyoncé Lima)",
             vec![
-                RgbColor::new(13, 15, 18),      // #0D0F12 Fundo Ruído Escuro
-                RgbColor::new(0, 255, 204),     // #00FFCC Fósforo P31 Verde/Ciano
-                RgbColor::new(255, 0, 51),      // #FF0033 Aberração Vermelha
-                RgbColor::new(0, 51, 255),      // #0033FF Aberração Azul
+                RgbColor::new(13, 15, 18),  // #0D0F12 Fundo Ruído Escuro
+                RgbColor::new(0, 255, 204), // #00FFCC Fósforo P31 Verde/Ciano
+                RgbColor::new(255, 0, 51),  // #FF0033 Aberração Vermelha
+                RgbColor::new(0, 51, 255),  // #0033FF Aberração Azul
             ],
         )
     }
@@ -350,10 +350,10 @@ impl Palette {
         Self::new(
             "Terminal Fósforo Verde (ASCII 1971)",
             vec![
-                RgbColor::new(5, 10, 5),       // #050A05 Fundo CRT escuro
-                RgbColor::new(0, 85, 20),      // #005514 Verde escuro
-                RgbColor::new(0, 170, 50),     // #00AA32 Verde médio
-                RgbColor::new(0, 255, 102),    // #00FF66 Fósforo verde brilhante
+                RgbColor::new(5, 10, 5),    // #050A05 Fundo CRT escuro
+                RgbColor::new(0, 85, 20),   // #005514 Verde escuro
+                RgbColor::new(0, 170, 50),  // #00AA32 Verde médio
+                RgbColor::new(0, 255, 102), // #00FF66 Fósforo verde brilhante
             ],
         )
     }
@@ -362,10 +362,10 @@ impl Palette {
         Self::new(
             "Tabloide Popular",
             vec![
-                RgbColor::new(10, 10, 10),      // #0A0A0A Preto chumbo rotativa
-                RgbColor::new(230, 0, 0),       // #E60000 Vermelho manchete
-                RgbColor::new(255, 230, 0),     // #FFE600 Amarelo sensacionalista
-                RgbColor::new(232, 230, 223),   // #E8E6DF Papel jornal cinza
+                RgbColor::new(10, 10, 10),    // #0A0A0A Preto chumbo rotativa
+                RgbColor::new(230, 0, 0),     // #E60000 Vermelho manchete
+                RgbColor::new(255, 230, 0),   // #FFE600 Amarelo sensacionalista
+                RgbColor::new(232, 230, 223), // #E8E6DF Papel jornal cinza
             ],
         )
     }
@@ -374,9 +374,9 @@ impl Palette {
         Self::new(
             "Linóleo & Ouro Queimado (Madame Satã)",
             vec![
-                RgbColor::new(26, 20, 18),      // #1A1412 Carvão linóleo
-                RgbColor::new(212, 136, 58),    // #D4883A Ouro cru queimado
-                RgbColor::new(255, 255, 255),   // #FFFFFF Branco navalha
+                RgbColor::new(26, 20, 18),    // #1A1412 Carvão linóleo
+                RgbColor::new(212, 136, 58),  // #D4883A Ouro cru queimado
+                RgbColor::new(255, 255, 255), // #FFFFFF Branco navalha
             ],
         )
     }
@@ -385,9 +385,9 @@ impl Palette {
         Self::new(
             "Papel Kraft & Datilografia Olivetti (João W. Nery)",
             vec![
-                RgbColor::new(43, 29, 12),      // #2B1D0C Sépia carbono máquina
-                RgbColor::new(200, 168, 112),   // #C8A870 Papel kraft envelhecido
-                RgbColor::new(245, 235, 225),   // #F5EBE1 Papel datilografado
+                RgbColor::new(43, 29, 12),    // #2B1D0C Sépia carbono máquina
+                RgbColor::new(200, 168, 112), // #C8A870 Papel kraft envelhecido
+                RgbColor::new(245, 235, 225), // #F5EBE1 Papel datilografado
             ],
         )
     }
@@ -396,9 +396,9 @@ impl Palette {
         Self::new(
             "Teatro Operário Construtivista (Leo Moreira Sá)",
             vec![
-                RgbColor::new(17, 17, 17),      // #111111 Preto chumbo
-                RgbColor::new(179, 27, 27),     // #B31B1B Vermelho carmesim
-                RgbColor::new(230, 226, 216),   // #E6E2D8 Papel jornal cru
+                RgbColor::new(17, 17, 17),    // #111111 Preto chumbo
+                RgbColor::new(179, 27, 27),   // #B31B1B Vermelho carmesim
+                RgbColor::new(230, 226, 216), // #E6E2D8 Papel jornal cru
             ],
         )
     }
@@ -407,9 +407,9 @@ impl Palette {
         Self::new(
             "Cyber-BBS Fanzine Digital (Amara Moira)",
             vec![
-                RgbColor::new(0, 17, 136),      // #001188 Azul ultramarino BBS
-                RgbColor::new(255, 238, 0),     // #FFEE00 Amarelo fósforo CRT
-                RgbColor::new(255, 255, 255),   // #FFFFFF Branco puro
+                RgbColor::new(0, 17, 136),    // #001188 Azul ultramarino BBS
+                RgbColor::new(255, 238, 0),   // #FFEE00 Amarelo fósforo CRT
+                RgbColor::new(255, 255, 255), // #FFFFFF Branco puro
             ],
         )
     }
@@ -418,9 +418,9 @@ impl Palette {
         Self::new(
             "Punk 80 BR // ABC Paulista & K7 (Marina Mathey)",
             vec![
-                RgbColor::new(20, 20, 20),      // #141414 Preto asfalto / piche fabril
-                RgbColor::new(166, 43, 43),     // #A62B2B Vermelho óxido / ferrugem
-                RgbColor::new(230, 226, 212),   // #E6E2D4 Branco papel K7 gasto
+                RgbColor::new(20, 20, 20),    // #141414 Preto asfalto / piche fabril
+                RgbColor::new(166, 43, 43),   // #A62B2B Vermelho óxido / ferrugem
+                RgbColor::new(230, 226, 212), // #E6E2D4 Branco papel K7 gasto
             ],
         )
     }
@@ -429,9 +429,9 @@ impl Palette {
         Self::new(
             "Anarco-Zine // Stencil & Grampos (Jaqueline Gomes de Jesus)",
             vec![
-                RgbColor::new(10, 10, 10),      // #0A0A0A Preto anarquia puro
-                RgbColor::new(212, 28, 28),     // #D41C1C Vermelho fogo libertário
-                RgbColor::new(214, 206, 189),   // #D6CEBD Papel kraft / jornal artesanal
+                RgbColor::new(10, 10, 10),    // #0A0A0A Preto anarquia puro
+                RgbColor::new(212, 28, 28),   // #D41C1C Vermelho fogo libertário
+                RgbColor::new(214, 206, 189), // #D6CEBD Papel kraft / jornal artesanal
             ],
         )
     }
@@ -440,10 +440,10 @@ impl Palette {
         Self::new(
             "Comunicação Popular // Linogravura & Voz das Ruas (Paulete Furacão)",
             vec![
-                RgbColor::new(26, 20, 18),      // #1A1412 Preto Nanquim / Carvão de rua
-                RgbColor::new(246, 240, 226),   // #F6F0E2 Papel Panfleto / Kraft Claro
-                RgbColor::new(217, 56, 30),     // #D9381E Vermelho Terra / Luta Popular
-                RgbColor::new(245, 183, 0),     // #F5B700 Amarelo Dendê / Sol Baiano
+                RgbColor::new(26, 20, 18),    // #1A1412 Preto Nanquim / Carvão de rua
+                RgbColor::new(246, 240, 226), // #F6F0E2 Papel Panfleto / Kraft Claro
+                RgbColor::new(217, 56, 30),   // #D9381E Vermelho Terra / Luta Popular
+                RgbColor::new(245, 183, 0),   // #F5B700 Amarelo Dendê / Sol Baiano
             ],
         )
     }
@@ -452,10 +452,10 @@ impl Palette {
         Self::new(
             "Imprensa Amazônica // Retícula Viva & Resistência (Symmy Larrat)",
             vec![
-                RgbColor::new(13, 20, 18),      // #0D1412 Preto Floresta Profunda
-                RgbColor::new(242, 237, 228),   // #F2EDE4 Papel Tabloide Ribeirinho
-                RgbColor::new(19, 75, 54),      // #134B36 Verde Clorofila / Florestal
-                RgbColor::new(255, 0, 85),      // #FF0055 Magenta Choque da Resistência
+                RgbColor::new(13, 20, 18),    // #0D1412 Preto Floresta Profunda
+                RgbColor::new(242, 237, 228), // #F2EDE4 Papel Tabloide Ribeirinho
+                RgbColor::new(19, 75, 54),    // #134B36 Verde Clorofila / Florestal
+                RgbColor::new(255, 0, 85),    // #FF0055 Magenta Choque da Resistência
             ],
         )
     }
@@ -492,31 +492,73 @@ impl Palette {
     pub fn find_preset(name_or_id: &str) -> Option<Self> {
         let norm = name_or_id.to_lowercase().replace(['-', '_', ' '], "");
         match norm.as_str() {
-            "classicpunk" | "punkriot" | "navalha" | "punk" | "claudiawonder" => Some(Self::classic_punk()),
+            "classicpunk" | "punkriot" | "navalha" | "punk" | "claudiawonder" => {
+                Some(Self::classic_punk())
+            }
             "linoleoouro" | "navalhasata" | "sata" | "madamesata" => Some(Self::linoleo_ouro()),
-            "xeroxpodre" | "xerox" | "indianaraesiqueira" | "indianarae" => Some(Self::xerox_podre()),
-            "kraftolivetti" | "viagemsolitaria" | "nery" | "joaownery" => Some(Self::kraft_olivetti()),
-            "lapanoturna" | "lapa" | "neon" | "linndaquebrada" | "linn" => Some(Self::lapa_noturna()),
-            "teatrooperario" | "leosa" | "leomoreirasa" | "construtivista" => Some(Self::teatro_operario()),
-            "risografiacrua" | "risografia" | "riso" | "erikahilton" => Some(Self::risografia_crua()),
-            "cyberbbs" | "fanzinedigital" | "amaramoir" | "amara" | "amramoira" | "bbs" => Some(Self::cyber_bbs()),
-            "asfaltoeouro" | "asfaltoalerta" | "asfalto" | "ouro" | "katiatapety" => Some(Self::asfalto_ouro()),
+            "xeroxpodre" | "xerox" | "indianaraesiqueira" | "indianarae" => {
+                Some(Self::xerox_podre())
+            }
+            "kraftolivetti" | "viagemsolitaria" | "nery" | "joaownery" => {
+                Some(Self::kraft_olivetti())
+            }
+            "lapanoturna" | "lapa" | "neon" | "linndaquebrada" | "linn" => {
+                Some(Self::lapa_noturna())
+            }
+            "teatrooperario" | "leosa" | "leomoreirasa" | "construtivista" => {
+                Some(Self::teatro_operario())
+            }
+            "risografiacrua" | "risografia" | "riso" | "erikahilton" => {
+                Some(Self::risografia_crua())
+            }
+            "cyberbbs" | "fanzinedigital" | "amaramoir" | "amara" | "amramoira" | "bbs" => {
+                Some(Self::cyber_bbs())
+            }
+            "asfaltoeouro" | "asfaltoalerta" | "asfalto" | "ouro" | "katiatapety" => {
+                Some(Self::asfalto_ouro())
+            }
             "vga256" | "vga" | "mode13h" | "marciapantera" => Some(Self::vga_256()),
             "cga" | "cga1" | "cgapalette1" | "neoncunha" => Some(Self::cga_palette1()),
             "cga0" | "cgapalette0" => Some(Self::cga_palette0()),
-            "oldmacpopart" | "oldmac" | "popart" | "warhol" | "rogeria" => Some(Self::pop_art_mac()),
-            "terminalgreen" | "ascii" | "asciiart" | "cordeiro" | "laerte" | "laertecoutinho" => Some(Self::terminal_green()),
-            "tabloidepopular" | "tabloide" | "noticiaspopulares" | "imprensa" | "luanamuniz" => Some(Self::tabloide_popular()),
-            "brutalismo" | "brutalista" | "dricadarc" | "dricadarcmeirelles" => Some(Self::brutalismo()),
+            "oldmacpopart" | "oldmac" | "popart" | "warhol" | "rogeria" => {
+                Some(Self::pop_art_mac())
+            }
+            "terminalgreen" | "ascii" | "asciiart" | "cordeiro" | "laerte" | "laertecoutinho" => {
+                Some(Self::terminal_green())
+            }
+            "tabloidepopular" | "tabloide" | "noticiaspopulares" | "imprensa" | "luanamuniz" => {
+                Some(Self::tabloide_popular())
+            }
+            "brutalismo" | "brutalista" | "dricadarc" | "dricadarcmeirelles" => {
+                Some(Self::brutalismo())
+            }
             "trashpolka" | "trash" | "polka" | "renatacarvalho" => Some(Self::trash_polka()),
-            "atarigaming" | "atari" | "tia" | "stella" | "jovannababy" => Some(Self::atari_gaming()),
-            "mimeografo" | "mimeo" | "anilina" | "keilasimpson" | "keila" => Some(Self::mimeografo()),
+            "atarigaming" | "atari" | "tia" | "stella" | "jovannababy" => {
+                Some(Self::atari_gaming())
+            }
+            "mimeografo" | "mimeo" | "anilina" | "keilasimpson" | "keila" => {
+                Some(Self::mimeografo())
+            }
             "xilogravura" | "xilo" | "cordel" | "xicamanicongo" => Some(Self::xilogravura()),
-            "glitchcrt" | "glitch" | "vhs" | "robeyonce" | "robeyoncelima" => Some(Self::glitch_crt()),
-            "punk80br" | "punk80" | "abc" | "k7" | "marinamathey" | "marina" => Some(Self::punk_80_br()),
-            "anarcozine" | "anarco" | "zine" | "stencil" | "jaqueline" | "jaquelinejesus" | "jaquelinegomesdejesus" => Some(Self::anarco_zine()),
-            "comunicacaopopular" | "pauletefuracao" | "paulete" | "furacao" => Some(Self::comunicacao_popular()),
-            "imprensaamazonica" | "symmylarrat" | "symmy" | "larrat" | "amazonia" => Some(Self::imprensa_amazonica()),
+            "glitchcrt" | "glitch" | "vhs" | "robeyonce" | "robeyoncelima" => {
+                Some(Self::glitch_crt())
+            }
+            "punk80br" | "punk80" | "abc" | "k7" | "marinamathey" | "marina" => {
+                Some(Self::punk_80_br())
+            }
+            "anarcozine"
+            | "anarco"
+            | "zine"
+            | "stencil"
+            | "jaqueline"
+            | "jaquelinejesus"
+            | "jaquelinegomesdejesus" => Some(Self::anarco_zine()),
+            "comunicacaopopular" | "pauletefuracao" | "paulete" | "furacao" => {
+                Some(Self::comunicacao_popular())
+            }
+            "imprensaamazonica" | "symmylarrat" | "symmy" | "larrat" | "amazonia" => {
+                Some(Self::imprensa_amazonica())
+            }
             _ => None,
         }
     }

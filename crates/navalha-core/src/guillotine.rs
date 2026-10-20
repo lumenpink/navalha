@@ -1,5 +1,5 @@
-use image::{Rgba, RgbaImage};
 use crate::palette::RgbColor;
+use image::{Rgba, RgbaImage};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GuillotineConfig {

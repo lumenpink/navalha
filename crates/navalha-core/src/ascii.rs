@@ -90,7 +90,10 @@ pub fn render_ascii_to_image(
                 outlined.draw(|gx, gy, c| {
                     if c > 0.2 {
                         let px = base_x as i32 + bounds.min.x as i32 + gx as i32;
-                        let py = base_y as i32 + bounds.min.y as i32 + gy as i32 + scaled_font.ascent() as i32;
+                        let py = base_y as i32
+                            + bounds.min.y as i32
+                            + gy as i32
+                            + scaled_font.ascent() as i32;
                         if px >= 0 && px < img_w as i32 && py >= 0 && py < img_h as i32 {
                             img.put_pixel(px as u32, py as u32, Rgba([fg.r, fg.g, fg.b, 255]));
                         }
@@ -128,7 +131,8 @@ pub fn render_ascii_plate(
     let ramp_len = ramp.len();
 
     // Cache pré-rasterizado dos glifos da rampa (máscaras de alfa 0..255)
-    let mut glyph_masks: Vec<Option<(ab_glyph::Rect, Vec<(i32, i32, u8)>)>> = Vec::with_capacity(ramp_len);
+    let mut glyph_masks: Vec<Option<(ab_glyph::Rect, Vec<(i32, i32, u8)>)>> =
+        Vec::with_capacity(ramp_len);
     for &byte in ramp {
         let ch = byte as char;
         if ch == ' ' {
@@ -212,9 +216,15 @@ pub fn render_ascii_plate(
                             let new_a = a as f32 / 255.0;
                             let out_a = new_a + old_a * (1.0 - new_a);
                             if out_a > 0.0 {
-                                let r = ((color.r as f32 * new_a + cur[0] as f32 * old_a * (1.0 - new_a)) / out_a) as u8;
-                                let g = ((color.g as f32 * new_a + cur[1] as f32 * old_a * (1.0 - new_a)) / out_a) as u8;
-                                let b = ((color.b as f32 * new_a + cur[2] as f32 * old_a * (1.0 - new_a)) / out_a) as u8;
+                                let r = ((color.r as f32 * new_a
+                                    + cur[0] as f32 * old_a * (1.0 - new_a))
+                                    / out_a) as u8;
+                                let g = ((color.g as f32 * new_a
+                                    + cur[1] as f32 * old_a * (1.0 - new_a))
+                                    / out_a) as u8;
+                                let b = ((color.b as f32 * new_a
+                                    + cur[2] as f32 * old_a * (1.0 - new_a))
+                                    / out_a) as u8;
                                 *cur = Rgba([r, g, b, (out_a * 255.0) as u8]);
                             }
                         }
@@ -270,6 +280,9 @@ mod tests {
 
         // Deve conter pixels ativos desenhados com alfa opaco e cor da paleta
         let active_pixels = plate.pixels().filter(|p| p[3] > 0).count();
-        assert!(active_pixels > 0, "Deveria ter caracteres renderizados na matriz");
+        assert!(
+            active_pixels > 0,
+            "Deveria ter caracteres renderizados na matriz"
+        );
     }
 }

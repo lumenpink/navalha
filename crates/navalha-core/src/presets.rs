@@ -2,7 +2,10 @@ use crate::dither::DitherAlgorithm;
 use crate::guillotine::GuillotineConfig;
 use crate::palette::{Palette, RgbColor};
 use crate::prep::PrepConfig;
-use crate::press::{BannerFontFamily, DamageEffect, DamageElement, PosterComposition, PunkOverlayConfig, StickerBorder, StickerElement, StickerKind, TarjaBorderFinish, TarjaEffect, TextElement};
+use crate::press::{
+    BannerFontFamily, DamageEffect, DamageElement, PosterComposition, PunkOverlayConfig,
+    StickerBorder, StickerElement, StickerKind, TarjaBorderFinish, TarjaEffect, TextElement,
+};
 use crate::scale::ScaleFactor;
 use serde::{Deserialize, Serialize};
 
@@ -116,8 +119,12 @@ impl AestheticPreset {
             Self::Xilogravura => "Xilogravura / Talhe em Madeira & Cordel (Xica Manicongo)",
             Self::GlitchCrt => "Glitch CRT / Sinal Pirata & Aberração Cromática (Robeyoncé Lima)",
             Self::Punk80Br => "Punk 80 BR / ABC Paulista & Fitas K7 (Marina Mathey)",
-            Self::AnarcoZine => "Anarco-Zine / Stencil de Guerrilha & Grampos (Jaqueline Gomes de Jesus)",
-            Self::PauleteFuracao => "Comunicação Popular / Linogravura & Voz das Ruas (Paulete Furacão)",
+            Self::AnarcoZine => {
+                "Anarco-Zine / Stencil de Guerrilha & Grampos (Jaqueline Gomes de Jesus)"
+            }
+            Self::PauleteFuracao => {
+                "Comunicação Popular / Linogravura & Voz das Ruas (Paulete Furacão)"
+            }
             Self::SymmyLarrat => "Imprensa Amazônica / Retícula Viva & Resistência (Symmy Larrat)",
         }
     }
@@ -127,28 +134,58 @@ impl AestheticPreset {
         match norm.as_str() {
             "punkriot" | "punk" | "riot" | "navalha" | "claudiawonder" => Some(Self::PunkRiot),
             "navalhasata" | "sata" | "madamesata" | "linoleo" => Some(Self::NavalhaSata),
-            "xeroxpodre" | "xerox" | "fotocopiadora" | "indianaraesiqueira" | "indianarae" => Some(Self::XeroxPodre),
-            "viagemsolitaria" | "nery" | "joaownery" | "kraft" | "olivetti" => Some(Self::ViagemSolitaria),
-            "lapanoturna" | "lapa" | "cyber" | "neon" | "linndaquebrada" | "linn" => Some(Self::LapaNoturna),
-            "teatrooperario" | "leosa" | "leomoreirasa" | "teatro" | "operario" | "construtivista" => Some(Self::TeatroOperario),
+            "xeroxpodre" | "xerox" | "fotocopiadora" | "indianaraesiqueira" | "indianarae" => {
+                Some(Self::XeroxPodre)
+            }
+            "viagemsolitaria" | "nery" | "joaownery" | "kraft" | "olivetti" => {
+                Some(Self::ViagemSolitaria)
+            }
+            "lapanoturna" | "lapa" | "cyber" | "neon" | "linndaquebrada" | "linn" => {
+                Some(Self::LapaNoturna)
+            }
+            "teatrooperario" | "leosa" | "leomoreirasa" | "teatro" | "operario"
+            | "construtivista" => Some(Self::TeatroOperario),
             "risografia" | "riso" | "risografiacrua" | "erikahilton" => Some(Self::Risografia),
-            "fanzinedigital" | "amaramoir" | "amara" | "amramoira" | "fanzine" | "cyberbbs" | "bbs" => Some(Self::FanzineDigital),
-            "asfaltoalerta" | "asfalto" | "alerta" | "ouro" | "asfaltoeouro" | "katiatapety" => Some(Self::AsfaltoAlerta),
+            "fanzinedigital" | "amaramoir" | "amara" | "amramoira" | "fanzine" | "cyberbbs"
+            | "bbs" => Some(Self::FanzineDigital),
+            "asfaltoalerta" | "asfalto" | "alerta" | "ouro" | "asfaltoeouro" | "katiatapety" => {
+                Some(Self::AsfaltoAlerta)
+            }
             "vga256" | "vga" | "mode13h" | "marciapantera" => Some(Self::Vga256),
             "cga" | "cgapalette1" | "ibmpc" | "neoncunha" => Some(Self::Cga),
-            "oldmacpopart" | "oldmac" | "popart" | "warhol" | "atkinson" | "rogeria" => Some(Self::OldMacPopArt),
-            "asciiart" | "ascii" | "cordeiro" | "terminal" | "laerte" | "laertecoutinho" => Some(Self::AsciiArt),
-            "tabloidepopular" | "tabloide" | "noticiaspopulares" | "imprensa" | "luanamuniz" => Some(Self::TabloidePopular),
-            "brutalismo" | "brutalista" | "dricadarc" | "dricadarcmeirelles" => Some(Self::Brutalismo),
+            "oldmacpopart" | "oldmac" | "popart" | "warhol" | "atkinson" | "rogeria" => {
+                Some(Self::OldMacPopArt)
+            }
+            "asciiart" | "ascii" | "cordeiro" | "terminal" | "laerte" | "laertecoutinho" => {
+                Some(Self::AsciiArt)
+            }
+            "tabloidepopular" | "tabloide" | "noticiaspopulares" | "imprensa" | "luanamuniz" => {
+                Some(Self::TabloidePopular)
+            }
+            "brutalismo" | "brutalista" | "dricadarc" | "dricadarcmeirelles" => {
+                Some(Self::Brutalismo)
+            }
             "trashpolka" | "trash" | "polka" | "renatacarvalho" => Some(Self::TrashPolka),
             "atarigaming" | "atari" | "tia" | "stella" | "jovannababy" => Some(Self::AtariGaming),
             "mimeografo" | "mimeo" | "anilina" | "keilasimpson" | "keila" => Some(Self::Mimeografo),
             "xilogravura" | "xilo" | "cordel" | "xicamanicongo" => Some(Self::Xilogravura),
             "glitchcrt" | "glitch" | "crt" | "robeyonce" | "robeyoncelima" => Some(Self::GlitchCrt),
-            "punk80br" | "punk80" | "abc" | "k7" | "marinamathey" | "marina" => Some(Self::Punk80Br),
-            "anarcozine" | "anarco" | "zine" | "stencil" | "jaqueline" | "jaquelinejesus" | "jaquelinegomesdejesus" => Some(Self::AnarcoZine),
-            "pauletefuracao" | "paulete" | "furacao" | "comunicacaopopular" => Some(Self::PauleteFuracao),
-            "symmylarrat" | "symmy" | "larrat" | "imprensaamazonica" | "amazonia" => Some(Self::SymmyLarrat),
+            "punk80br" | "punk80" | "abc" | "k7" | "marinamathey" | "marina" => {
+                Some(Self::Punk80Br)
+            }
+            "anarcozine"
+            | "anarco"
+            | "zine"
+            | "stencil"
+            | "jaqueline"
+            | "jaquelinejesus"
+            | "jaquelinegomesdejesus" => Some(Self::AnarcoZine),
+            "pauletefuracao" | "paulete" | "furacao" | "comunicacaopopular" => {
+                Some(Self::PauleteFuracao)
+            }
+            "symmylarrat" | "symmy" | "larrat" | "imprensaamazonica" | "amazonia" => {
+                Some(Self::SymmyLarrat)
+            }
             _ => None,
         }
     }
@@ -742,7 +779,8 @@ impl AestheticPreset {
                         ..Default::default()
                     }),
                     foreground_texts: vec![self.default_banner_element(&phrase_upper)],
-                    overlay: PunkOverlayConfig { damage_elements: Vec::new(),
+                    overlay: PunkOverlayConfig {
+                        damage_elements: Vec::new(),
                         damages: Vec::new(),
                         crop_frame: true,
                         blade_scratches: true,
@@ -792,7 +830,8 @@ impl AestheticPreset {
                     background_color: RgbColor::new(245, 242, 235), // Papel oxidado
                     background_text: None,
                     foreground_texts: vec![self.default_banner_element(&phrase_upper)],
-                    overlay: PunkOverlayConfig { damage_elements: Vec::new(),
+                    overlay: PunkOverlayConfig {
+                        damage_elements: Vec::new(),
                         damages: Vec::new(),
                         crop_frame: true,
                         blade_scratches: true,
@@ -856,7 +895,8 @@ impl AestheticPreset {
                         ..Default::default()
                     }),
                     foreground_texts: vec![self.default_banner_element(&phrase_upper)],
-                    overlay: PunkOverlayConfig { damage_elements: Vec::new(),
+                    overlay: PunkOverlayConfig {
+                        damage_elements: Vec::new(),
                         damages: Vec::new(),
                         crop_frame: true,
                         blade_scratches: true,
@@ -891,7 +931,10 @@ impl AestheticPreset {
                     crop_left: 0.0,
                     crop_right: 0.0,
                 };
-                let dither = DitherAlgorithm::Halftone { angle_deg: 45, cell_size: 6 };
+                let dither = DitherAlgorithm::Halftone {
+                    angle_deg: 45,
+                    cell_size: 6,
+                };
                 let scale = ScaleFactor::OneX;
 
                 let comp = PosterComposition {
@@ -906,7 +949,8 @@ impl AestheticPreset {
                     background_color: RgbColor::new(255, 242, 0), // Amarelo riso
                     background_text: None,
                     foreground_texts: vec![self.default_banner_element(&phrase_upper)],
-                    overlay: PunkOverlayConfig { damage_elements: Vec::new(),
+                    overlay: PunkOverlayConfig {
+                        damage_elements: Vec::new(),
                         damages: Vec::new(),
                         crop_frame: true,
                         blade_scratches: false,
@@ -970,7 +1014,8 @@ impl AestheticPreset {
                         ..Default::default()
                     }),
                     foreground_texts: vec![self.default_banner_element(&phrase_upper)],
-                    overlay: PunkOverlayConfig { damage_elements: Vec::new(),
+                    overlay: PunkOverlayConfig {
+                        damage_elements: Vec::new(),
                         damages: Vec::new(),
                         crop_frame: true,
                         blade_scratches: true,
@@ -1035,7 +1080,8 @@ impl AestheticPreset {
                         ..Default::default()
                     }),
                     foreground_texts: vec![self.default_banner_element(&phrase_upper)],
-                    overlay: PunkOverlayConfig { damage_elements: Vec::new(),
+                    overlay: PunkOverlayConfig {
+                        damage_elements: Vec::new(),
                         damages: Vec::new(),
                         crop_frame: true,
                         blade_scratches: true,
@@ -1100,7 +1146,8 @@ impl AestheticPreset {
                         ..Default::default()
                     }),
                     foreground_texts: vec![self.default_banner_element(&phrase_upper)],
-                    overlay: PunkOverlayConfig { damage_elements: Vec::new(),
+                    overlay: PunkOverlayConfig {
+                        damage_elements: Vec::new(),
                         damages: Vec::new(),
                         crop_frame: true,
                         blade_scratches: true,
@@ -1165,7 +1212,8 @@ impl AestheticPreset {
                         ..Default::default()
                     }),
                     foreground_texts: vec![self.default_banner_element(&phrase_upper)],
-                    overlay: PunkOverlayConfig { damage_elements: Vec::new(),
+                    overlay: PunkOverlayConfig {
+                        damage_elements: Vec::new(),
                         damages: Vec::new(),
                         crop_frame: true,
                         blade_scratches: true,
@@ -1517,9 +1565,12 @@ impl AestheticPreset {
                     }),
                     foreground_texts: vec![self.default_banner_element(&phrase_upper)],
                     overlay: PunkOverlayConfig {
-                        damage_elements: vec![
-                            DamageElement::new(DamageEffect::Faca, 0.50, 0.35, 1.2),
-                        ],
+                        damage_elements: vec![DamageElement::new(
+                            DamageEffect::Faca,
+                            0.50,
+                            0.35,
+                            1.2,
+                        )],
                         damages: Vec::new(),
                         crop_frame: true,
                         blade_scratches: true,
@@ -1648,7 +1699,8 @@ impl AestheticPreset {
                         ..Default::default()
                     }),
                     foreground_texts: vec![self.default_banner_element(&phrase_upper)],
-                    overlay: PunkOverlayConfig { damage_elements: Vec::new(),
+                    overlay: PunkOverlayConfig {
+                        damage_elements: Vec::new(),
                         damages: Vec::new(),
                         crop_frame: true,
                         blade_scratches: false,
@@ -1733,7 +1785,8 @@ impl AestheticPreset {
                         },
                         self.default_banner_element(&phrase_upper),
                     ],
-                    overlay: PunkOverlayConfig { damage_elements: Vec::new(),
+                    overlay: PunkOverlayConfig {
+                        damage_elements: Vec::new(),
                         damages: Vec::new(),
                         crop_frame: true,
                         blade_scratches: false,
@@ -2047,14 +2100,12 @@ impl AestheticPreset {
                     }),
                     foreground_texts: vec![self.default_banner_element(&phrase_upper)],
                     overlay: PunkOverlayConfig {
-                        damage_elements: vec![
-                            DamageElement {
-                                kind: DamageEffect::Rasgo,
-                                pos_x: 0.15,
-                                pos_y: 0.35,
-                                scale: 0.8,
-                            },
-                        ],
+                        damage_elements: vec![DamageElement {
+                            kind: DamageEffect::Rasgo,
+                            pos_x: 0.15,
+                            pos_y: 0.35,
+                            scale: 0.8,
+                        }],
                         damages: Vec::new(),
                         crop_frame: true,
                         blade_scratches: true,
@@ -2089,7 +2140,10 @@ impl AestheticPreset {
                     crop_left: 0.0,
                     crop_right: 0.0,
                 };
-                let dither = DitherAlgorithm::Halftone { angle_deg: 45, cell_size: 5 };
+                let dither = DitherAlgorithm::Halftone {
+                    angle_deg: 45,
+                    cell_size: 5,
+                };
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
@@ -2202,14 +2256,12 @@ impl AestheticPreset {
                     }),
                     foreground_texts: vec![self.default_banner_element(&phrase_upper)],
                     overlay: PunkOverlayConfig {
-                        damage_elements: vec![
-                            DamageElement {
-                                kind: DamageEffect::Tinta,
-                                pos_x: 0.50,
-                                pos_y: 0.05,
-                                scale: 1.0,
-                            },
-                        ],
+                        damage_elements: vec![DamageElement {
+                            kind: DamageEffect::Tinta,
+                            pos_x: 0.50,
+                            pos_y: 0.05,
+                            scale: 1.0,
+                        }],
                         damages: Vec::new(),
                         crop_frame: true,
                         blade_scratches: true,
@@ -2243,7 +2295,10 @@ impl AestheticPreset {
                     crop_left: 0.0,
                     crop_right: 0.0,
                 };
-                let dither = DitherAlgorithm::Halftone { angle_deg: 45, cell_size: 4 };
+                let dither = DitherAlgorithm::Halftone {
+                    angle_deg: 45,
+                    cell_size: 4,
+                };
                 let scale = ScaleFactor::TwoX;
 
                 let comp = PosterComposition {
@@ -2276,14 +2331,12 @@ impl AestheticPreset {
                     }),
                     foreground_texts: vec![self.default_banner_element(&phrase_upper)],
                     overlay: PunkOverlayConfig {
-                        damage_elements: vec![
-                            DamageElement {
-                                kind: DamageEffect::Censura,
-                                pos_x: 0.50,
-                                pos_y: 0.46,
-                                scale: 0.8,
-                            },
-                        ],
+                        damage_elements: vec![DamageElement {
+                            kind: DamageEffect::Censura,
+                            pos_x: 0.50,
+                            pos_y: 0.46,
+                            scale: 0.8,
+                        }],
                         damages: Vec::new(),
                         crop_frame: true,
                         blade_scratches: true,

@@ -1,4 +1,4 @@
-use image::{imageops, RgbaImage};
+use image::{RgbaImage, imageops};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ScaleFactor {

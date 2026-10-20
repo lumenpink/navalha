@@ -1,4 +1,4 @@
-use image::{imageops, Rgba, RgbaImage};
+use image::{Rgba, RgbaImage, imageops};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct PrepConfig {
@@ -192,7 +192,8 @@ pub fn compute_otsu_threshold(img: &RgbaImage) -> f32 {
 
     for p in img.pixels() {
         if p[3] > 10 {
-            let lum = (0.299 * p[0] as f32 + 0.587 * p[1] as f32 + 0.114 * p[2] as f32).round() as usize;
+            let lum =
+                (0.299 * p[0] as f32 + 0.587 * p[1] as f32 + 0.114 * p[2] as f32).round() as usize;
             let lum = lum.clamp(0, 255);
             histogram[lum] += 1;
             total_pixels += 1;

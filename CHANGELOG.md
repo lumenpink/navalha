@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Features
+  - (updater) integrar auto-atualizador nativo e distribuicao na banca (closes #38)
   - (layout) controle de espacamento vertical entre linhas e palavras em faixas (#28)
   - (core) bordas brancas irregulares de papel rasgado e recortes poligonais (#27)
   - (ui) reestruturar painel de controle em 4 abas funcionais (#25)

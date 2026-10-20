@@ -170,7 +170,10 @@ mod tests {
 
         let metadata = [
             ("Software", "Navalha v0.1.0"),
-            ("Command", "navalha poster foto.jpg --frase PUNK -e punk-riot"),
+            (
+                "Command",
+                "navalha poster foto.jpg --frase PUNK -e punk-riot",
+            ),
             ("License", "CC BY-SA 4.0"),
         ];
 
@@ -178,8 +181,20 @@ mod tests {
         let extracted = extract_png_metadata(&injected);
 
         assert_eq!(extracted.len(), 3);
-        assert_eq!(extracted[0], ("Software".to_string(), "Navalha v0.1.0".to_string()));
-        assert_eq!(extracted[1], ("Command".to_string(), "navalha poster foto.jpg --frase PUNK -e punk-riot".to_string()));
-        assert_eq!(extracted[2], ("License".to_string(), "CC BY-SA 4.0".to_string()));
+        assert_eq!(
+            extracted[0],
+            ("Software".to_string(), "Navalha v0.1.0".to_string())
+        );
+        assert_eq!(
+            extracted[1],
+            (
+                "Command".to_string(),
+                "navalha poster foto.jpg --frase PUNK -e punk-riot".to_string()
+            )
+        );
+        assert_eq!(
+            extracted[2],
+            ("License".to_string(), "CC BY-SA 4.0".to_string())
+        );
     }
 }

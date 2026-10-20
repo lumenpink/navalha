@@ -1,6 +1,9 @@
 use crate::press::PosterComposition;
 
-pub fn generate_poster_svg(composition: &PosterComposition, image_base64_png: Option<&str>) -> String {
+pub fn generate_poster_svg(
+    composition: &PosterComposition,
+    image_base64_png: Option<&str>,
+) -> String {
     let w = composition.canvas_width;
     let h = composition.canvas_height;
     let bg = composition.background_color.to_hex();
@@ -16,8 +19,16 @@ pub fn generate_poster_svg(composition: &PosterComposition, image_base64_png: Op
         let col = bg_text.color.to_hex();
         let fs = bg_text.font_size * bg_text.stretch_y;
         let scale_x = bg_text.stretch_x;
-        let tx = if bg_text.pos_x <= 1.0 { bg_text.pos_x * w as f32 } else { bg_text.pos_x };
-        let ty = if bg_text.pos_y <= 1.0 { bg_text.pos_y * h as f32 } else { bg_text.pos_y };
+        let tx = if bg_text.pos_x <= 1.0 {
+            bg_text.pos_x * w as f32
+        } else {
+            bg_text.pos_x
+        };
+        let ty = if bg_text.pos_y <= 1.0 {
+            bg_text.pos_y * h as f32
+        } else {
+            bg_text.pos_y
+        };
         let anchor = if bg_text.center_x { "middle" } else { "start" };
 
         svg.push_str(&format!(
@@ -37,8 +48,16 @@ pub fn generate_poster_svg(composition: &PosterComposition, image_base64_png: Op
 
     // Camada 3: Textos em tarja
     for fg_text in &composition.foreground_texts {
-        let tx = if fg_text.pos_x <= 1.0 { fg_text.pos_x * w as f32 } else { fg_text.pos_x };
-        let ty = if fg_text.pos_y <= 1.0 { fg_text.pos_y * h as f32 } else { fg_text.pos_y };
+        let tx = if fg_text.pos_x <= 1.0 {
+            fg_text.pos_x * w as f32
+        } else {
+            fg_text.pos_x
+        };
+        let ty = if fg_text.pos_y <= 1.0 {
+            fg_text.pos_y * h as f32
+        } else {
+            fg_text.pos_y
+        };
         let fs = fg_text.font_size * fg_text.stretch_y;
         let text_col = fg_text.color.to_hex();
 
@@ -63,18 +82,28 @@ pub fn generate_poster_svg(composition: &PosterComposition, image_base64_png: Op
             let pad = fg_text.tarja_padding as f32;
             let est_w = max_line_len as f32 * fg_text.font_size * 0.6 * fg_text.stretch_x;
             let est_h = fs * 1.1 + (lines.len().saturating_sub(1) as f32) * line_height;
-            let rx = if fg_text.center_x { tx - (est_w / 2.0) - pad } else { tx - pad };
+            let rx = if fg_text.center_x {
+                tx - (est_w / 2.0) - pad
+            } else {
+                tx - pad
+            };
             let ry = ty - fs * 0.85 - pad;
             let tw = est_w + pad * 2.0;
             let th = est_h + pad * 2.0;
 
-            let border_finish = if fg_text.border_finish == crate::press::TarjaBorderFinish::Nenhuma && fg_text.border_width > 0 {
+            let border_finish = if fg_text.border_finish == crate::press::TarjaBorderFinish::Nenhuma
+                && fg_text.border_width > 0
+            {
                 crate::press::TarjaBorderFinish::Solida
             } else {
                 fg_text.border_finish
             };
             let stroke_attr = if border_finish != crate::press::TarjaBorderFinish::Nenhuma {
-                let bw = if fg_text.border_width == 0 { 3 } else { fg_text.border_width };
+                let bw = if fg_text.border_width == 0 {
+                    3
+                } else {
+                    fg_text.border_width
+                };
                 let bc = fg_text.border_color.unwrap_or(fg_text.color).to_hex();
                 let dash = match border_finish {
                     crate::press::TarjaBorderFinish::Tracejada => " stroke-dasharray=\"12,6\"",
@@ -151,7 +180,14 @@ pub fn generate_poster_svg(composition: &PosterComposition, image_base64_png: Op
             svg.push_str(&format!(
                 r#"  <path d="M {} {} L {} {} M {} {} L {} {}" stroke="{v_col}" stroke-width="2" />
 "#,
-                cx - cs, cy, cx + cs, cy, cx, cy - cs, cx, cy + cs
+                cx - cs,
+                cy,
+                cx + cs,
+                cy,
+                cx,
+                cy - cs,
+                cx,
+                cy + cs
             ));
         }
     }
@@ -314,11 +350,15 @@ pub fn generate_poster_svg(composition: &PosterComposition, image_base64_png: Op
 "#
                     ));
                 } else if stroke.points.len() > 1 {
-                    let pts: Vec<String> = stroke.points.iter().map(|p| {
-                        let px = if p.0 <= 1.0 { p.0 * w as f32 } else { p.0 };
-                        let py = if p.1 <= 1.0 { p.1 * h as f32 } else { p.1 };
-                        format!("{px:.1},{py:.1}")
-                    }).collect();
+                    let pts: Vec<String> = stroke
+                        .points
+                        .iter()
+                        .map(|p| {
+                            let px = if p.0 <= 1.0 { p.0 * w as f32 } else { p.0 };
+                            let py = if p.1 <= 1.0 { p.1 * h as f32 } else { p.1 };
+                            format!("{px:.1},{py:.1}")
+                        })
+                        .collect();
                     let pts_str = pts.join(" ");
                     svg.push_str(&format!(
                         r#"  <polyline points="{pts_str}" fill="none" stroke="{col}" stroke-width="{sw}" stroke-linecap="round" stroke-linejoin="round" />
