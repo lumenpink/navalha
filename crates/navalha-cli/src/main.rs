@@ -506,6 +506,53 @@ enum Commands {
         #[arg(short = 'j', long = "jobs", default_value_t = 0)]
         jobs: usize,
     },
+
+    /// ⚡ Auto-atualização: Baixa e instala atomicamente a versão mais recente da Banca
+    Update {
+        /// Canal de distribuição: stable (padrão) ou nightly (desenvolvimento)
+        #[arg(short, long)]
+        channel: Option<String>,
+
+        /// Trava a instalação em uma versão semântica específica (ex: 0.1.0)
+        #[arg(long)]
+        pin: Option<String>,
+
+        /// Grava o canal escolhido como padrão em ~/.config/navalha/config.toml
+        #[arg(long)]
+        save: bool,
+
+        /// Apenas verifica se há atualizações disponíveis sem baixar
+        #[arg(long)]
+        check: bool,
+
+        /// Sobrescreve o caminho do executável de destino
+        #[arg(long)]
+        target: Option<PathBuf>,
+    },
+
+    /// 🔍 Checar Atualizações: Consulta endpoints oficiais da Banca sem alterar o binário
+    CheckUpdate {
+        /// Canal de distribuição: stable (padrão) ou nightly
+        #[arg(short, long)]
+        channel: Option<String>,
+    },
+
+    /// ⚙ Configuração: Gerencia preferências locais de canal e comportamento
+    Config {
+        #[command(subcommand)]
+        command: ConfigCommands,
+    },
+}
+
+#[derive(Subcommand)]
+enum ConfigCommands {
+    /// Define o canal padrão no arquivo de configuração (stable ou nightly)
+    SetChannel {
+        /// Canal desejado: stable ou nightly
+        channel: String,
+    },
+    /// Exibe o caminho do arquivo de configuração e o canal ativo
+    Show,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -1027,6 +1074,42 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 jobs,
             )?;
         }
+
+        Commands::Update {
+            channel,
+            pin,
+            save,
+            check,
+            target,
+        } => {
+            if check {
+                navalha_cli::update::cmd_check_update(channel.as_deref())?;
+            } else {
+                navalha_cli::update::cmd_update(
+                    channel.as_deref(),
+                    pin.as_deref(),
+                    save,
+                    target.as_deref(),
+                )?;
+            }
+        }
+
+        Commands::CheckUpdate { channel } => {
+            navalha_cli::update::cmd_check_update(channel.as_deref())?;
+        }
+
+        Commands::Config { command } => match command {
+            ConfigCommands::SetChannel { channel } => {
+                navalha_cli::update::save_default_channel(&channel, None)?;
+                println!("✔ Canal padrão atualizado para '{}'.", channel);
+            }
+            ConfigCommands::Show => {
+                let path = navalha_cli::update::get_default_config_path();
+                let active = navalha_cli::update::resolve_channel(None, None, None);
+                println!("Arquivo de configuração : {}", path.display());
+                println!("Canal ativo resolvido  : {}", active);
+            }
+        },
     }
 
     Ok(())

@@ -80,6 +80,24 @@ jobs:
             echo "CLOUDFLARE_API_TOKEN não configurado, pulando deploy no Cloudflare."
           fi
 
+      - name: "Publish Native CLI to Banca Storage"
+        run: |
+          echo "★ Publicando binário nativo do Navalha na Banca (banca.2lp.in/downloads/navalha)..."
+          if [ -d /srv/banca/downloads/navalha ]; then
+            if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+              TAG="${GITHUB_REF#refs/tags/v}"
+              mkdir -p /srv/banca/downloads/navalha/stable-latest /srv/banca/downloads/navalha/releases/v$TAG
+              cp dist/bin/navalha-linux-x86_64 /srv/banca/downloads/navalha/releases/v$TAG/navalha
+              cp dist/bin/navalha-linux-x86_64 /srv/banca/downloads/navalha/stable-latest/navalha
+              echo "$TAG" > /srv/banca/downloads/navalha/version
+            else
+              mkdir -p /srv/banca/downloads/navalha/nightly-latest
+              cp dist/bin/navalha-linux-x86_64 /srv/banca/downloads/navalha/nightly-latest/navalha
+              git rev-parse --short HEAD > /srv/banca/downloads/navalha/nightly-version
+            fi
+          fi
+          echo "✔ Artefatos de release entregues na Banca."
+
       - name: "Deploy to Codeberg Pages (Fallback)"
         continue-on-error: true
         run: |
