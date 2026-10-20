@@ -7,17 +7,17 @@
 use clap::{Parser, Subcommand};
 use image::{ImageFormat, ImageReader};
 use navalha_core::{
-    generate_plates_pdf, generate_poster_svg, process_subject, render_poster, separate_plates,
     AestheticPreset, BannerFontFamily, DamageElement, DitherAlgorithm, GuillotineConfig, Palette,
     PlateMode, PlateSeparationConfig, PosterComposition, PosterFormat, PrepConfig, PrintPlate,
     PunkOverlayConfig, RgbColor, ScaleFactor, StickerBorder, StickerElement, StickerKind,
-    TarjaBorderFinish, TarjaEffect, TextElement,
+    TarjaBorderFinish, TarjaEffect, TextElement, generate_plates_pdf, generate_poster_svg,
+    process_subject, render_poster, separate_plates,
 };
 use std::fs::File;
 use std::io::{self, Cursor, Read, Write};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
 #[derive(Parser)]
@@ -607,11 +607,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             saida,
         } => {
             eprintln!("[navalha] ⚡ Afiando a lâmina anti-design...");
-            let preset = AestheticPreset::parse(&estetica)
-                .unwrap_or_else(|| {
-                    eprintln!("[navalha] ⚠️ Estética '{}' desconhecida. Usando PunkRiot.", estetica);
-                    AestheticPreset::PunkRiot
-                });
+            let preset = AestheticPreset::parse(&estetica).unwrap_or_else(|| {
+                eprintln!(
+                    "[navalha] ⚠️ Estética '{}' desconhecida. Usando PunkRiot.",
+                    estetica
+                );
+                AestheticPreset::PunkRiot
+            });
 
             let img = load_image(&input)?;
             if let Some(ref topo) = frase_superior {
@@ -622,7 +624,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     frase
                 );
             } else {
-                eprintln!("[navalha] 🔪 Aplicando preset '{}' com frase: \"{}\"", preset.display_name(), frase);
+                eprintln!(
+                    "[navalha] 🔪 Aplicando preset '{}' com frase: \"{}\"",
+                    preset.display_name(),
+                    frase
+                );
             }
 
             let (mut g, mut pr, dt, pal, sc, mut comp) =
@@ -678,7 +684,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
                 if let Some(ref bg) = banner_bg {
-                    if bg.trim().eq_ignore_ascii_case("none") || bg.trim().eq_ignore_ascii_case("sem") {
+                    if bg.trim().eq_ignore_ascii_case("none")
+                        || bg.trim().eq_ignore_ascii_case("sem")
+                    {
                         t.bg_tarja = None;
                     } else if let Some(col) = RgbColor::parse_color_str(bg) {
                         t.bg_tarja = Some(col);
@@ -736,7 +744,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Parsing de danos: suporta "tiro" (padrão) ou "tiro:posX:posY:escala" (customizado)
             for d_spec in &dano {
                 if let Some(elem) = DamageElement::parse_spec(d_spec) {
-                    let ja_existe = comp.overlay.damage_elements.iter().any(|e| e.kind == elem.kind);
+                    let ja_existe = comp
+                        .overlay
+                        .damage_elements
+                        .iter()
+                        .any(|e| e.kind == elem.kind);
                     if !ja_existe {
                         comp.overlay.damage_elements.push(elem);
                     }
@@ -750,13 +762,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .unwrap_or(StickerBorder::DieCutBranco);
 
             for stk_spec in &sticker {
-                if let Some(stk) = parse_sticker_spec(stk_spec, filtrar_stickers, def_stk_border, sticker_borda_largura) {
+                if let Some(stk) = parse_sticker_spec(
+                    stk_spec,
+                    filtrar_stickers,
+                    def_stk_border,
+                    sticker_borda_largura,
+                ) {
                     comp.stickers.push(stk);
                 }
             }
 
             for custom_spec in &sticker_custom {
-                if let Some(stk) = parse_custom_sticker_spec(custom_spec, filtrar_stickers, def_stk_border, sticker_borda_largura) {
+                if let Some(stk) = parse_custom_sticker_spec(
+                    custom_spec,
+                    filtrar_stickers,
+                    def_stk_border,
+                    sticker_borda_largura,
+                ) {
                     comp.stickers.push(stk);
                 }
             }
@@ -771,16 +793,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let poster = render_poster(&comp, Some(&processed));
 
             save_output(&poster, &comp, &saida)?;
-            eprintln!("[navalha] 💀 Pôster gerado com sucesso em: {}", saida.display());
+            eprintln!(
+                "[navalha] 💀 Pôster gerado com sucesso em: {}",
+                saida.display()
+            );
 
             if separar_chapas {
                 let out_dir = chapas_dir.unwrap_or_else(|| {
                     let stem = saida.file_stem().unwrap_or_default().to_string_lossy();
-                    saida.parent().unwrap_or_else(|| Path::new(".")).join(format!("{}_chapas", stem))
+                    saida
+                        .parent()
+                        .unwrap_or_else(|| Path::new("."))
+                        .join(format!("{}_chapas", stem))
                 });
                 let plate_cfg = PlateSeparationConfig::default();
                 let plates = separate_plates(&poster, &plate_cfg)?;
-                eprintln!("[navalha] 🖨️ Separando {} chapas de impressão (Risografia / Silk-screen)...", plates.len());
+                eprintln!(
+                    "[navalha] 🖨️ Separando {} chapas de impressão (Risografia / Silk-screen)...",
+                    plates.len()
+                );
                 export_plates_to_dir(&plates, &out_dir, "ambos")?;
             }
         }
@@ -796,7 +827,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             eprintln!("[navalha] ⚙️ Processando retícula direta...");
             let img = load_image(&input)?;
             let palette = resolve_palette(&paleta);
-            let dither_algo = DitherAlgorithm::parse(&algoritmo).unwrap_or(DitherAlgorithm::FloydSteinberg);
+            let dither_algo =
+                DitherAlgorithm::parse(&algoritmo).unwrap_or(DitherAlgorithm::FloydSteinberg);
             let scale_factor = ScaleFactor::parse(&escala).unwrap_or(ScaleFactor::TwoX);
 
             let prep = PrepConfig {
@@ -805,7 +837,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
             let guillotine = GuillotineConfig::default();
 
-            let out = process_subject(&img, &guillotine, &prep, dither_algo, &palette, scale_factor);
+            let out = process_subject(
+                &img,
+                &guillotine,
+                &prep,
+                dither_algo,
+                &palette,
+                scale_factor,
+            );
             out.save_with_format(&saida, ImageFormat::Png)?;
             eprintln!("[navalha] 🖨️ Retícula finalizada: {}", saida.display());
         }
@@ -868,7 +907,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ..Default::default()
             };
 
-            let processed = process_subject(&img, &guillotine, &prep, dither_algo, &palette, scale_factor);
+            let processed = process_subject(
+                &img,
+                &guillotine,
+                &prep,
+                dither_algo,
+                &palette,
+                scale_factor,
+            );
 
             let mut fg_texts = Vec::new();
             if let Some(topo) = texto_topo {
@@ -945,13 +991,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let mut stickers = Vec::new();
             for stk_spec in &sticker {
-                if let Some(stk) = parse_sticker_spec(stk_spec, filtrar_stickers, def_stk_border, sticker_borda_largura) {
+                if let Some(stk) = parse_sticker_spec(
+                    stk_spec,
+                    filtrar_stickers,
+                    def_stk_border,
+                    sticker_borda_largura,
+                ) {
                     stickers.push(stk);
                 }
             }
 
             for custom_spec in &sticker_custom {
-                if let Some(stk) = parse_custom_sticker_spec(custom_spec, filtrar_stickers, def_stk_border, sticker_borda_largura) {
+                if let Some(stk) = parse_custom_sticker_spec(
+                    custom_spec,
+                    filtrar_stickers,
+                    def_stk_border,
+                    sticker_borda_largura,
+                ) {
                     stickers.push(stk);
                 }
             }
@@ -975,8 +1031,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 palette: Some(palette.clone()),
                 subject_offset_x: offset_x,
                 subject_offset_y: offset_y,
-                custom_seed: Some(navalha_core::compute_subject_seed(Some(&img), tarja_baixo.as_deref().unwrap_or(""))),
-            }.with_format(poster_fmt);
+                custom_seed: Some(navalha_core::compute_subject_seed(
+                    Some(&img),
+                    tarja_baixo.as_deref().unwrap_or(""),
+                )),
+            }
+            .with_format(poster_fmt);
 
             let poster = navalha_core::render_poster(&comp, Some(&processed));
             save_output(&poster, &comp, &saida)?;
@@ -985,11 +1045,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if separar_chapas {
                 let out_dir = chapas_dir.unwrap_or_else(|| {
                     let stem = saida.file_stem().unwrap_or_default().to_string_lossy();
-                    saida.parent().unwrap_or_else(|| Path::new(".")).join(format!("{}_chapas", stem))
+                    saida
+                        .parent()
+                        .unwrap_or_else(|| Path::new("."))
+                        .join(format!("{}_chapas", stem))
                 });
                 let plate_cfg = PlateSeparationConfig::default();
                 let plates = separate_plates(&poster, &plate_cfg)?;
-                eprintln!("[navalha] 🖨️ Separando {} chapas de impressão (Risografia / Silk-screen)...", plates.len());
+                eprintln!(
+                    "[navalha] 🖨️ Separando {} chapas de impressão (Risografia / Silk-screen)...",
+                    plates.len()
+                );
                 export_plates_to_dir(&plates, &out_dir, "ambos")?;
             }
         }
@@ -1015,13 +1081,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
 
             let plates = separate_plates(&img, &plate_cfg)?;
-            eprintln!("[navalha] 📄 Identificadas {} chapas de cor pura na arte:", plates.len());
+            eprintln!(
+                "[navalha] 📄 Identificadas {} chapas de cor pura na arte:",
+                plates.len()
+            );
             for p in &plates {
-                eprintln!("   - Chapa #{}: {} ({:.1}% de cobertura)", p.index, p.color_hex, p.coverage_percentage);
+                eprintln!(
+                    "   - Chapa #{}: {} ({:.1}% de cobertura)",
+                    p.index, p.color_hex, p.coverage_percentage
+                );
             }
 
             export_plates_to_dir(&plates, &saida, &formato.to_lowercase())?;
-            eprintln!("[navalha] ⚡ Chapas exportadas com sucesso no diretório: {}", saida.display());
+            eprintln!(
+                "[navalha] ⚡ Chapas exportadas com sucesso no diretório: {}",
+                saida.display()
+            );
         }
 
         Commands::Ascii {
@@ -1119,7 +1194,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn extract_phrase_from_stem(stem: &str) -> String {
     let clean = stem
         .chars()
-        .map(|c| if c == '-' || c == '_' || c == '.' { ' ' } else { c })
+        .map(|c| {
+            if c == '-' || c == '_' || c == '.' {
+                ' '
+            } else {
+                c
+            }
+        })
         .collect::<String>();
     let result = clean
         .split_whitespace()
@@ -1191,7 +1272,14 @@ fn process_single_item(
         let scale_factor = ScaleFactor::parse(escala).unwrap_or(ScaleFactor::TwoX);
         let prep = PrepConfig::default();
         let guillotine = GuillotineConfig::default();
-        let out = process_subject(&img, &guillotine, &prep, dither_algo, &palette, scale_factor);
+        let out = process_subject(
+            &img,
+            &guillotine,
+            &prep,
+            dither_algo,
+            &palette,
+            scale_factor,
+        );
         out.save_with_format(out_path, ImageFormat::Png)?;
     } else {
         let preset = AestheticPreset::parse(estetica).unwrap_or(AestheticPreset::PunkRiot);
@@ -1213,13 +1301,22 @@ fn process_single_item(
         poster.save_with_format(out_path, ImageFormat::Png)?;
 
         if separar_chapas {
-            let stem = in_path.file_stem().and_then(|s| s.to_str()).unwrap_or("item");
+            let stem = in_path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("item");
             let chapas_dir = target_dir.join(format!("{}_chapas", stem));
             let plate_cfg = PlateSeparationConfig::default();
-            let plates = separate_plates(&poster, &plate_cfg)
-                .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())) })?;
-            export_plates_to_dir(&plates, &chapas_dir, "ambos")
-                .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())) })?;
+            let plates = separate_plates(&poster, &plate_cfg).map_err(
+                |e| -> Box<dyn std::error::Error + Send + Sync> {
+                    Box::new(std::io::Error::other(e.to_string()))
+                },
+            )?;
+            export_plates_to_dir(&plates, &chapas_dir, "ambos").map_err(
+                |e| -> Box<dyn std::error::Error + Send + Sync> {
+                    Box::new(std::io::Error::other(e.to_string()))
+                },
+            )?;
         }
     }
 
@@ -1276,7 +1373,11 @@ fn run_lote(
     } else if input.is_dir() {
         collect_image_files(&input, &input, recursivo, &exts, &mut files)?;
     } else {
-        return Err(format!("Caminho de entrada inválido ou inexistente: {}", input.display()).into());
+        return Err(format!(
+            "Caminho de entrada inválido ou inexistente: {}",
+            input.display()
+        )
+        .into());
     }
 
     // Ordenação alfabética para determinismo estrito
@@ -1326,7 +1427,10 @@ fn run_lote(
                     }
                     let (ref in_path, ref rel_path) = files[idx];
                     let start_item = Instant::now();
-                    let stem = in_path.file_stem().and_then(|s| s.to_str()).unwrap_or("imagem");
+                    let stem = in_path
+                        .file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("imagem");
 
                     let mut target_dir = saida.clone();
                     if let Some(parent) = rel_path.parent() {
@@ -1422,52 +1526,62 @@ fn run_lote(
 fn parse_texto_extra(spec: &str) -> Option<TextElement> {
     let partes: Vec<&str> = spec.splitn(6, ':').collect();
     let texto = partes.first().copied().unwrap_or("").to_uppercase();
-    if texto.is_empty() { return None; }
+    if texto.is_empty() {
+        return None;
+    }
 
-    let pos_x  = partes.get(1).and_then(|s| s.parse::<f32>().ok()).unwrap_or(0.5);
-    let pos_y  = partes.get(2).and_then(|s| s.parse::<f32>().ok()).unwrap_or(0.5);
-    let tamanho = partes.get(3).and_then(|s| s.parse::<f32>().ok()).unwrap_or(48.0);
-    let inclinacao = partes.get(4).and_then(|s| s.parse::<i16>().ok()).unwrap_or(0);
+    let pos_x = partes
+        .get(1)
+        .and_then(|s| s.parse::<f32>().ok())
+        .unwrap_or(0.5);
+    let pos_y = partes
+        .get(2)
+        .and_then(|s| s.parse::<f32>().ok())
+        .unwrap_or(0.5);
+    let tamanho = partes
+        .get(3)
+        .and_then(|s| s.parse::<f32>().ok())
+        .unwrap_or(48.0);
+    let inclinacao = partes
+        .get(4)
+        .and_then(|s| s.parse::<i16>().ok())
+        .unwrap_or(0);
     let acabamento = partes.get(5).copied().unwrap_or("tarja");
 
     // Define aparência conforme acabamento
-    let (cor_texto, bg_tarja, padding, tarja_effect) = match acabamento.trim().to_lowercase().as_str() {
-        // Xerox: tarja de toner oxidado com riscos e falhas de fotocopiadora
-        "xerox" | "xerox-podre" => (
-            RgbColor::new(245, 242, 235),
-            Some(RgbColor::new(28, 25, 23)),
-            14u32,
-            TarjaEffect::Xerox,
-        ),
-        // Tape: tarja cinza claro, texto escuro — evoca fita adesiva
-        "tape" => (
-            RgbColor::new(20, 20, 20),
-            Some(RgbColor::new(200, 200, 180)),
-            6u32,
-            TarjaEffect::Solida,
-        ),
-        // Serrilhado: tarja amarelo-neon brutalista, texto preto — borda dentada visual
-        "serrilhado" => (
-            RgbColor::new(0, 0, 0),
-            Some(RgbColor::new(255, 230, 0)),
-            10u32,
-            TarjaEffect::Solida,
-        ),
-        // Rasgo: sem tarja, texto vermelho agressivo — simula letra rasgada
-        "rasgo" => (
-            RgbColor::new(200, 0, 0),
-            None,
-            0u32,
-            TarjaEffect::Solida,
-        ),
-        // Tarja (padrão): clássico punk — tarja preta, texto branco
-        _ => (
-            RgbColor::new(255, 255, 255),
-            Some(RgbColor::new(0, 0, 0)),
-            10u32,
-            TarjaEffect::Solida,
-        ),
-    };
+    let (cor_texto, bg_tarja, padding, tarja_effect) =
+        match acabamento.trim().to_lowercase().as_str() {
+            // Xerox: tarja de toner oxidado com riscos e falhas de fotocopiadora
+            "xerox" | "xerox-podre" => (
+                RgbColor::new(245, 242, 235),
+                Some(RgbColor::new(28, 25, 23)),
+                14u32,
+                TarjaEffect::Xerox,
+            ),
+            // Tape: tarja cinza claro, texto escuro — evoca fita adesiva
+            "tape" => (
+                RgbColor::new(20, 20, 20),
+                Some(RgbColor::new(200, 200, 180)),
+                6u32,
+                TarjaEffect::Solida,
+            ),
+            // Serrilhado: tarja amarelo-neon brutalista, texto preto — borda dentada visual
+            "serrilhado" => (
+                RgbColor::new(0, 0, 0),
+                Some(RgbColor::new(255, 230, 0)),
+                10u32,
+                TarjaEffect::Solida,
+            ),
+            // Rasgo: sem tarja, texto vermelho agressivo — simula letra rasgada
+            "rasgo" => (RgbColor::new(200, 0, 0), None, 0u32, TarjaEffect::Solida),
+            // Tarja (padrão): clássico punk — tarja preta, texto branco
+            _ => (
+                RgbColor::new(255, 255, 255),
+                Some(RgbColor::new(0, 0, 0)),
+                10u32,
+                TarjaEffect::Solida,
+            ),
+        };
 
     Some(TextElement {
         text: texto,
@@ -1518,10 +1632,22 @@ fn parse_sticker_spec(
         // Sintaxe completa: tipo:posX:posY[:tamanho[:rotacao[:borda[:largura]]]]
         let pos_x = partes[1].parse::<f32>().unwrap_or(0.5).clamp(0.0, 1.0);
         let pos_y = partes[2].parse::<f32>().unwrap_or(0.5).clamp(0.0, 1.0);
-        let size = partes.get(3).and_then(|s| s.parse::<u32>().ok()).unwrap_or(100);
-        let rotation = partes.get(4).and_then(|s| s.parse::<i16>().ok()).unwrap_or(0);
-        let border = partes.get(5).and_then(|s| StickerBorder::parse(s)).unwrap_or(default_border);
-        let border_width = partes.get(6).and_then(|s| s.parse::<u32>().ok()).unwrap_or(default_border_width);
+        let size = partes
+            .get(3)
+            .and_then(|s| s.parse::<u32>().ok())
+            .unwrap_or(100);
+        let rotation = partes
+            .get(4)
+            .and_then(|s| s.parse::<i16>().ok())
+            .unwrap_or(0);
+        let border = partes
+            .get(5)
+            .and_then(|s| StickerBorder::parse(s))
+            .unwrap_or(default_border);
+        let border_width = partes
+            .get(6)
+            .and_then(|s| s.parse::<u32>().ok())
+            .unwrap_or(default_border_width);
         StickerElement::new(kind, pos_x, pos_y, size, rotation, apply_palette)
             .with_border(border, border_width)
     } else {
@@ -1554,10 +1680,22 @@ fn parse_custom_sticker_spec(
     let element = if partes.len() >= 3 {
         let pos_x = partes[1].parse::<f32>().unwrap_or(0.5).clamp(0.0, 1.0);
         let pos_y = partes[2].parse::<f32>().unwrap_or(0.5).clamp(0.0, 1.0);
-        let size = partes.get(3).and_then(|s| s.parse::<u32>().ok()).unwrap_or(100);
-        let rotation = partes.get(4).and_then(|s| s.parse::<i16>().ok()).unwrap_or(0);
-        let border = partes.get(5).and_then(|s| StickerBorder::parse(s)).unwrap_or(default_border);
-        let border_width = partes.get(6).and_then(|s| s.parse::<u32>().ok()).unwrap_or(default_border_width);
+        let size = partes
+            .get(3)
+            .and_then(|s| s.parse::<u32>().ok())
+            .unwrap_or(100);
+        let rotation = partes
+            .get(4)
+            .and_then(|s| s.parse::<i16>().ok())
+            .unwrap_or(0);
+        let border = partes
+            .get(5)
+            .and_then(|s| StickerBorder::parse(s))
+            .unwrap_or(default_border);
+        let border_width = partes
+            .get(6)
+            .and_then(|s| s.parse::<u32>().ok())
+            .unwrap_or(default_border_width);
         StickerElement::new_custom(arc_img, pos_x, pos_y, size, rotation, apply_palette)
             .with_border(border, border_width)
     } else {
@@ -1574,7 +1712,6 @@ fn parse_custom_sticker_spec(
 }
 
 fn load_image(input: &str) -> Result<image::RgbaImage, Box<dyn std::error::Error>> {
-
     let bytes = if input == "-" {
         let mut buffer = Vec::new();
         io::stdin().read_to_end(&mut buffer)?;
@@ -1630,8 +1767,7 @@ fn save_output(
         ("License", "CC BY-SA 4.0"),
     ];
 
-    let final_bytes = navalha_core::inject_png_metadata(&raw_png, &metadata)
-        .unwrap_or(raw_png);
+    let final_bytes = navalha_core::inject_png_metadata(&raw_png, &metadata).unwrap_or(raw_png);
 
     let mut f = File::create(saida)?;
     f.write_all(&final_bytes)?;
@@ -1668,7 +1804,10 @@ fn export_plates_to_dir(
     }
 
     if export_pdf {
-        let pdf_data = generate_plates_pdf(plates, Some("Navalha - Chapas de Impressão (Risografia / Silk-screen)"))?;
+        let pdf_data = generate_plates_pdf(
+            plates,
+            Some("Navalha - Chapas de Impressão (Risografia / Silk-screen)"),
+        )?;
         let pdf_path = out_dir.join("chapas.pdf");
         std::fs::write(&pdf_path, pdf_data)?;
         eprintln!(
@@ -1693,19 +1832,27 @@ mod tests {
                 img.put_pixel(x, y, Rgba([v, 255 - v, 128, 255]));
             }
         }
-        img.save_with_format(path, ImageFormat::Png).expect("Falha ao salvar dummy png");
+        img.save_with_format(path, ImageFormat::Png)
+            .expect("Falha ao salvar dummy png");
     }
 
     #[test]
     fn test_extract_phrase_from_stem() {
-        assert_eq!(extract_phrase_from_stem("contra-cultura_zine"), "CONTRA CULTURA ZINE");
-        assert_eq!(extract_phrase_from_stem("fanzine-punk.01"), "FANZINE PUNK 01");
+        assert_eq!(
+            extract_phrase_from_stem("contra-cultura_zine"),
+            "CONTRA CULTURA ZINE"
+        );
+        assert_eq!(
+            extract_phrase_from_stem("fanzine-punk.01"),
+            "FANZINE PUNK 01"
+        );
         assert_eq!(extract_phrase_from_stem("   "), "EU SOBREVIVO AO MUNDO");
     }
 
     #[test]
     fn test_collect_image_files_filtering_and_recursion() {
-        let tmp_dir = std::env::temp_dir().join(format!("navalha_test_collect_{}", std::process::id()));
+        let tmp_dir =
+            std::env::temp_dir().join(format!("navalha_test_collect_{}", std::process::id()));
         let sub_dir = tmp_dir.join("subpasta");
         std::fs::create_dir_all(&sub_dir).unwrap();
 
@@ -1741,8 +1888,10 @@ mod tests {
             .unwrap()
             .as_nanos();
         let in_dir = std::env::temp_dir().join(format!("navalha_lote_in_{}", unique_id));
-        let out_poster_dir = std::env::temp_dir().join(format!("navalha_lote_out_poster_{}", unique_id));
-        let out_dither_dir = std::env::temp_dir().join(format!("navalha_lote_out_dither_{}", unique_id));
+        let out_poster_dir =
+            std::env::temp_dir().join(format!("navalha_lote_out_poster_{}", unique_id));
+        let out_dither_dir =
+            std::env::temp_dir().join(format!("navalha_lote_out_dither_{}", unique_id));
 
         std::fs::create_dir_all(&in_dir).unwrap();
 
@@ -1768,7 +1917,8 @@ mod tests {
             String::from("2x"),
             false,
             2,
-        ).expect("Lote poster deve rodar com sucesso");
+        )
+        .expect("Lote poster deve rodar com sucesso");
 
         let p1 = out_poster_dir.join("revolta-popular.png");
         let p2 = out_poster_dir.join("grito-rua.png");
@@ -1797,7 +1947,8 @@ mod tests {
             String::from("2x"),
             false,
             1,
-        ).expect("Lote dither deve rodar com sucesso");
+        )
+        .expect("Lote dither deve rodar com sucesso");
 
         assert!(out_dither_dir.join("revolta-popular.png").exists());
         assert!(out_dither_dir.join("grito-rua.png").exists());
@@ -1842,7 +1993,8 @@ mod tests {
             String::from("2x"),
             false,
             2,
-        ).expect("Lote com arquivo de frases deve rodar com sucesso");
+        )
+        .expect("Lote com arquivo de frases deve rodar com sucesso");
 
         assert!(out_dir.join("fotoA.png").exists());
         assert!(out_dir.join("fotoB.png").exists());
@@ -1851,4 +2003,3 @@ mod tests {
         let _ = std::fs::remove_dir_all(&out_dir);
     }
 }
-

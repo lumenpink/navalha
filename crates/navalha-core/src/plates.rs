@@ -121,7 +121,7 @@ pub fn separate_plates(
         .collect();
 
     // Ordenar da cor mais abundante para a menos abundante
-    valid_colors.sort_by(|a, b| b.1.cmp(&a.1));
+    valid_colors.sort_by_key(|a| std::cmp::Reverse(a.1));
 
     if valid_colors.is_empty() {
         return Err(PlateError::NoColorsFound);
@@ -206,12 +206,7 @@ pub fn separate_plates(
 }
 
 /// Desenha marcas de registro (cruzes de mira de alta precisão) nas margens da chapa
-fn draw_registration_marks(
-    img: &mut RgbaImage,
-    art_w: u32,
-    art_h: u32,
-    margin: u32,
-) {
+fn draw_registration_marks(img: &mut RgbaImage, art_w: u32, art_h: u32, margin: u32) {
     let mark_color = Rgba([0, 0, 0, 255]); // Preto absoluto para matrizes de serigrafia
 
     let offset = margin / 2;
@@ -222,14 +217,14 @@ fn draw_registration_marks(
 
     // Centros das miras: 4 cantos + 4 pontos cardeais
     let points = [
-        (offset, offset),         // Canto superior esquerdo
-        (right, offset),          // Canto superior direito
-        (offset, bottom),         // Canto inferior esquerdo
-        (right, bottom),          // Canto inferior direito
-        (mid_x, offset),          // Meio superior
-        (mid_x, bottom),          // Meio inferior
-        (offset, mid_y),          // Meio esquerdo
-        (right, mid_y),           // Meio direito
+        (offset, offset), // Canto superior esquerdo
+        (right, offset),  // Canto superior direito
+        (offset, bottom), // Canto inferior esquerdo
+        (right, bottom),  // Canto inferior direito
+        (mid_x, offset),  // Meio superior
+        (mid_x, bottom),  // Meio inferior
+        (offset, mid_y),  // Meio esquerdo
+        (right, mid_y),   // Meio direito
     ];
 
     let radius: i32 = (margin as i32 / 3).clamp(6, 14);
@@ -277,10 +272,9 @@ fn draw_plate_header(img: &mut RgbaImage, text: &str, start_x: u32, center_y: u3
         let mut curr_x = start_x as f32;
 
         for ch in text.chars() {
-            let glyph = font.glyph_id(ch).with_scale_and_position(
-                scale,
-                ab_glyph::point(curr_x, center_y as f32 - 7.0),
-            );
+            let glyph = font
+                .glyph_id(ch)
+                .with_scale_and_position(scale, ab_glyph::point(curr_x, center_y as f32 - 7.0));
             if let Some(outline) = font.outline_glyph(glyph) {
                 let bounds = outline.px_bounds();
                 outline.draw(|x, y, c| {

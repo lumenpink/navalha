@@ -1,5 +1,5 @@
-use image::{Rgba, RgbaImage};
 use crate::palette::{Palette, RgbColor};
+use image::{Rgba, RgbaImage};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -9,7 +9,10 @@ pub enum DitherAlgorithm {
     Atkinson,
     Bayer4x4,
     Bayer8x8,
-    Halftone { angle_deg: u16, cell_size: u8 },
+    Halftone {
+        angle_deg: u16,
+        cell_size: u8,
+    },
     AsciiArt,
     Threshold,
     AtariGaming,
@@ -26,11 +29,18 @@ impl DitherAlgorithm {
             "atkinson" | "atk" => Some(Self::Atkinson),
             "bayer4x4" | "bayer4" => Some(Self::Bayer4x4),
             "bayer8x8" | "bayer8" | "bayer" => Some(Self::Bayer8x8),
-            "halftone" | "halftone45" | "reticula" => {
-                Some(Self::Halftone { angle_deg: 45, cell_size: 6 })
-            }
-            "halftone0" => Some(Self::Halftone { angle_deg: 0, cell_size: 6 }),
-            "halftone90" => Some(Self::Halftone { angle_deg: 90, cell_size: 6 }),
+            "halftone" | "halftone45" | "reticula" => Some(Self::Halftone {
+                angle_deg: 45,
+                cell_size: 6,
+            }),
+            "halftone0" => Some(Self::Halftone {
+                angle_deg: 0,
+                cell_size: 6,
+            }),
+            "halftone90" => Some(Self::Halftone {
+                angle_deg: 90,
+                cell_size: 6,
+            }),
             "asciiart" | "ascii" | "cordeiro" => Some(Self::AsciiArt),
             "threshold" | "limiar" | "brutalismo" => Some(Self::Threshold),
             "atarigaming" | "atari" | "tia" | "stella" => Some(Self::AtariGaming),
@@ -48,9 +58,10 @@ pub fn apply_dither(img: &RgbaImage, algorithm: DitherAlgorithm, palette: &Palet
         DitherAlgorithm::Atkinson => dither_atkinson(img, palette),
         DitherAlgorithm::Bayer4x4 => dither_bayer_4x4(img, palette),
         DitherAlgorithm::Bayer8x8 => dither_bayer_8x8(img, palette),
-        DitherAlgorithm::Halftone { angle_deg, cell_size } => {
-            dither_halftone(img, palette, angle_deg, cell_size)
-        }
+        DitherAlgorithm::Halftone {
+            angle_deg,
+            cell_size,
+        } => dither_halftone(img, palette, angle_deg, cell_size),
         DitherAlgorithm::AsciiArt => crate::ascii::render_ascii_plate(img, palette, 9, 12, false),
         DitherAlgorithm::Threshold => dither_threshold(img, palette),
         DitherAlgorithm::AtariGaming => dither_atari_gaming(img, palette),
@@ -387,7 +398,7 @@ fn dither_atari_gaming(img: &RgbaImage, palette: &Palette) -> RgbaImage {
 
     for y in 0..height {
         let is_scanline_blank = y % 2 == 0;
-        let sample_y = (y * 192 / height.max(1)) * height / 192.max(1);
+        let sample_y = (y * 192 / height.max(1)) * height / 192;
 
         for x in 0..width {
             let p = img.get_pixel(x, y);
@@ -399,9 +410,10 @@ fn dither_atari_gaming(img: &RgbaImage, palette: &Palette) -> RgbaImage {
             if is_scanline_blank {
                 out.put_pixel(x, y, Rgba([0, 0, 0, p[3]]));
             } else {
-                let sample_x = (x * 160 / width.max(1)) * width / 160.max(1);
+                let sample_x = (x * 160 / width.max(1)) * width / 160;
                 let sampled_p = img.get_pixel(sample_x.min(width - 1), sample_y.min(height - 1));
-                let target = palette.nearest_color(RgbColor::new(sampled_p[0], sampled_p[1], sampled_p[2]));
+                let target =
+                    palette.nearest_color(RgbColor::new(sampled_p[0], sampled_p[1], sampled_p[2]));
                 out.put_pixel(x, y, Rgba([target.r, target.g, target.b, p[3]]));
             }
         }
@@ -446,15 +458,39 @@ fn dither_mimeografo(img: &RgbaImage, palette: &Palette) -> RgbaImage {
     }
 
     let bayer = [
-        0.0 / 16.0, 8.0 / 16.0, 2.0 / 16.0, 10.0 / 16.0,
-        12.0 / 16.0, 4.0 / 16.0, 14.0 / 16.0, 6.0 / 16.0,
-        3.0 / 16.0, 11.0 / 16.0, 1.0 / 16.0, 9.0 / 16.0,
-        15.0 / 16.0, 7.0 / 16.0, 13.0 / 16.0, 5.0 / 16.0,
+        0.0 / 16.0,
+        8.0 / 16.0,
+        2.0 / 16.0,
+        10.0 / 16.0,
+        12.0 / 16.0,
+        4.0 / 16.0,
+        14.0 / 16.0,
+        6.0 / 16.0,
+        3.0 / 16.0,
+        11.0 / 16.0,
+        1.0 / 16.0,
+        9.0 / 16.0,
+        15.0 / 16.0,
+        7.0 / 16.0,
+        13.0 / 16.0,
+        5.0 / 16.0,
     ];
 
-    let papel = palette.colors.first().copied().unwrap_or(RgbColor::new(244, 239, 230));
-    let violeta = palette.colors.get(1).copied().unwrap_or(RgbColor::new(67, 44, 122));
-    let saturacao = palette.colors.get(2).copied().unwrap_or(RgbColor::new(42, 25, 84));
+    let papel = palette
+        .colors
+        .first()
+        .copied()
+        .unwrap_or(RgbColor::new(244, 239, 230));
+    let violeta = palette
+        .colors
+        .get(1)
+        .copied()
+        .unwrap_or(RgbColor::new(67, 44, 122));
+    let saturacao = palette
+        .colors
+        .get(2)
+        .copied()
+        .unwrap_or(RgbColor::new(42, 25, 84));
 
     for y in 0..height {
         for x in 0..width {
@@ -497,14 +533,23 @@ fn dither_sauvola_woodcut(img: &RgbaImage, palette: &Palette) -> RgbaImage {
     let r_dyn = 128.0f32;
     let window_radius = 7i32; // 15x15 = raio 7
 
-    let paper_color = palette.colors.first().copied().unwrap_or(RgbColor::new(214, 196, 165));
-    let ink_color = palette.colors.get(1).copied().unwrap_or(RgbColor::new(19, 17, 16));
+    let paper_color = palette
+        .colors
+        .first()
+        .copied()
+        .unwrap_or(RgbColor::new(214, 196, 165));
+    let ink_color = palette
+        .colors
+        .get(1)
+        .copied()
+        .unwrap_or(RgbColor::new(19, 17, 16));
 
     let mut lum_map = vec![0.0f32; (width * height) as usize];
     for y in 0..height {
         for x in 0..width {
             let p = img.get_pixel(x, y);
-            lum_map[(y * width + x) as usize] = 0.299 * p[0] as f32 + 0.587 * p[1] as f32 + 0.114 * p[2] as f32;
+            lum_map[(y * width + x) as usize] =
+                0.299 * p[0] as f32 + 0.587 * p[1] as f32 + 0.114 * p[2] as f32;
         }
     }
 

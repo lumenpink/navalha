@@ -4,9 +4,9 @@
     clippy::manual_is_multiple_of
 )]
 
+use crate::palette::{Palette, RgbColor};
 use ab_glyph::{Font, FontRef, Glyph, Point, PxScale, ScaleFont};
 use image::{Rgba, RgbaImage};
-use crate::palette::{Palette, RgbColor};
 use serde::{Deserialize, Serialize};
 
 // Fontes brutalistas e fanzineiras embutidas no binário/wasm para determinismo absoluto em qualquer plataforma
@@ -22,14 +22,10 @@ pub fn get_font_for_family(family: BannerFontFamily) -> FontRef<'static> {
             FontRef::try_from_slice(EMBEDDED_FONT_SANS_BYTES)
                 .expect("Fonte brutalista sans corrompida ou inválida")
         }
-        BannerFontFamily::Monospace => {
-            FontRef::try_from_slice(EMBEDDED_FONT_TYPEWRITER_BYTES)
-                .expect("Fonte máquina de escrever typewriter corrompida ou inválida")
-        }
-        BannerFontFamily::Serif => {
-            FontRef::try_from_slice(EMBEDDED_FONT_SERIF_BYTES)
-                .expect("Fonte serifada de jornal corrompida ou inválida")
-        }
+        BannerFontFamily::Monospace => FontRef::try_from_slice(EMBEDDED_FONT_TYPEWRITER_BYTES)
+            .expect("Fonte máquina de escrever typewriter corrompida ou inválida"),
+        BannerFontFamily::Serif => FontRef::try_from_slice(EMBEDDED_FONT_SERIF_BYTES)
+            .expect("Fonte serifada de jornal corrompida ou inválida"),
     }
 }
 
@@ -70,9 +66,8 @@ impl BannerFontFamily {
     pub fn parse(s: &str) -> Option<Self> {
         match s.trim().to_lowercase().as_str() {
             "impact" | "bebas" | "poster" | "brutal" | "brutalista" => Some(Self::Impact),
-            "monospace" | "mono" | "terminal" | "typewriter" | "maquina" | "máquina" | "olivetti" => {
-                Some(Self::Monospace)
-            }
+            "monospace" | "mono" | "terminal" | "typewriter" | "maquina" | "máquina"
+            | "olivetti" => Some(Self::Monospace),
             "serif" | "jornal" | "romano" | "editorial" => Some(Self::Serif),
             "sans" | "helvetica" | "modern" | "moderna" => Some(Self::Sans),
             _ => None,
@@ -304,24 +299,34 @@ pub struct DamageElement {
 
 impl DamageElement {
     pub fn new(kind: DamageEffect, pos_x: f32, pos_y: f32, scale: f32) -> Self {
-        Self { kind, pos_x, pos_y, scale }
+        Self {
+            kind,
+            pos_x,
+            pos_y,
+            scale,
+        }
     }
 
     /// Cria um DamageElement com a posição e escala padrão para cada tipo de dano.
     pub fn default_for(kind: DamageEffect) -> Self {
         let (px, py) = match kind {
-            DamageEffect::Tiro     => (0.50, 0.40),
-            DamageEffect::Rasgo    => (0.80, 0.15),
-            DamageEffect::Chuva    => (0.50, 0.50),
-            DamageEffect::Sangue   => (0.45, 0.45),
-            DamageEffect::Tinta    => (0.50, 0.05),
-            DamageEffect::Faca     => (0.50, 0.35),
-            DamageEffect::Pixo     => (0.20, 0.85),
-            DamageEffect::Censura  => (0.50, 0.46),
-            DamageEffect::Pulica   => (0.50, 0.72),
-            DamageEffect::Grampo   => (0.05, 0.25),
+            DamageEffect::Tiro => (0.50, 0.40),
+            DamageEffect::Rasgo => (0.80, 0.15),
+            DamageEffect::Chuva => (0.50, 0.50),
+            DamageEffect::Sangue => (0.45, 0.45),
+            DamageEffect::Tinta => (0.50, 0.05),
+            DamageEffect::Faca => (0.50, 0.35),
+            DamageEffect::Pixo => (0.20, 0.85),
+            DamageEffect::Censura => (0.50, 0.46),
+            DamageEffect::Pulica => (0.50, 0.72),
+            DamageEffect::Grampo => (0.05, 0.25),
         };
-        Self { kind, pos_x: px, pos_y: py, scale: 1.0 }
+        Self {
+            kind,
+            pos_x: px,
+            pos_y: py,
+            scale: 1.0,
+        }
     }
 
     /// Faz o parsing de um especificador de string: "tipo:posX:posY:escala"
@@ -332,10 +337,19 @@ impl DamageElement {
         if partes.len() < 4 {
             return Some(Self::default_for(kind));
         }
-        let pos_x = partes[1].parse::<f32>().unwrap_or_else(|_| Self::default_for(kind).pos_x);
-        let pos_y = partes[2].parse::<f32>().unwrap_or_else(|_| Self::default_for(kind).pos_y);
+        let pos_x = partes[1]
+            .parse::<f32>()
+            .unwrap_or_else(|_| Self::default_for(kind).pos_x);
+        let pos_y = partes[2]
+            .parse::<f32>()
+            .unwrap_or_else(|_| Self::default_for(kind).pos_y);
         let scale = partes[3].parse::<f32>().unwrap_or(1.0).clamp(0.1, 5.0);
-        Some(Self { kind, pos_x, pos_y, scale })
+        Some(Self {
+            kind,
+            pos_x,
+            pos_y,
+            scale,
+        })
     }
 }
 
@@ -586,7 +600,9 @@ pub enum DrawingTool {
 impl DrawingTool {
     pub fn parse(s: &str) -> Option<Self> {
         match s.trim().to_lowercase().as_str() {
-            "freehand" | "livre" | "mao-livre" | "mão-livre" | "draw" | "pen" => Some(Self::Freehand),
+            "freehand" | "livre" | "mao-livre" | "mão-livre" | "draw" | "pen" => {
+                Some(Self::Freehand)
+            }
             "cross" | "cruz" | "x" | "cruz-punk" => Some(Self::Cross),
             "arrow" | "seta" => Some(Self::Arrow),
             "line" | "linha" | "reta" => Some(Self::Line),
@@ -613,12 +629,7 @@ impl DrawingTool {
     }
 
     pub fn all() -> &'static [DrawingTool] {
-        &[
-            Self::Freehand,
-            Self::Cross,
-            Self::Arrow,
-            Self::Line,
-        ]
+        &[Self::Freehand, Self::Cross, Self::Arrow, Self::Line]
     }
 }
 
@@ -803,7 +814,12 @@ where
 
     // ── Camada 2: Sujeito processado (recorte com dither) ───────────────────────
     if let Some(subject) = processed_subject {
-        blend_subject(&mut canvas, subject, composition.subject_offset_x, composition.subject_offset_y);
+        blend_subject(
+            &mut canvas,
+            subject,
+            composition.subject_offset_x,
+            composition.subject_offset_y,
+        );
     }
 
     if is_cancelled() {
@@ -1029,7 +1045,11 @@ fn render_words_cut<'a>(
     seed: u64,
 ) {
     let pad = elem.tarja_padding as f32;
-    let wavelength = if elem.wave_wavelength > 0.0 { elem.wave_wavelength } else { 200.0 };
+    let wavelength = if elem.wave_wavelength > 0.0 {
+        elem.wave_wavelength
+    } else {
+        200.0
+    };
     let phase = ((seed % 1000) as f32) / 1000.0;
 
     let mut global_word_idx = 0usize;
@@ -1074,79 +1094,88 @@ fn render_words_cut<'a>(
                 font.clone()
             };
 
-            let (w_scale, word_v_metrics, word_col, word_bg, word_pad, word_finish, word_border_w, word_border_col) =
-                if elem.ransom_note {
-                    let style_variant = lcg_hash(seed as u32, word_idx as u32, 31415) % 5;
-                    let (sx, sy, fsm) = match style_variant {
-                        0 => (elem.stretch_x * 0.95, elem.stretch_y * 1.35, 1.05),
-                        1 => (elem.stretch_x * 1.15, elem.stretch_y * 0.90, 0.92),
-                        2 => (elem.stretch_x * 1.05, elem.stretch_y * 1.05, 1.00),
-                        3 => (elem.stretch_x * 0.90, elem.stretch_y * 1.20, 1.12),
-                        _ => (elem.stretch_x * 1.20, elem.stretch_y * 1.30, 1.08),
-                    };
-                    let scale = PxScale {
-                        x: elem.font_size * sx * fsm,
-                        y: elem.font_size * sy * fsm,
-                    };
-                    let sf = word_font.as_scaled(scale);
-                    let vm = sf.height();
+            let (
+                w_scale,
+                word_v_metrics,
+                word_col,
+                word_bg,
+                word_pad,
+                word_finish,
+                word_border_w,
+                word_border_col,
+            ) = if elem.ransom_note {
+                let style_variant = lcg_hash(seed as u32, word_idx as u32, 31415) % 5;
+                let (sx, sy, fsm) = match style_variant {
+                    0 => (elem.stretch_x * 0.95, elem.stretch_y * 1.35, 1.05),
+                    1 => (elem.stretch_x * 1.15, elem.stretch_y * 0.90, 0.92),
+                    2 => (elem.stretch_x * 1.05, elem.stretch_y * 1.05, 1.00),
+                    3 => (elem.stretch_x * 0.90, elem.stretch_y * 1.20, 1.12),
+                    _ => (elem.stretch_x * 1.20, elem.stretch_y * 1.30, 1.08),
+                };
+                let scale = PxScale {
+                    x: elem.font_size * sx * fsm,
+                    y: elem.font_size * sy * fsm,
+                };
+                let sf = word_font.as_scaled(scale);
+                let vm = sf.height();
 
-                    let col_idx = lcg_hash(seed as u32, word_idx as u32, 92837) % 8;
-                    let (fg, bg) = match col_idx {
-                        0 => (RgbColor::new(255, 255, 255), RgbColor::new(0, 0, 0)),
-                        1 => (RgbColor::new(0, 0, 0), RgbColor::new(255, 255, 255)),
-                        2 => (RgbColor::new(255, 238, 0), RgbColor::new(0, 0, 0)),
-                        3 => (RgbColor::new(255, 255, 255), RgbColor::new(255, 0, 51)),
-                        4 => (RgbColor::new(0, 0, 0), RgbColor::new(255, 238, 0)),
-                        5 => (RgbColor::new(255, 0, 51), RgbColor::new(255, 255, 255)),
-                        6 => (RgbColor::new(0, 0, 0), RgbColor::new(0, 255, 255)),
-                        _ => (RgbColor::new(255, 255, 255), RgbColor::new(255, 0, 127)),
-                    };
+                let col_idx = lcg_hash(seed as u32, word_idx as u32, 92837) % 8;
+                let (fg, bg) = match col_idx {
+                    0 => (RgbColor::new(255, 255, 255), RgbColor::new(0, 0, 0)),
+                    1 => (RgbColor::new(0, 0, 0), RgbColor::new(255, 255, 255)),
+                    2 => (RgbColor::new(255, 238, 0), RgbColor::new(0, 0, 0)),
+                    3 => (RgbColor::new(255, 255, 255), RgbColor::new(255, 0, 51)),
+                    4 => (RgbColor::new(0, 0, 0), RgbColor::new(255, 238, 0)),
+                    5 => (RgbColor::new(255, 0, 51), RgbColor::new(255, 255, 255)),
+                    6 => (RgbColor::new(0, 0, 0), RgbColor::new(0, 255, 255)),
+                    _ => (RgbColor::new(255, 255, 255), RgbColor::new(255, 0, 127)),
+                };
 
-                    let mut w_pad = 8.0 + ((lcg_hash(seed as u32, word_idx as u32, 5555) % 7) as f32);
-                    let finish = match lcg_hash(seed as u32, word_idx as u32, 8888) % 5 {
-                        0 => TarjaBorderFinish::Solida,
-                        1 => TarjaBorderFinish::FitaDurex,
-                        2 => TarjaBorderFinish::Rasgado,
-                        3 => TarjaBorderFinish::Poligonal,
-                        _ => TarjaBorderFinish::Tracejada,
-                    };
-                    if finish == TarjaBorderFinish::Poligonal {
-                        w_pad = w_pad.max(14.0);
-                    }
-                    let b_col = if col_idx == 1 || col_idx == 5 {
-                        RgbColor::new(0, 0, 0)
-                    } else {
-                        RgbColor::new(255, 255, 255)
-                    };
-                    (scale, vm, fg, Some(bg), w_pad, finish, 2u32, b_col)
+                let mut w_pad = 8.0 + ((lcg_hash(seed as u32, word_idx as u32, 5555) % 7) as f32);
+                let finish = match lcg_hash(seed as u32, word_idx as u32, 8888) % 5 {
+                    0 => TarjaBorderFinish::Solida,
+                    1 => TarjaBorderFinish::FitaDurex,
+                    2 => TarjaBorderFinish::Rasgado,
+                    3 => TarjaBorderFinish::Poligonal,
+                    _ => TarjaBorderFinish::Tracejada,
+                };
+                if finish == TarjaBorderFinish::Poligonal {
+                    w_pad = w_pad.max(14.0);
+                }
+                let b_col = if col_idx == 1 || col_idx == 5 {
+                    RgbColor::new(0, 0, 0)
                 } else {
-                    let finish = if elem.border_finish == TarjaBorderFinish::Nenhuma && elem.border_width > 0 {
+                    RgbColor::new(255, 255, 255)
+                };
+                (scale, vm, fg, Some(bg), w_pad, finish, 2u32, b_col)
+            } else {
+                let finish =
+                    if elem.border_finish == TarjaBorderFinish::Nenhuma && elem.border_width > 0 {
                         TarjaBorderFinish::Solida
                     } else {
                         elem.border_finish
                     };
-                    let b_col = elem.border_color.unwrap_or(elem.color);
-                    let b_w = if finish != TarjaBorderFinish::Nenhuma && elem.border_width == 0 {
-                        3
-                    } else {
-                        elem.border_width
-                    };
-                    let mut final_pad = pad;
-                    if finish == TarjaBorderFinish::Poligonal {
-                        final_pad = final_pad.max(14.0);
-                    }
-                    (
-                        scaled_font.scale,
-                        v_metrics,
-                        elem.color,
-                        elem.bg_tarja,
-                        final_pad,
-                        finish,
-                        b_w,
-                        b_col,
-                    )
+                let b_col = elem.border_color.unwrap_or(elem.color);
+                let b_w = if finish != TarjaBorderFinish::Nenhuma && elem.border_width == 0 {
+                    3
+                } else {
+                    elem.border_width
                 };
+                let mut final_pad = pad;
+                if finish == TarjaBorderFinish::Poligonal {
+                    final_pad = final_pad.max(14.0);
+                }
+                (
+                    scaled_font.scale,
+                    v_metrics,
+                    elem.color,
+                    elem.bg_tarja,
+                    final_pad,
+                    finish,
+                    b_w,
+                    b_col,
+                )
+            };
 
             let sf = word_font.as_scaled(w_scale);
             let mut w_w = 0.0f32;
@@ -1283,7 +1312,7 @@ fn render_words_cut<'a>(
 
                 // Se o acabamento for Poligonal, recorta os pixels de fundo fora do polígono
                 if data.word_finish == TarjaBorderFinish::Poligonal {
-                    let poly_salt = lcg_hash(0u32 ^ (sub_w * 31), 0u32 ^ (sub_h * 37), data.word_border_w ^ 9991);
+                    let poly_salt = lcg_hash(sub_w * 31, sub_h * 37, data.word_border_w ^ 9991);
                     let poly = generate_irregular_polygon_with_bounds(
                         0.0,
                         0.0,
@@ -1303,13 +1332,26 @@ fn render_words_cut<'a>(
                         }
                     }
                 } else if data.word_finish == TarjaBorderFinish::Rasgado {
-                    let tear_salt = lcg_hash(0u32 ^ (sub_w * 31), 0u32 ^ (sub_h * 37), data.word_border_w ^ 7771);
-                    let max_depth = (data.word_border_w as f32 * 2.8).clamp(8.0, 24.0).min(data.word_pad * 0.85).min(sub_w as f32 * 0.22).min(sub_h as f32 * 0.25);
+                    let tear_salt = lcg_hash(sub_w * 31, sub_h * 37, data.word_border_w ^ 7771);
+                    let max_depth = (data.word_border_w as f32 * 2.8)
+                        .clamp(8.0, 24.0)
+                        .min(data.word_pad * 0.85)
+                        .min(sub_w as f32 * 0.22)
+                        .min(sub_h as f32 * 0.25);
                     for ty in 0..sub_h {
                         for tx in 0..sub_w {
                             let px = tx as f32 + 0.5;
                             let py = ty as f32 + 0.5;
-                            if !point_in_torn_rect(px, py, 0.0, 0.0, sub_w as f32, sub_h as f32, max_depth, tear_salt) {
+                            if !point_in_torn_rect(
+                                px,
+                                py,
+                                0.0,
+                                0.0,
+                                sub_w as f32,
+                                sub_h as f32,
+                                max_depth,
+                                tear_salt,
+                            ) {
                                 sub_canvas.put_pixel(tx, ty, Rgba([0, 0, 0, 0]));
                             }
                         }
@@ -1357,12 +1399,7 @@ fn render_words_cut<'a>(
                                 sub_canvas.put_pixel(
                                     px as u32,
                                     py as u32,
-                                    Rgba([
-                                        data.word_col.r,
-                                        data.word_col.g,
-                                        data.word_col.b,
-                                        255,
-                                    ]),
+                                    Rgba([data.word_col.r, data.word_col.g, data.word_col.b, 255]),
                                 );
                             }
                         }
@@ -1378,7 +1415,12 @@ fn render_words_cut<'a>(
     }
 }
 
-fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &TextElement, seed: u64) {
+fn render_text_element(
+    canvas: &mut RgbaImage,
+    _default_font: &FontRef,
+    elem: &TextElement,
+    seed: u64,
+) {
     if elem.text.trim().is_empty() {
         return;
     }
@@ -1469,7 +1511,13 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
         for ch in line.chars() {
             let glyph_id = font.glyph_id(ch);
             let advance = scaled_font.h_advance(glyph_id);
-            let glyph = glyph_id.with_scale_and_position(scale, Point { x: cursor_x, y: 0.0 });
+            let glyph = glyph_id.with_scale_and_position(
+                scale,
+                Point {
+                    x: cursor_x,
+                    y: 0.0,
+                },
+            );
             glyphs.push(glyph);
             cursor_x += advance;
         }
@@ -1489,7 +1537,11 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
     };
     let start_y = base_y;
 
-    let wavelength = if elem.wave_wavelength > 0.0 { elem.wave_wavelength } else { 200.0 };
+    let wavelength = if elem.wave_wavelength > 0.0 {
+        elem.wave_wavelength
+    } else {
+        200.0
+    };
     let phase = ((seed % 1000) as f32) / 1000.0;
 
     // Modo com rotação global, ondulação não-linear contínua ou acabamento irregular (Poligonal / Rasgado)
@@ -1517,12 +1569,19 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
             if elem.wave_amplitude > 0.0 {
                 // Desenha a tarja contínua com ondulação senoidal por coluna
                 for tx in 0..sub_w {
-                    let col_wave = elem.wave_amplitude * (((tx as f32 / wavelength) + phase) * 2.0 * std::f32::consts::PI).sin();
+                    let col_wave = elem.wave_amplitude
+                        * (((tx as f32 / wavelength) + phase) * 2.0 * std::f32::consts::PI).sin();
                     let top_y = ((wave_y_center + col_wave - pad).max(0.0)).round() as u32;
-                    let bot_y = ((wave_y_center + col_wave + text_height + pad).min(sub_h as f32 - 1.0)).round() as u32;
+                    let bot_y = ((wave_y_center + col_wave + text_height + pad)
+                        .min(sub_h as f32 - 1.0))
+                    .round() as u32;
                     for ty in top_y..=bot_y {
                         if ty < sub_h {
-                            sub_canvas.put_pixel(tx, ty, Rgba([tarja_color.r, tarja_color.g, tarja_color.b, 255]));
+                            sub_canvas.put_pixel(
+                                tx,
+                                ty,
+                                Rgba([tarja_color.r, tarja_color.g, tarja_color.b, 255]),
+                            );
                         }
                     }
                 }
@@ -1531,7 +1590,11 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
                     TarjaEffect::Solida => {
                         for ty in 0..sub_h {
                             for tx in 0..sub_w {
-                                sub_canvas.put_pixel(tx, ty, Rgba([tarja_color.r, tarja_color.g, tarja_color.b, 255]));
+                                sub_canvas.put_pixel(
+                                    tx,
+                                    ty,
+                                    Rgba([tarja_color.r, tarja_color.g, tarja_color.b, 255]),
+                                );
                             }
                         }
                     }
@@ -1541,13 +1604,15 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
                 }
             }
 
-            let border_finish = if elem.border_finish == TarjaBorderFinish::Nenhuma && elem.border_width > 0 {
-                TarjaBorderFinish::Solida
-            } else {
-                elem.border_finish
-            };
+            let border_finish =
+                if elem.border_finish == TarjaBorderFinish::Nenhuma && elem.border_width > 0 {
+                    TarjaBorderFinish::Solida
+                } else {
+                    elem.border_finish
+                };
             let border_col = elem.border_color.unwrap_or(elem.color);
-            let border_w = if border_finish != TarjaBorderFinish::Nenhuma && elem.border_width == 0 {
+            let border_w = if border_finish != TarjaBorderFinish::Nenhuma && elem.border_width == 0
+            {
                 3
             } else {
                 elem.border_width
@@ -1555,7 +1620,7 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
 
             // Se o acabamento for Poligonal ou Rasgado, recorta os pixels de fundo fora do contorno
             if border_finish == TarjaBorderFinish::Poligonal {
-                let poly_salt = lcg_hash(0u32 ^ (sub_w * 31), 0u32 ^ (sub_h * 37), border_w ^ 9991);
+                let poly_salt = lcg_hash(sub_w * 31, sub_h * 37, border_w ^ 9991);
                 let poly = generate_irregular_polygon_with_bounds(
                     0.0,
                     0.0,
@@ -1575,20 +1640,42 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
                     }
                 }
             } else if border_finish == TarjaBorderFinish::Rasgado {
-                let tear_salt = lcg_hash(0u32 ^ (sub_w * 31), 0u32 ^ (sub_h * 37), border_w ^ 7771);
-                let max_depth = (border_w as f32 * 2.8).clamp(8.0, 24.0).min(pad * 0.85).min(sub_w as f32 * 0.22).min(sub_h as f32 * 0.25);
+                let tear_salt = lcg_hash(sub_w * 31, sub_h * 37, border_w ^ 7771);
+                let max_depth = (border_w as f32 * 2.8)
+                    .clamp(8.0, 24.0)
+                    .min(pad * 0.85)
+                    .min(sub_w as f32 * 0.22)
+                    .min(sub_h as f32 * 0.25);
                 for ty in 0..sub_h {
                     for tx in 0..sub_w {
                         let px = tx as f32 + 0.5;
                         let py = ty as f32 + 0.5;
-                        if !point_in_torn_rect(px, py, 0.0, 0.0, sub_w as f32, sub_h as f32, max_depth, tear_salt) {
+                        if !point_in_torn_rect(
+                            px,
+                            py,
+                            0.0,
+                            0.0,
+                            sub_w as f32,
+                            sub_h as f32,
+                            max_depth,
+                            tear_salt,
+                        ) {
                             sub_canvas.put_pixel(tx, ty, Rgba([0, 0, 0, 0]));
                         }
                     }
                 }
             }
 
-            draw_tarja_border(&mut sub_canvas, 0, 0, sub_w, sub_h, border_finish, border_w, border_col);
+            draw_tarja_border(
+                &mut sub_canvas,
+                0,
+                0,
+                sub_w,
+                sub_h,
+                border_finish,
+                border_w,
+                border_col,
+            );
         }
 
         // Rasteriza cada glifo em sua respectiva linha no sub_canvas (com deslocamento de onda se ativo)
@@ -1603,7 +1690,9 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
             for mut glyph in glyphs {
                 glyph.position.x += line_start_x;
                 let wave_y = if elem.wave_amplitude > 0.0 {
-                    elem.wave_amplitude * (((glyph.position.x / wavelength) + phase) * 2.0 * std::f32::consts::PI).sin()
+                    elem.wave_amplitude
+                        * (((glyph.position.x / wavelength) + phase) * 2.0 * std::f32::consts::PI)
+                            .sin()
                 } else {
                     0.0
                 };
@@ -1622,7 +1711,11 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
                                     }
                                 }
                                 let col = elem.color;
-                                sub_canvas.put_pixel(px as u32, py as u32, Rgba([col.r, col.g, col.b, 255]));
+                                sub_canvas.put_pixel(
+                                    px as u32,
+                                    py as u32,
+                                    Rgba([col.r, col.g, col.b, 255]),
+                                );
                             }
                         }
                     });
@@ -1653,7 +1746,11 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
             TarjaEffect::Solida => {
                 for ty in y0..y1 {
                     for tx in x0..x1 {
-                        canvas.put_pixel(tx, ty, Rgba([tarja_color.r, tarja_color.g, tarja_color.b, 255]));
+                        canvas.put_pixel(
+                            tx,
+                            ty,
+                            Rgba([tarja_color.r, tarja_color.g, tarja_color.b, 255]),
+                        );
                     }
                 }
             }
@@ -1662,11 +1759,12 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
             }
         }
 
-        let border_finish = if elem.border_finish == TarjaBorderFinish::Nenhuma && elem.border_width > 0 {
-            TarjaBorderFinish::Solida
-        } else {
-            elem.border_finish
-        };
+        let border_finish =
+            if elem.border_finish == TarjaBorderFinish::Nenhuma && elem.border_width > 0 {
+                TarjaBorderFinish::Solida
+            } else {
+                elem.border_finish
+            };
         let border_col = elem.border_color.unwrap_or(elem.color);
         let border_w = if border_finish != TarjaBorderFinish::Nenhuma && elem.border_width == 0 {
             3
@@ -1702,7 +1800,11 @@ fn render_text_element(canvas: &mut RgbaImage, _default_font: &FontRef, elem: &T
                                 }
                             }
                             let col = elem.color;
-                            canvas.put_pixel(px as u32, py as u32, Rgba([col.r, col.g, col.b, 255]));
+                            canvas.put_pixel(
+                                px as u32,
+                                py as u32,
+                                Rgba([col.r, col.g, col.b, 255]),
+                            );
                         }
                     }
                 });
@@ -1733,18 +1835,26 @@ pub fn draw_tarja_border(
             let bw = width.min((x1 - x0) / 2).min((y1 - y0) / 2).max(1);
             for x in x0..x1 {
                 for y in y0..(y0 + bw).min(y1) {
-                    if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                    if x < cw && y < ch {
+                        canvas.put_pixel(x, y, border_rgba);
+                    }
                 }
                 for y in (y1.saturating_sub(bw)).max(y0)..y1 {
-                    if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                    if x < cw && y < ch {
+                        canvas.put_pixel(x, y, border_rgba);
+                    }
                 }
             }
             for y in y0..y1 {
                 for x in x0..(x0 + bw).min(x1) {
-                    if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                    if x < cw && y < ch {
+                        canvas.put_pixel(x, y, border_rgba);
+                    }
                 }
                 for x in (x1.saturating_sub(bw)).max(x0)..x1 {
-                    if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                    if x < cw && y < ch {
+                        canvas.put_pixel(x, y, border_rgba);
+                    }
                 }
             }
         }
@@ -1753,20 +1863,28 @@ pub fn draw_tarja_border(
             for x in x0..x1 {
                 if ((x - x0) / 12) % 2 == 0 {
                     for y in y0..(y0 + bw).min(y1) {
-                        if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                        if x < cw && y < ch {
+                            canvas.put_pixel(x, y, border_rgba);
+                        }
                     }
                     for y in (y1.saturating_sub(bw)).max(y0)..y1 {
-                        if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                        if x < cw && y < ch {
+                            canvas.put_pixel(x, y, border_rgba);
+                        }
                     }
                 }
             }
             for y in y0..y1 {
                 if ((y - y0) / 12) % 2 == 0 {
                     for x in x0..(x0 + bw).min(x1) {
-                        if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                        if x < cw && y < ch {
+                            canvas.put_pixel(x, y, border_rgba);
+                        }
                     }
                     for x in (x1.saturating_sub(bw)).max(x0)..x1 {
-                        if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                        if x < cw && y < ch {
+                            canvas.put_pixel(x, y, border_rgba);
+                        }
                     }
                 }
             }
@@ -1776,20 +1894,28 @@ pub fn draw_tarja_border(
             for x in x0..x1 {
                 if ((x - x0) / 6) % 2 == 0 {
                     for y in y0..(y0 + bw).min(y1) {
-                        if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                        if x < cw && y < ch {
+                            canvas.put_pixel(x, y, border_rgba);
+                        }
                     }
                     for y in (y1.saturating_sub(bw)).max(y0)..y1 {
-                        if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                        if x < cw && y < ch {
+                            canvas.put_pixel(x, y, border_rgba);
+                        }
                     }
                 }
             }
             for y in y0..y1 {
                 if ((y - y0) / 6) % 2 == 0 {
                     for x in x0..(x0 + bw).min(x1) {
-                        if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                        if x < cw && y < ch {
+                            canvas.put_pixel(x, y, border_rgba);
+                        }
                     }
                     for x in (x1.saturating_sub(bw)).max(x0)..x1 {
-                        if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                        if x < cw && y < ch {
+                            canvas.put_pixel(x, y, border_rgba);
+                        }
                     }
                 }
             }
@@ -1798,27 +1924,43 @@ pub fn draw_tarja_border(
             let bw = width.min((x1 - x0) / 2).min((y1 - y0) / 2).max(1);
             for x in x0..x1 {
                 for y in y0..(y0 + bw).min(y1) {
-                    if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                    if x < cw && y < ch {
+                        canvas.put_pixel(x, y, border_rgba);
+                    }
                 }
                 for y in (y1.saturating_sub(bw)).max(y0)..y1 {
-                    if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                    if x < cw && y < ch {
+                        canvas.put_pixel(x, y, border_rgba);
+                    }
                 }
             }
             for y in y0..y1 {
                 for x in x0..(x0 + bw).min(x1) {
-                    if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                    if x < cw && y < ch {
+                        canvas.put_pixel(x, y, border_rgba);
+                    }
                 }
                 for x in (x1.saturating_sub(bw)).max(x0)..x1 {
-                    if x < cw && y < ch { canvas.put_pixel(x, y, border_rgba); }
+                    if x < cw && y < ch {
+                        canvas.put_pixel(x, y, border_rgba);
+                    }
                 }
             }
             let tab_len = 16u32;
             for i in 0..tab_len {
                 let col = Rgba([230, 230, 200, 255]);
-                if x0 + i < cw && y0 + i < ch { canvas.put_pixel(x0 + i, y0 + i, col); }
-                if x1.saturating_sub(i) < cw && y0 + i < ch { canvas.put_pixel(x1.saturating_sub(i), y0 + i, col); }
-                if x0 + i < cw && y1.saturating_sub(i) < ch { canvas.put_pixel(x0 + i, y1.saturating_sub(i), col); }
-                if x1.saturating_sub(i) < cw && y1.saturating_sub(i) < ch { canvas.put_pixel(x1.saturating_sub(i), y1.saturating_sub(i), col); }
+                if x0 + i < cw && y0 + i < ch {
+                    canvas.put_pixel(x0 + i, y0 + i, col);
+                }
+                if x1.saturating_sub(i) < cw && y0 + i < ch {
+                    canvas.put_pixel(x1.saturating_sub(i), y0 + i, col);
+                }
+                if x0 + i < cw && y1.saturating_sub(i) < ch {
+                    canvas.put_pixel(x0 + i, y1.saturating_sub(i), col);
+                }
+                if x1.saturating_sub(i) < cw && y1.saturating_sub(i) < ch {
+                    canvas.put_pixel(x1.saturating_sub(i), y1.saturating_sub(i), col);
+                }
             }
         }
         TarjaBorderFinish::Rasgado => {
@@ -1826,16 +1968,21 @@ pub fn draw_tarja_border(
             let w = (x1 - x0) as f32;
             let h = (y1 - y0) as f32;
             let tear_salt = lcg_hash(x0 ^ (x1 * 31), y0 ^ (y1 * 37), width ^ 7771);
-            let max_depth = (width as f32 * 2.8).clamp(8.0, 24.0).min(w * 0.22).min(h * 0.25);
+            let max_depth = (width as f32 * 2.8)
+                .clamp(8.0, 24.0)
+                .min(w * 0.22)
+                .min(h * 0.25);
             let pulp_thick = (width as f32 * 2.0).clamp(5.0, 14.0);
-            
+
             let white_paper = Rgba([255, 255, 255, 255]);
             let pulp_fiber = Rgba([246, 243, 234, 255]);
             let fiber_shade = Rgba([232, 226, 214, 255]);
             let pulp_dense = Rgba([252, 250, 245, 255]);
 
             for y in y0..y1 {
-                if y >= ch { break; }
+                if y >= ch {
+                    break;
+                }
                 let py = y as f32 + 0.5;
                 let d_left = torn_edge_offset(py - y0 as f32, h, max_depth, tear_salt ^ 303);
                 let d_right = torn_edge_offset(py - y0 as f32, h, max_depth, tear_salt ^ 404);
@@ -1844,7 +1991,9 @@ pub fn draw_tarja_border(
                 let x_tear_end = x1 as f32 - d_right;
 
                 for x in x0..x1 {
-                    if x >= cw { break; }
+                    if x >= cw {
+                        break;
+                    }
                     let px = x as f32 + 0.5;
 
                     let d_top = torn_edge_offset(px - x0 as f32, w, max_depth, tear_salt ^ 101);
@@ -1854,7 +2003,11 @@ pub fn draw_tarja_border(
                     let y_tear_end = y1 as f32 - d_bot;
 
                     // Se estiver dentro da área rasgada do papel
-                    if px >= x_tear_start && px <= x_tear_end && py >= y_tear_start && py <= y_tear_end {
+                    if px >= x_tear_start
+                        && px <= x_tear_end
+                        && py >= y_tear_start
+                        && py <= y_tear_end
+                    {
                         // Calcula distância até a borda de ruptura mais próxima
                         let dist_l = px - x_tear_start;
                         let dist_r = x_tear_end - px;
@@ -1900,14 +2053,20 @@ pub fn draw_tarja_border(
             let h_box = (y1 - y0) as f32;
             let pad_x = (w_box * 0.15).max(12.0);
             let pad_y = (h_box * 0.20).max(8.0);
-            let poly = generate_irregular_polygon_with_bounds(x0 as f32, y0 as f32, x1 as f32, y1 as f32, pad_x, pad_y, poly_salt);
+            let poly = generate_irregular_polygon_with_bounds(
+                x0 as f32, y0 as f32, x1 as f32, y1 as f32, pad_x, pad_y, poly_salt,
+            );
             let bw_sq = (width as f32).max(1.5).powi(2);
             let n = poly.len();
 
             for y in y0..y1 {
-                if y >= ch { break; }
+                if y >= ch {
+                    break;
+                }
                 for x in x0..x1 {
-                    if x >= cw { break; }
+                    if x >= cw {
+                        break;
+                    }
                     let px = x as f32 + 0.5;
                     let py = y as f32 + 0.5;
                     if point_in_polygon(px, py, &poly) {
@@ -2037,7 +2196,13 @@ pub fn generate_irregular_polygon_with_bounds(
 }
 
 /// Determina deterministicamente um polígono irregular de corte de fanzine (4 a 6 lados)
-pub fn generate_irregular_polygon(x0: f32, y0: f32, x1: f32, y1: f32, salt: u32) -> Vec<(f32, f32)> {
+pub fn generate_irregular_polygon(
+    x0: f32,
+    y0: f32,
+    x1: f32,
+    y1: f32,
+    salt: u32,
+) -> Vec<(f32, f32)> {
     let w = (x1 - x0).max(10.0);
     let h = (y1 - y0).max(10.0);
     generate_irregular_polygon_with_bounds(x0, y0, x1, y1, w * 0.15, h * 0.18, salt)
@@ -2084,20 +2249,20 @@ pub fn dist_point_to_segment_sq(px: f32, py: f32, x1: f32, y1: f32, x2: f32, y2:
 pub fn torn_edge_offset(coord: f32, length: f32, max_depth: f32, salt: u32) -> f32 {
     let t = if length > 0.0 { coord / length } else { 0.0 };
     let phase = ((salt % 1000) as f32) / 1000.0;
-    
+
     // 1. Ondulação e fratura macro (formato irregular/sinuoso da caixa, rasgo de fora a fora)
-    let wave1 = (t * std::f32::consts::PI * 2.0 * 1.7 + phase * 6.28).sin() * 0.40;
-    let wave2 = (t * std::f32::consts::PI * 2.0 * 3.4 + phase * 3.14).sin() * 0.25;
+    let wave1 = (t * std::f32::consts::PI * 2.0 * 1.7 + phase * std::f32::consts::TAU).sin() * 0.40;
+    let wave2 = (t * std::f32::consts::PI * 2.0 * 3.4 + phase * std::f32::consts::PI).sin() * 0.25;
     let wave3 = ((t * 7.0 + phase * 2.0).floor() % 3.0 - 1.0) * 0.15; // quebras facetadas de tesoura/rasgamento
-    
+
     // 2. Ruptura de média frequência (fração em pedaços e dentes de fibra de papelão)
     let seg = (coord / 5.0).floor() as u32;
     let seg_hash = (lcg_hash(seg, salt, 7771) % 1000) as f32 / 1000.0;
     let rough = (seg_hash - 0.48) * 0.35;
-    
+
     // 3. Micro-fibras pontiagudas de alta frequência e textura felpuda
     let micro = ((lcg_hash(coord.round() as u32, salt, 9993) % 1000) as f32 / 1000.0 - 0.5) * 0.25;
-    
+
     let total = wave1 + wave2 + wave3 + rough + micro;
     // O rasgo penetra para dentro do papel em profundidades orgânicas variáveis
     (total.abs() * max_depth).min(max_depth)
@@ -2128,9 +2293,8 @@ pub fn point_in_torn_rect(
 }
 
 pub fn lcg_hash(x: u32, y: u32, salt: u32) -> u32 {
-    let mut h = x.wrapping_mul(374761393)
-        ^ y.wrapping_mul(668265263)
-        ^ salt.wrapping_mul(1013904223);
+    let mut h =
+        x.wrapping_mul(374761393) ^ y.wrapping_mul(668265263) ^ salt.wrapping_mul(1013904223);
     h = (h ^ (h >> 13)).wrapping_mul(1274126177);
     h ^ (h >> 16)
 }
@@ -2276,8 +2440,18 @@ fn render_punk_overlay(canvas: &mut RgbaImage, overlay: &PunkOverlayConfig, font
         // Traços diagonais toscos anti-design
         let scratch_lines = [
             (30i32, 60i32, 180i32, 85i32),
-            (cw as i32 - 150, ch as i32 - 100, cw as i32 - 40, ch as i32 - 60),
-            (cw as i32 / 2 - 80, ch as i32 - 45, cw as i32 / 2 + 80, ch as i32 - 42),
+            (
+                cw as i32 - 150,
+                ch as i32 - 100,
+                cw as i32 - 40,
+                ch as i32 - 60,
+            ),
+            (
+                cw as i32 / 2 - 80,
+                ch as i32 - 45,
+                cw as i32 / 2 + 80,
+                ch as i32 - 42,
+            ),
         ];
 
         for (x0, y0, x1, y1) in scratch_lines {
@@ -2291,7 +2465,9 @@ fn render_punk_overlay(canvas: &mut RgbaImage, overlay: &PunkOverlayConfig, font
     let elementos: Vec<DamageElement> = if !overlay.damage_elements.is_empty() {
         overlay.damage_elements.clone()
     } else {
-        overlay.damages.iter()
+        overlay
+            .damages
+            .iter()
             .map(|&d| DamageElement::default_for(d))
             .collect()
     };
@@ -2336,11 +2512,24 @@ fn render_damage_tiro(canvas: &mut RgbaImage, cx: i32, cy: i32, scale: f32) {
     let burn_rim = Rgba([50, 45, 45, 220]);
 
     let cracks = [
-        (0, -38), (28, -28), (42, 0), (28, 30),
-        (0, 40), (-32, 28), (-40, -4), (-25, -28)
+        (0, -38),
+        (28, -28),
+        (42, 0),
+        (28, 30),
+        (0, 40),
+        (-32, 28),
+        (-40, -4),
+        (-25, -28),
     ];
     for (dx, dy) in cracks {
-        draw_rough_line(canvas, cx, cy, cx + (dx as f32 * s) as i32, cy + (dy as f32 * s) as i32, burn_rim);
+        draw_rough_line(
+            canvas,
+            cx,
+            cy,
+            cx + (dx as f32 * s) as i32,
+            cy + (dy as f32 * s) as i32,
+            burn_rim,
+        );
     }
     draw_filled_circle(canvas, cx, cy, (20.0 * s) as i32, burn_rim);
     draw_filled_circle(canvas, cx, cy, (14.0 * s) as i32, paper_rim);
@@ -2353,15 +2542,15 @@ fn render_damage_rasgo(canvas: &mut RgbaImage, cx: i32, cy: i32, scale: f32) {
 
     let pure_white = Rgba([255, 255, 255, 255]);
     let pulp_white = Rgba([245, 242, 235, 255]);
-    let tear_dark  = Rgba([12, 12, 12, 255]);
+    let tear_dark = Rgba([12, 12, 12, 255]);
     let tear_shadow = Rgba([20, 20, 20, 180]);
 
     let len_y = (240.0 * s) as i32;
     let len_x = (90.0 * s) as i32;
     let start_x = cx - len_x / 2;
     let start_y = cy - len_y / 2;
-    let end_x   = cx + len_x / 2;
-    let end_y   = cy + len_y / 2;
+    let end_x = cx + len_x / 2;
+    let end_y = cy + len_y / 2;
 
     let steps = ((len_y.abs() as f32) * 1.5).max(60.0) as usize;
 
@@ -2379,7 +2568,13 @@ fn render_damage_rasgo(canvas: &mut RgbaImage, cx: i32, cy: i32, scale: f32) {
         let fy = base_y;
 
         let shadow_off = (5.0 * s).round() as i32;
-        draw_filled_circle(canvas, (fx + shadow_off as f32) as i32, fy as i32, (10.0 * s) as i32, tear_shadow);
+        draw_filled_circle(
+            canvas,
+            (fx + shadow_off as f32) as i32,
+            fy as i32,
+            (10.0 * s) as i32,
+            tear_shadow,
+        );
     }
 
     // 2. Passada de Margem Branca Fibrosa / Papel Desfiado (Tear Fringe)
@@ -2396,8 +2591,20 @@ fn render_damage_rasgo(canvas: &mut RgbaImage, cx: i32, cy: i32, scale: f32) {
 
         // Camada externa de desfiamento branco
         let fringe_w = (7.0 + (lcg_hash(i as u32, 333, 404) % 9) as f32) * s;
-        draw_filled_circle(canvas, (fx - fringe_w * 0.5) as i32, fy as i32, (fringe_w * 0.8) as i32, pure_white);
-        draw_filled_circle(canvas, (fx + fringe_w * 0.5) as i32, fy as i32, (fringe_w * 0.8) as i32, pulp_white);
+        draw_filled_circle(
+            canvas,
+            (fx - fringe_w * 0.5) as i32,
+            fy as i32,
+            (fringe_w * 0.8) as i32,
+            pure_white,
+        );
+        draw_filled_circle(
+            canvas,
+            (fx + fringe_w * 0.5) as i32,
+            fy as i32,
+            (fringe_w * 0.8) as i32,
+            pulp_white,
+        );
 
         // Fibras individuais saindo do rasgo
         if i % 3 == 0 {
@@ -2457,18 +2664,61 @@ fn render_damage_sangue(canvas: &mut RgbaImage, cx: i32, cy: i32, scale: f32) {
     let dark_blood = Rgba([90, 0, 0, 255]);
 
     draw_filled_circle(canvas, cx, cy, (22.0 * s) as i32, blood);
-    draw_filled_circle(canvas, cx + (2.0 * s) as i32, cy - (2.0 * s) as i32, (16.0 * s) as i32, dark_blood);
-    draw_rough_line(canvas, cx - (6.0*s) as i32, cy + (10.0*s) as i32, cx - (7.0*s) as i32, cy + (45.0*s) as i32, blood);
-    draw_filled_circle(canvas, cx - (7.0*s) as i32, cy + (45.0*s) as i32, (5.0*s) as i32, blood);
-    draw_rough_line(canvas, cx + (8.0*s) as i32, cy + (12.0*s) as i32, cx + (9.0*s) as i32, cy + (70.0*s) as i32, blood);
-    draw_filled_circle(canvas, cx + (9.0*s) as i32, cy + (70.0*s) as i32, (6.0*s) as i32, blood);
+    draw_filled_circle(
+        canvas,
+        cx + (2.0 * s) as i32,
+        cy - (2.0 * s) as i32,
+        (16.0 * s) as i32,
+        dark_blood,
+    );
+    draw_rough_line(
+        canvas,
+        cx - (6.0 * s) as i32,
+        cy + (10.0 * s) as i32,
+        cx - (7.0 * s) as i32,
+        cy + (45.0 * s) as i32,
+        blood,
+    );
+    draw_filled_circle(
+        canvas,
+        cx - (7.0 * s) as i32,
+        cy + (45.0 * s) as i32,
+        (5.0 * s) as i32,
+        blood,
+    );
+    draw_rough_line(
+        canvas,
+        cx + (8.0 * s) as i32,
+        cy + (12.0 * s) as i32,
+        cx + (9.0 * s) as i32,
+        cy + (70.0 * s) as i32,
+        blood,
+    );
+    draw_filled_circle(
+        canvas,
+        cx + (9.0 * s) as i32,
+        cy + (70.0 * s) as i32,
+        (6.0 * s) as i32,
+        blood,
+    );
 
     let satellites = [
-        (-35, -20, 4), (30, -32, 3), (45, 15, 4), (-25, 40, 3),
-        (-45, 5, 2), (25, 38, 3), (0, -42, 3)
+        (-35, -20, 4),
+        (30, -32, 3),
+        (45, 15, 4),
+        (-25, 40, 3),
+        (-45, 5, 2),
+        (25, 38, 3),
+        (0, -42, 3),
     ];
     for (dx, dy, r) in satellites {
-        draw_filled_circle(canvas, cx + (dx as f32 * s) as i32, cy + (dy as f32 * s) as i32, (r as f32 * s) as i32, blood);
+        draw_filled_circle(
+            canvas,
+            cx + (dx as f32 * s) as i32,
+            cy + (dy as f32 * s) as i32,
+            (r as f32 * s) as i32,
+            blood,
+        );
     }
 }
 
@@ -2479,20 +2729,40 @@ fn render_damage_tinta(canvas: &mut RgbaImage, cx: i32, cy: i32, scale: f32, cw:
     let puddle_h = (28.0 * s) as i32;
     let puddle_y0 = cy;
     let puddle_y1 = cy + puddle_h;
-    draw_filled_rect(canvas, cx - puddle_half, puddle_y0, cx + puddle_half, puddle_y1, ink);
+    draw_filled_rect(
+        canvas,
+        cx - puddle_half,
+        puddle_y0,
+        cx + puddle_half,
+        puddle_y1,
+        ink,
+    );
 
     let drips = [
         (-puddle_half * 3 / 4, (110.0 * s) as i32, (5.0 * s) as i32),
-        (-puddle_half / 4,     (180.0 * s) as i32, (6.0 * s) as i32),
-        (0,                    (130.0 * s) as i32, (4.0 * s) as i32),
-        (puddle_half / 4,      (220.0 * s) as i32, (7.0 * s) as i32),
-        (puddle_half * 3 / 4,  (90.0  * s) as i32, (4.0 * s) as i32),
+        (-puddle_half / 4, (180.0 * s) as i32, (6.0 * s) as i32),
+        (0, (130.0 * s) as i32, (4.0 * s) as i32),
+        (puddle_half / 4, (220.0 * s) as i32, (7.0 * s) as i32),
+        (puddle_half * 3 / 4, (90.0 * s) as i32, (4.0 * s) as i32),
     ];
     for (dx, len, thick) in drips {
         for t in 0..thick {
-            draw_rough_line(canvas, cx + dx + t, puddle_y1, cx + dx + t, puddle_y1 + len, ink);
+            draw_rough_line(
+                canvas,
+                cx + dx + t,
+                puddle_y1,
+                cx + dx + t,
+                puddle_y1 + len,
+                ink,
+            );
         }
-        draw_filled_circle(canvas, cx + dx + thick / 2, puddle_y1 + len, thick + (4.0 * s) as i32, ink);
+        draw_filled_circle(
+            canvas,
+            cx + dx + thick / 2,
+            puddle_y1 + len,
+            thick + (4.0 * s) as i32,
+            ink,
+        );
     }
 }
 
@@ -2505,8 +2775,22 @@ fn render_damage_faca(canvas: &mut RgbaImage, cx: i32, cy: i32, scale: f32, cw: 
     let oy2 = (ch as f32 * 0.16 * scale) as i32;
     draw_rough_line(canvas, cx - hw, cy - hh1, cx + hw, cy + hh1, cut);
     draw_rough_line(canvas, cx - hw, cy - hh1 + 2, cx + hw, cy + hh1 + 2, white);
-    draw_rough_line(canvas, cx - hw, cy + oy2 - hh2, cx + hw, cy + oy2 + hh2, cut);
-    draw_rough_line(canvas, cx - hw, cy + oy2 - hh2 + 2, cx + hw, cy + oy2 + hh2 + 2, white);
+    draw_rough_line(
+        canvas,
+        cx - hw,
+        cy + oy2 - hh2,
+        cx + hw,
+        cy + oy2 + hh2,
+        cut,
+    );
+    draw_rough_line(
+        canvas,
+        cx - hw,
+        cy + oy2 - hh2 + 2,
+        cx + hw,
+        cy + oy2 + hh2 + 2,
+        white,
+    );
 }
 
 fn render_damage_pixo(canvas: &mut RgbaImage, cx: i32, cy: i32, scale: f32) {
@@ -2518,19 +2802,19 @@ fn render_damage_pixo(canvas: &mut RgbaImage, cx: i32, cy: i32, scale: f32) {
     let by = cy - s(40);
 
     let strokes = [
-        (bx,       by,       bx,       by+s(80)),
-        (bx,       by,       bx+s(30), by+s(80)),
-        (bx+s(30), by,       bx+s(30), by+s(80)),
-        (bx+s(40), by,       bx+s(55), by+s(80)),
-        (bx+s(55), by+s(80), bx+s(70), by),
-        (bx+s(80), by,       bx+s(80), by+s(80)),
-        (bx+s(80), by+s(80), bx+s(110),by+s(80)),
-        (bx+s(120),by,       bx+s(120),by+s(80)),
-        (bx+s(150),by,       bx+s(150),by+s(80)),
-        (bx+s(120),by+s(40), bx+s(150),by+s(40)),
-        (bx+s(165),by+s(50), bx+s(185),by+s(10)),
-        (bx+s(170),by+s(10), bx+s(185),by+s(10)),
-        (bx+s(185),by+s(10), bx+s(185),by+s(25)),
+        (bx, by, bx, by + s(80)),
+        (bx, by, bx + s(30), by + s(80)),
+        (bx + s(30), by, bx + s(30), by + s(80)),
+        (bx + s(40), by, bx + s(55), by + s(80)),
+        (bx + s(55), by + s(80), bx + s(70), by),
+        (bx + s(80), by, bx + s(80), by + s(80)),
+        (bx + s(80), by + s(80), bx + s(110), by + s(80)),
+        (bx + s(120), by, bx + s(120), by + s(80)),
+        (bx + s(150), by, bx + s(150), by + s(80)),
+        (bx + s(120), by + s(40), bx + s(150), by + s(40)),
+        (bx + s(165), by + s(50), bx + s(185), by + s(10)),
+        (bx + s(170), by + s(10), bx + s(185), by + s(10)),
+        (bx + s(185), by + s(10), bx + s(185), by + s(25)),
     ];
 
     for &(x0, y0, x1, y1) in &strokes {
@@ -2541,7 +2825,13 @@ fn render_damage_pixo(canvas: &mut RgbaImage, cx: i32, cy: i32, scale: f32) {
     }
 }
 
-fn render_damage_censura(canvas: &mut RgbaImage, font: &FontRef, pos_x: f32, pos_y: f32, scale: f32) {
+fn render_damage_censura(
+    canvas: &mut RgbaImage,
+    font: &FontRef,
+    pos_x: f32,
+    pos_y: f32,
+    scale: f32,
+) {
     let elem = TextElement {
         text: "[ CENSURADO ]".to_string(),
         font_size: 44.0 * scale,
@@ -2560,7 +2850,15 @@ fn render_damage_censura(canvas: &mut RgbaImage, font: &FontRef, pos_x: f32, pos
     render_text_element(canvas, font, &elem, 0);
 }
 
-fn render_damage_pulica(canvas: &mut RgbaImage, font: &FontRef, pos_x: f32, pos_y: f32, scale: f32, cw: u32, ch: u32) {
+fn render_damage_pulica(
+    canvas: &mut RgbaImage,
+    font: &FontRef,
+    pos_x: f32,
+    pos_y: f32,
+    scale: f32,
+    cw: u32,
+    ch: u32,
+) {
     let elem = TextElement {
         text: "PULIÇA / APREENDIDO".to_string(),
         font_size: 32.0 * scale,
@@ -2578,8 +2876,16 @@ fn render_damage_pulica(canvas: &mut RgbaImage, font: &FontRef, pos_x: f32, pos_
     };
     render_text_element(canvas, font, &elem, 0);
 
-    let box_cx = if pos_x <= 1.0 { (pos_x * cw as f32) as i32 } else { pos_x as i32 };
-    let box_cy = if pos_y <= 1.0 { (pos_y * ch as f32) as i32 } else { pos_y as i32 };
+    let box_cx = if pos_x <= 1.0 {
+        (pos_x * cw as f32) as i32
+    } else {
+        pos_x as i32
+    };
+    let box_cy = if pos_y <= 1.0 {
+        (pos_y * ch as f32) as i32
+    } else {
+        pos_y as i32
+    };
     let half_w = (210.0 * scale) as i32;
     let box_x0 = box_cx - half_w;
     let box_x1 = box_cx + half_w;
@@ -2661,24 +2967,41 @@ fn render_damage_element(
     ch: u32,
 ) {
     let scale = elem.scale;
-    let cx = if elem.pos_x <= 1.0 { (elem.pos_x * cw as f32) as i32 } else { elem.pos_x as i32 };
-    let cy = if elem.pos_y <= 1.0 { (elem.pos_y * ch as f32) as i32 } else { elem.pos_y as i32 };
+    let cx = if elem.pos_x <= 1.0 {
+        (elem.pos_x * cw as f32) as i32
+    } else {
+        elem.pos_x as i32
+    };
+    let cy = if elem.pos_y <= 1.0 {
+        (elem.pos_y * ch as f32) as i32
+    } else {
+        elem.pos_y as i32
+    };
 
     match elem.kind {
-        DamageEffect::Tiro    => render_damage_tiro(canvas, cx, cy, scale),
-        DamageEffect::Rasgo   => render_damage_rasgo(canvas, cx, cy, scale),
-        DamageEffect::Chuva   => render_damage_chuva(canvas, cx, cy, scale, cw, ch),
-        DamageEffect::Sangue  => render_damage_sangue(canvas, cx, cy, scale),
-        DamageEffect::Tinta   => render_damage_tinta(canvas, cx, cy, scale, cw),
-        DamageEffect::Faca    => render_damage_faca(canvas, cx, cy, scale, cw, ch),
-        DamageEffect::Pixo    => render_damage_pixo(canvas, cx, cy, scale),
+        DamageEffect::Tiro => render_damage_tiro(canvas, cx, cy, scale),
+        DamageEffect::Rasgo => render_damage_rasgo(canvas, cx, cy, scale),
+        DamageEffect::Chuva => render_damage_chuva(canvas, cx, cy, scale, cw, ch),
+        DamageEffect::Sangue => render_damage_sangue(canvas, cx, cy, scale),
+        DamageEffect::Tinta => render_damage_tinta(canvas, cx, cy, scale, cw),
+        DamageEffect::Faca => render_damage_faca(canvas, cx, cy, scale, cw, ch),
+        DamageEffect::Pixo => render_damage_pixo(canvas, cx, cy, scale),
         DamageEffect::Censura => render_damage_censura(canvas, font, elem.pos_x, elem.pos_y, scale),
-        DamageEffect::Pulica  => render_damage_pulica(canvas, font, elem.pos_x, elem.pos_y, scale, cw, ch),
-        DamageEffect::Grampo  => render_damage_grampo(canvas, cx, cy, scale),
+        DamageEffect::Pulica => {
+            render_damage_pulica(canvas, font, elem.pos_x, elem.pos_y, scale, cw, ch)
+        }
+        DamageEffect::Grampo => render_damage_grampo(canvas, cx, cy, scale),
     }
 }
 
-fn draw_rough_line(canvas: &mut RgbaImage, mut x0: i32, mut y0: i32, x1: i32, y1: i32, col: Rgba<u8>) {
+fn draw_rough_line(
+    canvas: &mut RgbaImage,
+    mut x0: i32,
+    mut y0: i32,
+    x1: i32,
+    y1: i32,
+    col: Rgba<u8>,
+) {
     let (cw, ch) = canvas.dimensions();
     let dx = (x1 - x0).abs();
     let dy = -(y1 - y0).abs();
@@ -2791,7 +3114,14 @@ fn render_sticker_anarchy(size: u32) -> RgbaImage {
 
     draw_rough_line(&mut img, cx, apex_y, left_foot_x, foot_y, red);
     draw_rough_line(&mut img, cx, apex_y, right_foot_x, foot_y, red);
-    draw_rough_line(&mut img, left_foot_x - 4, bar_y, right_foot_x + 4, bar_y, red);
+    draw_rough_line(
+        &mut img,
+        left_foot_x - 4,
+        bar_y,
+        right_foot_x + 4,
+        bar_y,
+        red,
+    );
 
     img
 }
@@ -3001,7 +3331,14 @@ fn render_sticker_smiley(size: u32) -> RgbaImage {
         (cx + 14, cy + 16),
     ];
     for i in 0..pts.len() - 1 {
-        draw_rough_line(&mut img, pts[i].0, pts[i].1, pts[i + 1].0, pts[i + 1].1, black);
+        draw_rough_line(
+            &mut img,
+            pts[i].0,
+            pts[i].1,
+            pts[i + 1].0,
+            pts[i + 1].1,
+            black,
+        );
     }
 
     img
@@ -3054,7 +3391,14 @@ fn render_sticker_cassette(size: u32) -> RgbaImage {
     draw_filled_rect(&mut img, label_x0, label_y0, label_x1, label_y1, label_bg);
 
     // Faixa colorida superior no rótulo
-    draw_filled_rect(&mut img, label_x0, label_y0, label_x1, label_y0 + (h as f32 * 0.10) as i32, label_stripe);
+    draw_filled_rect(
+        &mut img,
+        label_x0,
+        label_y0,
+        label_x1,
+        label_y0 + (h as f32 * 0.10) as i32,
+        label_stripe,
+    );
 
     // Janela transparente central da fita
     let win_w = (w as f32 * 0.52) as i32;
@@ -3073,14 +3417,33 @@ fn render_sticker_cassette(size: u32) -> RgbaImage {
     draw_filled_circle(&mut img, cx - spool_dist, cy, spool_r + 4, tape_brown);
     draw_filled_circle(&mut img, cx + spool_dist, cy, spool_r + 3, tape_brown);
     // Linha de fita magnética correndo entre os carretéis na base
-    draw_filled_rect(&mut img, cx - spool_dist, cy + spool_r - 1, cx + spool_dist, cy + spool_r + 2, tape_brown);
+    draw_filled_rect(
+        &mut img,
+        cx - spool_dist,
+        cy + spool_r - 1,
+        cx + spool_dist,
+        cy + spool_r + 2,
+        tape_brown,
+    );
 
     // Carretéis dentados brancos (engrenagens da fita)
     draw_filled_circle(&mut img, cx - spool_dist, cy, spool_r, spool_col);
     draw_filled_circle(&mut img, cx + spool_dist, cy, spool_r, spool_col);
     // Orifício central do eixo
-    draw_filled_circle(&mut img, cx - spool_dist, cy, (spool_r as f32 * 0.45) as i32, window_bg);
-    draw_filled_circle(&mut img, cx + spool_dist, cy, (spool_r as f32 * 0.45) as i32, window_bg);
+    draw_filled_circle(
+        &mut img,
+        cx - spool_dist,
+        cy,
+        (spool_r as f32 * 0.45) as i32,
+        window_bg,
+    );
+    draw_filled_circle(
+        &mut img,
+        cx + spool_dist,
+        cy,
+        (spool_r as f32 * 0.45) as i32,
+        window_bg,
+    );
 
     // Área do cabeçote na base (corte trapezoidal característico da fita K7)
     let head_w = (w as f32 * 0.46) as i32;

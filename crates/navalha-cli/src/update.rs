@@ -16,10 +16,13 @@ pub struct UpdateConfig {
 
 /// Retorna o caminho padrão do arquivo de configuração segundo o padrão XDG
 pub fn get_default_config_path() -> PathBuf {
-    if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
-        if !xdg.trim().is_empty() {
-            return PathBuf::from(xdg).join("navalha").join("config.toml");
-        }
+    if let Some(xdg) = std::env::var("XDG_CONFIG_HOME")
+        .ok()
+        .filter(|s| !s.trim().is_empty())
+    {
+        return PathBuf::from(xdg.trim())
+            .join("navalha")
+            .join("config.toml");
     }
     if let Ok(home) = std::env::var("HOME") {
         return PathBuf::from(home)
@@ -72,29 +75,28 @@ pub fn resolve_channel(
     env_val: Option<&str>,
     config_path: Option<&Path>,
 ) -> String {
-    if let Some(f) = flag {
-        if !f.trim().is_empty() {
-            return f.trim().to_lowercase();
-        }
+    if let Some(f) = flag.map(str::trim).filter(|s| !s.is_empty()) {
+        return f.to_lowercase();
     }
 
-    if let Some(e) = env_val {
-        if !e.trim().is_empty() {
-            return e.trim().to_lowercase();
-        }
-    } else if let Ok(e) = std::env::var("NAVALHA_CHANNEL") {
-        if !e.trim().is_empty() {
-            return e.trim().to_lowercase();
+    if let Some(e) = env_val.map(str::trim).filter(|s| !s.is_empty()) {
+        return e.to_lowercase();
+    }
+
+    if let Ok(e) = std::env::var("NAVALHA_CHANNEL") {
+        let trimmed = e.trim();
+        if !trimmed.is_empty() {
+            return trimmed.to_lowercase();
         }
     }
 
     let cfg = load_config(config_path);
-    if let Some(update_cfg) = cfg.update {
-        if let Some(ch) = update_cfg.channel {
-            if !ch.trim().is_empty() {
-                return ch.trim().to_lowercase();
-            }
-        }
+    if let Some(ch) = cfg
+        .update
+        .and_then(|u| u.channel)
+        .filter(|s| !s.trim().is_empty())
+    {
+        return ch.trim().to_lowercase();
     }
 
     "stable".to_string()
@@ -169,10 +171,10 @@ pub fn cmd_check_update(channel_override: Option<&str>) -> Result<(), Box<dyn st
     let agent = ureq::Agent::new_with_config(ureq_cfg);
 
     let mut remote_ver = String::new();
-    if let Ok(resp) = agent.get(&ver_url).call() {
-        if let Ok(body) = resp.into_body().read_to_string() {
-            remote_ver = body.trim().to_string();
-        }
+    if let Ok(mut body) = agent.get(&ver_url).call().map(|r| r.into_body())
+        && let Ok(text) = body.read_to_string()
+    {
+        remote_ver = text.trim().to_string();
     }
 
     if remote_ver.is_empty() {
@@ -184,11 +186,17 @@ pub fn cmd_check_update(channel_override: Option<&str>) -> Result<(), Box<dyn st
     println!("Versão Remota         : v{}", remote_ver);
 
     if semver_is_newer(&remote_ver, current_ver) {
-        println!("\n★ Nova versão disponível: v{} -> v{}", current_ver, remote_ver);
+        println!(
+            "\n★ Nova versão disponível: v{} -> v{}",
+            current_ver, remote_ver
+        );
         println!("Para atualizar agora, execute:");
         println!("  navalha update --channel {}", channel);
     } else {
-        println!("\n✔ O Navalha já está atualizado na versão mais recente do canal {}.", channel);
+        println!(
+            "\n✔ O Navalha já está atualizado na versão mais recente do canal {}.",
+            channel
+        );
     }
 
     Ok(())

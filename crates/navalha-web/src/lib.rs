@@ -7,17 +7,17 @@
     clippy::type_complexity
 )]
 
-use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
+use base64::engine::general_purpose::STANDARD as BASE64;
 use dioxus::prelude::*;
 use gloo_timers::future::TimeoutFuture;
 use image::{ImageFormat, ImageReader, Rgba, RgbaImage};
+use navalha_core::plates::{PlateSeparationConfig, generate_plates_pdf, separate_plates};
 use navalha_core::{
-    generate_poster_svg, AestheticPreset, DamageEffect, DamageElement, DitherAlgorithm,
-    DrawingTool, ManualDrawingStroke, Palette, PosterFormat, RgbColor, ScaleFactor, StickerBorder,
-    StickerElement, StickerKind, TarjaEffect,
+    AestheticPreset, DamageEffect, DamageElement, DitherAlgorithm, DrawingTool,
+    ManualDrawingStroke, Palette, PosterFormat, RgbColor, ScaleFactor, StickerBorder,
+    StickerElement, StickerKind, TarjaEffect, generate_poster_svg,
 };
-use navalha_core::plates::{generate_plates_pdf, separate_plates, PlateSeparationConfig};
 use std::io::Cursor;
 use wasm_bindgen::prelude::*;
 use web_sys::{HtmlAnchorElement, HtmlInputElement};
@@ -59,9 +59,12 @@ fn create_default_graphic(w: u32, h: u32) -> RgbaImage {
 
             // Desenha silhueta gráfica tosca para início imediato
             if dist < r_head {
-                let inside_eye1 = (x as f32 - (cx - 35.0)).powi(2) + (y as f32 - (cy - 20.0)).powi(2) < 220.0;
-                let inside_eye2 = (x as f32 - (cx + 35.0)).powi(2) + (y as f32 - (cy - 20.0)).powi(2) < 220.0;
-                let inside_mouth = y as f32 > cy + 25.0 && (y as f32) < cy + 45.0 && dx.abs() < 40.0;
+                let inside_eye1 =
+                    (x as f32 - (cx - 35.0)).powi(2) + (y as f32 - (cy - 20.0)).powi(2) < 220.0;
+                let inside_eye2 =
+                    (x as f32 - (cx + 35.0)).powi(2) + (y as f32 - (cy - 20.0)).powi(2) < 220.0;
+                let inside_mouth =
+                    y as f32 > cy + 25.0 && (y as f32) < cy + 45.0 && dx.abs() < 40.0;
 
                 if inside_eye1 || inside_eye2 || inside_mouth {
                     img.put_pixel(x, y, Rgba([255, 255, 255, 255]));
@@ -80,28 +83,81 @@ fn create_default_graphic(w: u32, h: u32) -> RgbaImage {
 
 /// Catálogo de 20 imagens temáticas genéricas com licença Creative Commons / Domínio Público
 pub const BACKGROUND_COLLECTION: &[(&str, &str)] = &[
-    ("assets/backgrounds/01-busto-marmore.jpg", "Busto de Mármore Clássico"),
-    ("assets/backgrounds/02-gargula-gotica.jpg", "Gárgula Gótica de Pedra"),
-    ("assets/backgrounds/03-monumento-brutalista.jpg", "Monumento Brutalista Spomenik"),
-    ("assets/backgrounds/04-o-grito-munch.jpg", "O Grito (Edvard Munch)"),
-    ("assets/backgrounds/05-esqueleto-vesalius.jpg", "Esqueleto Anatômico (Vesalius)"),
-    ("assets/backgrounds/06-onda-kanagawa.jpg", "A Grande Onda de Kanagawa"),
-    ("assets/backgrounds/07-caravaggio-claroscuro.jpg", "São Jerônimo (Caravaggio)"),
+    (
+        "assets/backgrounds/01-busto-marmore.jpg",
+        "Busto de Mármore Clássico",
+    ),
+    (
+        "assets/backgrounds/02-gargula-gotica.jpg",
+        "Gárgula Gótica de Pedra",
+    ),
+    (
+        "assets/backgrounds/03-monumento-brutalista.jpg",
+        "Monumento Brutalista Spomenik",
+    ),
+    (
+        "assets/backgrounds/04-o-grito-munch.jpg",
+        "O Grito (Edvard Munch)",
+    ),
+    (
+        "assets/backgrounds/05-esqueleto-vesalius.jpg",
+        "Esqueleto Anatômico (Vesalius)",
+    ),
+    (
+        "assets/backgrounds/06-onda-kanagawa.jpg",
+        "A Grande Onda de Kanagawa",
+    ),
+    (
+        "assets/backgrounds/07-caravaggio-claroscuro.jpg",
+        "São Jerônimo (Caravaggio)",
+    ),
     ("assets/backgrounds/08-corvo-urbano.jpg", "Corvo Urbano"),
-    ("assets/backgrounds/09-cachorro-rua.jpg", "Cachorro em Alerta"),
+    (
+        "assets/backgrounds/09-cachorro-rua.jpg",
+        "Cachorro em Alerta",
+    ),
     ("assets/backgrounds/10-pombo-urbano.jpg", "Pombo Urbano"),
-    ("assets/backgrounds/11-caveira-anatomica.jpg", "Crânio Humano"),
-    ("assets/backgrounds/12-protesto-rua.jpg", "Manifestação de Rua e Fumaça"),
-    ("assets/backgrounds/13-cartazes-muro.jpg", "Cartazes e Lambe-Lambe"),
-    ("assets/backgrounds/14-pichacao-urbana.jpg", "Pichação e Grafite"),
-    ("assets/backgrounds/15-predio-brutalista.jpg", "Fachada de Edifício Brutalista"),
-    ("assets/backgrounds/16-torre-transmissao.jpg", "Torre de Transmissão Elétrica"),
-    ("assets/backgrounds/17-ruina-industrial.jpg", "Ruína Industrial Desativada"),
-    ("assets/backgrounds/18-escada-incendio.jpg", "Escadaria de Incêndio de Ferro"),
-    ("assets/backgrounds/19-televisao-crt.jpg", "Televisor de Tubo CRT Vintage"),
-    ("assets/backgrounds/20-fita-cassete.jpg", "Fita Cassete K7 Analógica"),
+    (
+        "assets/backgrounds/11-caveira-anatomica.jpg",
+        "Crânio Humano",
+    ),
+    (
+        "assets/backgrounds/12-protesto-rua.jpg",
+        "Manifestação de Rua e Fumaça",
+    ),
+    (
+        "assets/backgrounds/13-cartazes-muro.jpg",
+        "Cartazes e Lambe-Lambe",
+    ),
+    (
+        "assets/backgrounds/14-pichacao-urbana.jpg",
+        "Pichação e Grafite",
+    ),
+    (
+        "assets/backgrounds/15-predio-brutalista.jpg",
+        "Fachada de Edifício Brutalista",
+    ),
+    (
+        "assets/backgrounds/16-torre-transmissao.jpg",
+        "Torre de Transmissão Elétrica",
+    ),
+    (
+        "assets/backgrounds/17-ruina-industrial.jpg",
+        "Ruína Industrial Desativada",
+    ),
+    (
+        "assets/backgrounds/18-escada-incendio.jpg",
+        "Escadaria de Incêndio de Ferro",
+    ),
+    (
+        "assets/backgrounds/19-televisao-crt.jpg",
+        "Televisor de Tubo CRT Vintage",
+    ),
+    (
+        "assets/backgrounds/20-fita-cassete.jpg",
+        "Fita Cassete K7 Analógica",
+    ),
 ];
-
 
 /// Busca assincronamente os bytes de uma imagem remota do acervo e decodifica para RGBA
 pub async fn load_remote_image(url: &str) -> Option<RgbaImage> {
@@ -113,10 +169,16 @@ pub async fn load_remote_image(url: &str) -> Option<RgbaImage> {
         return None;
     }
     let array_buffer_promise = resp.array_buffer().ok()?;
-    let buf_val = wasm_bindgen_futures::JsFuture::from(array_buffer_promise).await.ok()?;
+    let buf_val = wasm_bindgen_futures::JsFuture::from(array_buffer_promise)
+        .await
+        .ok()?;
     let uint8_arr = js_sys::Uint8Array::new(&buf_val);
     let bytes = uint8_arr.to_vec();
-    let decoded = ImageReader::new(Cursor::new(bytes)).with_guessed_format().ok()?.decode().ok()?;
+    let decoded = ImageReader::new(Cursor::new(bytes))
+        .with_guessed_format()
+        .ok()?
+        .decode()
+        .ok()?;
     Some(decoded.to_rgba8())
 }
 
@@ -147,7 +209,9 @@ pub fn pick_time_slice_background_index(offset: u64) -> usize {
 pub fn pick_time_slice_protest_phrase(offset: u64) -> &'static str {
     let slot = current_time_slice().wrapping_add(offset);
     // Hash determinístico simples estilo LCG para descorrelacionar frase do índice da imagem
-    let phrase_hash = slot.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+    let phrase_hash = slot
+        .wrapping_mul(6364136223846793005)
+        .wrapping_add(1442695040888963407);
     let idx = (phrase_hash as usize) % navalha_core::PROTEST_PHRASES.len();
     navalha_core::PROTEST_PHRASES
         .get(idx)
@@ -158,15 +222,13 @@ pub fn pick_time_slice_protest_phrase(offset: u64) -> &'static str {
 /// Seleciona a estética canônica baseada na fatia horária de 15 minutos
 pub fn pick_time_slice_aesthetic(offset: u64) -> &'static str {
     let slot = current_time_slice().wrapping_add(offset);
-    let aes_hash = slot.wrapping_mul(2862933555777941757).wrapping_add(3037000493);
+    let aes_hash = slot
+        .wrapping_mul(2862933555777941757)
+        .wrapping_add(3037000493);
     let all_presets = navalha_core::AestheticPreset::all();
     let idx = (aes_hash as usize) % all_presets.len();
     all_presets[idx].id()
 }
-
-
-
-
 
 fn trigger_download(href: &str, filename: &str) {
     if let Some(window) = web_sys::window() {
@@ -318,17 +380,17 @@ pub fn App() -> Element {
     let mut dither_override = use_signal(|| String::from("auto"));
     let mut palette_override = use_signal(|| String::from("auto"));
     let mut threshold_slider = use_signal(|| 85u32); // 85%
-    let mut unsharp_slider = use_signal(|| 22u32);   // 2.2x
+    let mut unsharp_slider = use_signal(|| 22u32); // 2.2x
     let mut stretch_y_slider = use_signal(|| 15u32); // 1.5x
     let mut scale_select = use_signal(|| String::from("2x"));
     let mut rotation_deg = use_signal(|| 0u32);
     let mut image_zoom = use_signal(|| 100u32); // percentual: 100 = 1.0x
     let mut image_pos_x = use_signal(|| 50u32); // percentual: 50 = centro (0 a 100)
     let mut image_pos_y = use_signal(|| 50u32); // percentual: 50 = centro (0 a 100)
-    let mut image_crop_top = use_signal(|| 0u32);    // percentual de corte 0 a 45% (Ticket #17)
+    let mut image_crop_top = use_signal(|| 0u32); // percentual de corte 0 a 45% (Ticket #17)
     let mut image_crop_bottom = use_signal(|| 0u32); // percentual de corte 0 a 45%
-    let mut image_crop_left = use_signal(|| 0u32);   // percentual de corte 0 a 45%
-    let mut image_crop_right = use_signal(|| 0u32);  // percentual de corte 0 a 45%
+    let mut image_crop_left = use_signal(|| 0u32); // percentual de corte 0 a 45%
+    let mut image_crop_right = use_signal(|| 0u32); // percentual de corte 0 a 45%
     let mut auto_threshold = use_signal(|| false);
     let mut active_damages = use_signal(|| Vec::<String>::new());
     let mut active_stickers = use_signal(|| Vec::<String>::new());
@@ -336,15 +398,16 @@ pub fn App() -> Element {
 
     // Caixas de texto extras arbitrárias — (texto, pos_x*100, pos_y*100, tamanho, inclinacao, acabamento)
     // Acabamentos: "tarja", "tape", "serrilhado", "rasgo"
-    let mut extra_texts: Signal<Vec<(String, u32, u32, u32, i32, String)>> = use_signal(|| Vec::new());
+    let mut extra_texts: Signal<Vec<(String, u32, u32, u32, i32, String)>> =
+        use_signal(|| Vec::new());
     // Estado do formulário de nova caixa de texto
-    let mut form_texto   = use_signal(|| String::new());
-    let mut form_pos_x   = use_signal(|| 50u32);
-    let mut form_pos_y   = use_signal(|| 50u32);
+    let mut form_texto = use_signal(|| String::new());
+    let mut form_pos_x = use_signal(|| 50u32);
+    let mut form_pos_y = use_signal(|| 50u32);
     let mut form_tamanho = use_signal(|| 48u32);
-    let mut form_incl    = use_signal(|| 0i32);
+    let mut form_incl = use_signal(|| 0i32);
     let mut form_acabamento = use_signal(|| String::from("tarja"));
-    let mut form_editando   = use_signal(|| Option::<usize>::None); // índice em edição
+    let mut form_editando = use_signal(|| Option::<usize>::None); // índice em edição
 
     // Parâmetros individuais de danos: mapa tipo -> (posX*100, posY*100, escala*100)
     // Posição em % inteiro (0–100), escala em % inteiro (10–500, padrão 100 = 1.0x)
@@ -379,7 +442,11 @@ pub fn App() -> Element {
     let mut latest_poster = use_signal(|| None::<RgbaImage>);
     let mut is_processing = use_signal(|| false);
     let render_seq = use_hook(|| std::rc::Rc::new(std::cell::Cell::new(0u64)));
-    let subject_cache = use_hook(|| std::rc::Rc::new(std::cell::RefCell::new(navalha_core::SubjectLayerCache::new())));
+    let subject_cache = use_hook(|| {
+        std::rc::Rc::new(std::cell::RefCell::new(
+            navalha_core::SubjectLayerCache::new(),
+        ))
+    });
 
     // Efeito reativo com debounce para reprocessamento do cartaz
     {
@@ -501,9 +568,17 @@ pub fn App() -> Element {
                     return;
                 }
 
-                let current_preset = AestheticPreset::parse(&aes).unwrap_or(AestheticPreset::PunkRiot);
-                let (mut g, mut pr, mut dt, mut pal, mut sc, mut comp) =
-                    current_preset.build_pipeline_and_composition_dual(&phr, if phr_top.trim().is_empty() { None } else { Some(&phr_top) });
+                let current_preset =
+                    AestheticPreset::parse(&aes).unwrap_or(AestheticPreset::PunkRiot);
+                let (mut g, mut pr, mut dt, mut pal, mut sc, mut comp) = current_preset
+                    .build_pipeline_and_composition_dual(
+                        &phr,
+                        if phr_top.trim().is_empty() {
+                            None
+                        } else {
+                            Some(&phr_top)
+                        },
+                    );
 
                 let p_fmt = PosterFormat::parse(&p_format).unwrap_or(PosterFormat::Vertical);
                 comp.set_format(p_fmt);
@@ -567,16 +642,33 @@ pub fn App() -> Element {
                     if let Some(kind) = StickerKind::parse(s_str) {
                         let params = s_params.get(s_str).copied();
                         let (px, py, size, rot) = if let Some((px100, py100, sz, rot100)) = params {
-                            ((px100 as f32) / 100.0, (py100 as f32) / 100.0, sz, rot100 as i16)
+                            (
+                                (px100 as f32) / 100.0,
+                                (py100 as f32) / 100.0,
+                                sz,
+                                rot100 as i16,
+                            )
                         } else {
-                            let (apx, apy, arot) = sticker_auto_positions[idx % sticker_auto_positions.len()];
+                            let (apx, apy, arot) =
+                                sticker_auto_positions[idx % sticker_auto_positions.len()];
                             (apx, apy, 100, arot)
                         };
-                        let (b_style, b_width) = s_borders.get(s_str).cloned().unwrap_or_else(|| (String::from("diecut"), 4u32));
-                        let border = StickerBorder::parse(&b_style).unwrap_or(StickerBorder::DieCutBranco);
+                        let (b_style, b_width) = s_borders
+                            .get(s_str)
+                            .cloned()
+                            .unwrap_or_else(|| (String::from("diecut"), 4u32));
+                        let border =
+                            StickerBorder::parse(&b_style).unwrap_or(StickerBorder::DieCutBranco);
                         let el = if kind == StickerKind::Custom {
                             if let Some(ref c_img) = custom_stk_img {
-                                StickerElement::new_custom(c_img.clone(), px, py, size, rot, f_stickers)
+                                StickerElement::new_custom(
+                                    c_img.clone(),
+                                    px,
+                                    py,
+                                    size,
+                                    rot,
+                                    f_stickers,
+                                )
                             } else {
                                 StickerElement::new(kind, px, py, size, rot, f_stickers)
                             }
@@ -596,11 +688,31 @@ pub fn App() -> Element {
                     let pos_x = (*px100 as f32) / 100.0;
                     let pos_y = (*py100 as f32) / 100.0;
                     let (cor_texto, bg_tarja, padding, tarja_effect) = match acab.as_str() {
-                        "xerox"      => (RgbColor::new(245, 242, 235), Some(RgbColor::new(28, 25, 23)), 14u32, TarjaEffect::Xerox),
-                        "tape"       => (RgbColor::new(20, 20, 20),   Some(RgbColor::new(200, 200, 180)), 6u32, TarjaEffect::Solida),
-                        "serrilhado" => (RgbColor::new(0, 0, 0),      Some(RgbColor::new(255, 230, 0)),   10u32, TarjaEffect::Solida),
-                        "rasgo"      => (RgbColor::new(200, 0, 0),    None,                               0u32,  TarjaEffect::Solida),
-                        _            => (RgbColor::new(255, 255, 255),Some(RgbColor::new(0, 0, 0)),      10u32, TarjaEffect::Solida),
+                        "xerox" => (
+                            RgbColor::new(245, 242, 235),
+                            Some(RgbColor::new(28, 25, 23)),
+                            14u32,
+                            TarjaEffect::Xerox,
+                        ),
+                        "tape" => (
+                            RgbColor::new(20, 20, 20),
+                            Some(RgbColor::new(200, 200, 180)),
+                            6u32,
+                            TarjaEffect::Solida,
+                        ),
+                        "serrilhado" => (
+                            RgbColor::new(0, 0, 0),
+                            Some(RgbColor::new(255, 230, 0)),
+                            10u32,
+                            TarjaEffect::Solida,
+                        ),
+                        "rasgo" => (RgbColor::new(200, 0, 0), None, 0u32, TarjaEffect::Solida),
+                        _ => (
+                            RgbColor::new(255, 255, 255),
+                            Some(RgbColor::new(0, 0, 0)),
+                            10u32,
+                            TarjaEffect::Solida,
+                        ),
                     };
                     comp.foreground_texts.push(TextElement {
                         text: txt.to_uppercase(),
@@ -626,11 +738,31 @@ pub fn App() -> Element {
                     let pos_x = (f_px as f32) / 100.0;
                     let pos_y = (f_py as f32) / 100.0;
                     let (cor_texto, bg_tarja, padding, tarja_effect) = match f_acab.as_str() {
-                        "xerox"      => (RgbColor::new(245, 242, 235), Some(RgbColor::new(28, 25, 23)), 14u32, TarjaEffect::Xerox),
-                        "tape"       => (RgbColor::new(20, 20, 20),   Some(RgbColor::new(200, 200, 180)), 6u32, TarjaEffect::Solida),
-                        "serrilhado" => (RgbColor::new(0, 0, 0),      Some(RgbColor::new(255, 230, 0)),   10u32, TarjaEffect::Solida),
-                        "rasgo"      => (RgbColor::new(200, 0, 0),    None,                               0u32,  TarjaEffect::Solida),
-                        _            => (RgbColor::new(255, 255, 255),Some(RgbColor::new(0, 0, 0)),      10u32, TarjaEffect::Solida),
+                        "xerox" => (
+                            RgbColor::new(245, 242, 235),
+                            Some(RgbColor::new(28, 25, 23)),
+                            14u32,
+                            TarjaEffect::Xerox,
+                        ),
+                        "tape" => (
+                            RgbColor::new(20, 20, 20),
+                            Some(RgbColor::new(200, 200, 180)),
+                            6u32,
+                            TarjaEffect::Solida,
+                        ),
+                        "serrilhado" => (
+                            RgbColor::new(0, 0, 0),
+                            Some(RgbColor::new(255, 230, 0)),
+                            10u32,
+                            TarjaEffect::Solida,
+                        ),
+                        "rasgo" => (RgbColor::new(200, 0, 0), None, 0u32, TarjaEffect::Solida),
+                        _ => (
+                            RgbColor::new(255, 255, 255),
+                            Some(RgbColor::new(0, 0, 0)),
+                            10u32,
+                            TarjaEffect::Solida,
+                        ),
                     };
                     comp.foreground_texts.push(TextElement {
                         text: form_txt_up,
@@ -681,7 +813,8 @@ pub fn App() -> Element {
                             t.wave_amplitude = def_banner.wave_amplitude;
                             t.wave_wavelength = def_banner.wave_wavelength;
                         } else {
-                            let parsed_fam = navalha_core::BannerFontFamily::parse(&b_top_fam).unwrap_or(navalha_core::BannerFontFamily::Impact);
+                            let parsed_fam = navalha_core::BannerFontFamily::parse(&b_top_fam)
+                                .unwrap_or(navalha_core::BannerFontFamily::Impact);
                             t.font_family = parsed_fam;
                             t.auto_fit = b_top_af;
                             t.font_size = b_top_sz as f32;
@@ -690,23 +823,31 @@ pub fn App() -> Element {
                             t.rotation = b_top_rot;
 
                             if b_top_fg != "auto" {
-                                if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_top_fg) {
+                                if let Some(col) =
+                                    navalha_core::RgbColor::parse_color_str(&b_top_fg)
+                                {
                                     t.color = col;
                                 }
                             }
                             if b_top_bg != "auto" {
                                 if b_top_bg == "none" || b_top_bg == "sem" {
                                     t.bg_tarja = None;
-                                } else if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_top_bg) {
+                                } else if let Some(col) =
+                                    navalha_core::RgbColor::parse_color_str(&b_top_bg)
+                                {
                                     t.bg_tarja = Some(col);
                                 }
                             }
-                            if let Some(finish) = navalha_core::TarjaBorderFinish::parse(&b_top_bfinish) {
+                            if let Some(finish) =
+                                navalha_core::TarjaBorderFinish::parse(&b_top_bfinish)
+                            {
                                 t.border_finish = finish;
                             }
                             t.border_width = b_top_bwidth;
                             if b_top_bcol != "auto" {
-                                if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_top_bcol) {
+                                if let Some(col) =
+                                    navalha_core::RgbColor::parse_color_str(&b_top_bcol)
+                                {
                                     t.border_color = Some(col);
                                 }
                             }
@@ -744,7 +885,8 @@ pub fn App() -> Element {
                             t.wave_amplitude = def_banner.wave_amplitude;
                             t.wave_wavelength = def_banner.wave_wavelength;
                         } else {
-                            let parsed_fam = navalha_core::BannerFontFamily::parse(&b_fam).unwrap_or(navalha_core::BannerFontFamily::Impact);
+                            let parsed_fam = navalha_core::BannerFontFamily::parse(&b_fam)
+                                .unwrap_or(navalha_core::BannerFontFamily::Impact);
                             t.font_family = parsed_fam;
                             t.auto_fit = b_af;
                             t.font_size = b_sz as f32;
@@ -760,16 +902,20 @@ pub fn App() -> Element {
                             if b_bg != "auto" {
                                 if b_bg == "none" || b_bg == "sem" {
                                     t.bg_tarja = None;
-                                } else if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_bg) {
+                                } else if let Some(col) =
+                                    navalha_core::RgbColor::parse_color_str(&b_bg)
+                                {
                                     t.bg_tarja = Some(col);
                                 }
                             }
-                            if let Some(finish) = navalha_core::TarjaBorderFinish::parse(&b_bfinish) {
+                            if let Some(finish) = navalha_core::TarjaBorderFinish::parse(&b_bfinish)
+                            {
                                 t.border_finish = finish;
                             }
                             t.border_width = b_bwidth;
                             if b_bcol != "auto" {
-                                if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_bcol) {
+                                if let Some(col) = navalha_core::RgbColor::parse_color_str(&b_bcol)
+                                {
                                     t.border_color = Some(col);
                                 }
                             }
@@ -839,7 +985,8 @@ pub fn App() -> Element {
                     return;
                 }
 
-                let poster_opt = navalha_core::render_poster_cancellable(&comp, Some(&processed), &is_cancelled);
+                let poster_opt =
+                    navalha_core::render_poster_cancellable(&comp, Some(&processed), &is_cancelled);
                 let poster = match poster_opt {
                     Some(p) => p,
                     None => return,
@@ -871,33 +1018,50 @@ pub fn App() -> Element {
 
     let dither_str = dither_override();
     let palette_str = palette_override();
-    let dither_label = if dither_str == "auto" { "atkinson" } else { &dither_str };
-    let palette_label = if palette_str == "auto" { "classic-punk" } else { &palette_str };
+    let dither_label = if dither_str == "auto" {
+        "atkinson"
+    } else {
+        &dither_str
+    };
+    let palette_label = if palette_str == "auto" {
+        "classic-punk"
+    } else {
+        &palette_str
+    };
 
     // Gera espelho da sintaxe CLI em tempo real
     let dano_flag = if active_damages().is_empty() {
         String::new()
     } else {
-        let specs: Vec<String> = active_damages().iter().map(|d_str| {
-            if let Some(&(px100, py100, sc100)) = damage_params().get(d_str.as_str()) {
-                let default_elem = DamageEffect::parse(d_str).map(|k| DamageElement::default_for(k));
-                let is_default = default_elem.map(|def| {
-                    let dpx = (def.pos_x * 100.0).round() as u32;
-                    let dpy = (def.pos_y * 100.0).round() as u32;
-                    px100 == dpx && py100 == dpy && sc100 == 100
-                }).unwrap_or(true);
-                if is_default {
-                    d_str.clone()
+        let specs: Vec<String> = active_damages()
+            .iter()
+            .map(|d_str| {
+                if let Some(&(px100, py100, sc100)) = damage_params().get(d_str.as_str()) {
+                    let default_elem =
+                        DamageEffect::parse(d_str).map(|k| DamageElement::default_for(k));
+                    let is_default = default_elem
+                        .map(|def| {
+                            let dpx = (def.pos_x * 100.0).round() as u32;
+                            let dpy = (def.pos_y * 100.0).round() as u32;
+                            px100 == dpx && py100 == dpy && sc100 == 100
+                        })
+                        .unwrap_or(true);
+                    if is_default {
+                        d_str.clone()
+                    } else {
+                        format!(
+                            "{}:{:.2}:{:.2}:{:.2}",
+                            d_str,
+                            (px100 as f32) / 100.0,
+                            (py100 as f32) / 100.0,
+                            (sc100 as f32) / 100.0
+                        )
+                    }
                 } else {
-                    format!("{}:{:.2}:{:.2}:{:.2}", d_str,
-                        (px100 as f32) / 100.0,
-                        (py100 as f32) / 100.0,
-                        (sc100 as f32) / 100.0)
+                    d_str.clone()
                 }
-            } else {
-                d_str.clone()
-            }
-        }).collect();
+            })
+            .collect();
         format!(" --dano {}", specs.join(","))
     };
 
@@ -905,52 +1069,87 @@ pub fn App() -> Element {
         String::new()
     } else {
         let sticker_auto_positions: &[(f32, f32, i16)] = &[
-            (0.84, 0.16, -10), (0.16, 0.82, 12), (0.16, 0.18, -6),
-            (0.84, 0.78, 8), (0.85, 0.48, -12), (0.15, 0.48, 14),
+            (0.84, 0.16, -10),
+            (0.16, 0.82, 12),
+            (0.16, 0.18, -6),
+            (0.84, 0.78, 8),
+            (0.85, 0.48, -12),
+            (0.15, 0.48, 14),
         ];
         let s_borders_map = sticker_borders();
-        let specs: Vec<String> = active_stickers().iter().enumerate().map(|(idx, s_str)| {
-            let (b_style, b_width) = s_borders_map.get(s_str.as_str()).cloned().unwrap_or_else(|| (String::from("diecut"), 4u32));
-            let has_custom_border = b_style != "diecut" || b_width != 4;
-            if let Some(&(px100, py100, sz, rot)) = sticker_params().get(s_str.as_str()) {
-                let (apx, apy, arot) = sticker_auto_positions[idx % sticker_auto_positions.len()];
-                let is_default = px100 == (apx * 100.0).round() as u32
-                    && py100 == (apy * 100.0).round() as u32
-                    && sz == 100 && rot == arot as i32;
-                if is_default && !has_custom_border {
-                    s_str.clone()
+        let specs: Vec<String> = active_stickers()
+            .iter()
+            .enumerate()
+            .map(|(idx, s_str)| {
+                let (b_style, b_width) = s_borders_map
+                    .get(s_str.as_str())
+                    .cloned()
+                    .unwrap_or_else(|| (String::from("diecut"), 4u32));
+                let has_custom_border = b_style != "diecut" || b_width != 4;
+                if let Some(&(px100, py100, sz, rot)) = sticker_params().get(s_str.as_str()) {
+                    let (apx, apy, arot) =
+                        sticker_auto_positions[idx % sticker_auto_positions.len()];
+                    let is_default = px100 == (apx * 100.0).round() as u32
+                        && py100 == (apy * 100.0).round() as u32
+                        && sz == 100
+                        && rot == arot as i32;
+                    if is_default && !has_custom_border {
+                        s_str.clone()
+                    } else if has_custom_border {
+                        format!(
+                            "{}:{:.2}:{:.2}:{}:{}:{}:{}",
+                            s_str,
+                            (px100 as f32) / 100.0,
+                            (py100 as f32) / 100.0,
+                            sz,
+                            rot,
+                            b_style,
+                            b_width
+                        )
+                    } else {
+                        format!(
+                            "{}:{:.2}:{:.2}:{}:{}",
+                            s_str,
+                            (px100 as f32) / 100.0,
+                            (py100 as f32) / 100.0,
+                            sz,
+                            rot
+                        )
+                    }
                 } else if has_custom_border {
-                    format!("{}:{:.2}:{:.2}:{}:{}:{}:{}", s_str,
-                        (px100 as f32) / 100.0,
-                        (py100 as f32) / 100.0,
-                        sz, rot, b_style, b_width)
+                    let (apx, apy, arot) =
+                        sticker_auto_positions[idx % sticker_auto_positions.len()];
+                    format!(
+                        "{}:{:.2}:{:.2}:100:{}:{}:{}",
+                        s_str, apx, apy, arot, b_style, b_width
+                    )
                 } else {
-                    format!("{}:{:.2}:{:.2}:{}:{}", s_str,
-                        (px100 as f32) / 100.0,
-                        (py100 as f32) / 100.0,
-                        sz, rot)
+                    s_str.clone()
                 }
-            } else if has_custom_border {
-                let (apx, apy, arot) = sticker_auto_positions[idx % sticker_auto_positions.len()];
-                format!("{}:{:.2}:{:.2}:100:{}:{}:{}", s_str, apx, apy, arot, b_style, b_width)
-            } else {
-                s_str.clone()
-            }
-        }).collect();
-        let filter_opt = if filter_stickers() { " --filtrar-stickers" } else { "" };
+            })
+            .collect();
+        let filter_opt = if filter_stickers() {
+            " --filtrar-stickers"
+        } else {
+            ""
+        };
         format!(" --sticker {}{}", specs.join(","), filter_opt)
     };
 
-    let texto_extra_flag = extra_texts().iter().map(|(txt, px, py, tam, incl, acab)| {
-        format!(" --texto-extra \"{}:{:.2}:{:.2}:{}:{}:{}\"",
-            txt,
-            (*px as f32) / 100.0,
-            (*py as f32) / 100.0,
-            tam,
-            incl,
-            acab
-        )
-    }).collect::<String>();
+    let texto_extra_flag = extra_texts()
+        .iter()
+        .map(|(txt, px, py, tam, incl, acab)| {
+            format!(
+                " --texto-extra \"{}:{:.2}:{:.2}:{}:{}:{}\"",
+                txt,
+                (*px as f32) / 100.0,
+                (*py as f32) / 100.0,
+                tam,
+                incl,
+                acab
+            )
+        })
+        .collect::<String>();
 
     let rotacao_flag = if rotation_deg() > 0 {
         format!(" --rotacao {}", rotation_deg())
@@ -997,10 +1196,16 @@ pub fn App() -> Element {
     let banner_style_flags = {
         let mut flags = String::new();
         if banner_pos_x() != 50 {
-            flags.push_str(&format!(" --banner-x {:.2}", (banner_pos_x() as f32) / 100.0));
+            flags.push_str(&format!(
+                " --banner-x {:.2}",
+                (banner_pos_x() as f32) / 100.0
+            ));
         }
         if banner_pos_y() != 85 {
-            flags.push_str(&format!(" --banner-y {:.2}", (banner_pos_y() as f32) / 100.0));
+            flags.push_str(&format!(
+                " --banner-y {:.2}",
+                (banner_pos_y() as f32) / 100.0
+            ));
         }
         if banner_rotation() != 0 {
             flags.push_str(&format!(" --banner-rot {}", banner_rotation()));
@@ -1014,7 +1219,10 @@ pub fn App() -> Element {
         if banner_border_finish() != "nenhuma" {
             flags.push_str(&format!(" --banner-borda \"{}\"", banner_border_finish()));
             if banner_border_width() != 3 {
-                flags.push_str(&format!(" --banner-borda-largura {}", banner_border_width()));
+                flags.push_str(&format!(
+                    " --banner-borda-largura {}",
+                    banner_border_width()
+                ));
             }
         }
         if banner_effect() != "solida" {
@@ -1027,21 +1235,34 @@ pub fn App() -> Element {
             flags.push_str(&format!(" --palavra-rot {}", banner_word_rot()));
         }
         if banner_word_spacing() != 100 {
-            flags.push_str(&format!(" --palavra-espacamento {:.2}", (banner_word_spacing() as f32) / 100.0));
+            flags.push_str(&format!(
+                " --palavra-espacamento {:.2}",
+                (banner_word_spacing() as f32) / 100.0
+            ));
         }
         if banner_line_spacing() != 100 {
-            flags.push_str(&format!(" --linha-espacamento {:.2}", (banner_line_spacing() as f32) / 100.0));
+            flags.push_str(&format!(
+                " --linha-espacamento {:.2}",
+                (banner_line_spacing() as f32) / 100.0
+            ));
         }
         flags
     };
 
-    let sem_faixa_flag = if banner_sem_faixa() { " --sem-faixa" } else { "" };
+    let sem_faixa_flag = if banner_sem_faixa() {
+        " --sem-faixa"
+    } else {
+        ""
+    };
     let recorte_flags = if !recorte_adapt_preset() {
         let mut rf = String::new();
         if !recorte_ativo() {
             rf.push_str(" --sem-recorte");
         } else {
-            rf.push_str(&format!(" --recorte-threshold {:.2}", (recorte_threshold() as f32) / 100.0));
+            rf.push_str(&format!(
+                " --recorte-threshold {:.2}",
+                (recorte_threshold() as f32) / 100.0
+            ));
             if recorte_inverter() {
                 rf.push_str(" --recorte-inverter");
             }
@@ -1093,38 +1314,38 @@ pub fn App() -> Element {
     };
 
     // Callback para upload de imagem
-    let on_file_upload = move |_evt: Event<FormData>| {
-        async move {
-            let window = web_sys::window().unwrap();
-            let document = window.document().unwrap();
-            if let Some(input) = document.get_element_by_id("image-uploader") {
-                let input_el: HtmlInputElement = input.unchecked_into();
-                if let Some(files) = input_el.files() {
-                    if let Some(file) = files.get(0) {
-                        let reader = web_sys::FileReader::new().unwrap();
-                        let r_clone = reader.clone();
-                        let mut raw_image_setter = raw_image;
-                        let mut subject_setter = current_bg_subject;
-                        let mut file_setter = current_bg_filename;
+    let on_file_upload = move |_evt: Event<FormData>| async move {
+        let window = web_sys::window().unwrap();
+        let document = window.document().unwrap();
+        if let Some(input) = document.get_element_by_id("image-uploader") {
+            let input_el: HtmlInputElement = input.unchecked_into();
+            if let Some(files) = input_el.files() {
+                if let Some(file) = files.get(0) {
+                    let reader = web_sys::FileReader::new().unwrap();
+                    let r_clone = reader.clone();
+                    let mut raw_image_setter = raw_image;
+                    let mut subject_setter = current_bg_subject;
+                    let mut file_setter = current_bg_filename;
 
-                        let onload = Closure::wrap(Box::new(move |_: web_sys::Event| {
-                            if let Ok(result) = r_clone.result() {
-                                let array = js_sys::Uint8Array::new(&result);
-                                let bytes = array.to_vec();
-                                if let Ok(img_reader) = ImageReader::new(Cursor::new(bytes)).with_guessed_format() {
-                                    if let Ok(decoded) = img_reader.decode() {
-                                        raw_image_setter.set(Some(decoded.to_rgba8()));
-                                        subject_setter.set(String::from("Foto do Usuário"));
-                                        file_setter.set(String::from("./minha-foto.png"));
-                                    }
+                    let onload = Closure::wrap(Box::new(move |_: web_sys::Event| {
+                        if let Ok(result) = r_clone.result() {
+                            let array = js_sys::Uint8Array::new(&result);
+                            let bytes = array.to_vec();
+                            if let Ok(img_reader) =
+                                ImageReader::new(Cursor::new(bytes)).with_guessed_format()
+                            {
+                                if let Ok(decoded) = img_reader.decode() {
+                                    raw_image_setter.set(Some(decoded.to_rgba8()));
+                                    subject_setter.set(String::from("Foto do Usuário"));
+                                    file_setter.set(String::from("./minha-foto.png"));
                                 }
                             }
-                        }) as Box<dyn FnMut(_)>);
+                        }
+                    }) as Box<dyn FnMut(_)>);
 
-                        reader.set_onload(Some(onload.as_ref().unchecked_ref()));
-                        let _ = reader.read_as_array_buffer(&file);
-                        onload.forget();
-                    }
+                    reader.set_onload(Some(onload.as_ref().unchecked_ref()));
+                    let _ = reader.read_as_array_buffer(&file);
+                    onload.forget();
                 }
             }
         }
@@ -1152,44 +1373,43 @@ pub fn App() -> Element {
         });
     };
 
+    let on_custom_sticker_upload = move |_evt: Event<FormData>| async move {
+        let window = web_sys::window().unwrap();
+        let document = window.document().unwrap();
+        if let Some(input) = document.get_element_by_id("custom-sticker-uploader") {
+            let input_el: HtmlInputElement = input.unchecked_into();
+            if let Some(files) = input_el.files() {
+                if let Some(file) = files.get(0) {
+                    let reader = web_sys::FileReader::new().unwrap();
+                    let r_clone = reader.clone();
+                    let mut custom_stk_setter = custom_sticker_image;
+                    let mut active_stk_setter = active_stickers;
+                    let mut sel_stk_setter = selected_sticker;
 
-    let on_custom_sticker_upload = move |_evt: Event<FormData>| {
-        async move {
-            let window = web_sys::window().unwrap();
-            let document = window.document().unwrap();
-            if let Some(input) = document.get_element_by_id("custom-sticker-uploader") {
-                let input_el: HtmlInputElement = input.unchecked_into();
-                if let Some(files) = input_el.files() {
-                    if let Some(file) = files.get(0) {
-                        let reader = web_sys::FileReader::new().unwrap();
-                        let r_clone = reader.clone();
-                        let mut custom_stk_setter = custom_sticker_image;
-                        let mut active_stk_setter = active_stickers;
-                        let mut sel_stk_setter = selected_sticker;
-
-                        let onload = Closure::wrap(Box::new(move |_: web_sys::Event| {
-                            if let Ok(result) = r_clone.result() {
-                                let array = js_sys::Uint8Array::new(&result);
-                                let bytes = array.to_vec();
-                                if let Ok(img_reader) = ImageReader::new(Cursor::new(bytes)).with_guessed_format() {
-                                    if let Ok(decoded) = img_reader.decode() {
-                                        let arc_img = std::sync::Arc::new(decoded.to_rgba8());
-                                        custom_stk_setter.set(Some(arc_img));
-                                        let mut list = active_stk_setter();
-                                        if !list.contains(&"custom".to_string()) {
-                                            list.push("custom".to_string());
-                                        }
-                                        active_stk_setter.set(list);
-                                        sel_stk_setter.set(Some("custom".to_string()));
+                    let onload = Closure::wrap(Box::new(move |_: web_sys::Event| {
+                        if let Ok(result) = r_clone.result() {
+                            let array = js_sys::Uint8Array::new(&result);
+                            let bytes = array.to_vec();
+                            if let Ok(img_reader) =
+                                ImageReader::new(Cursor::new(bytes)).with_guessed_format()
+                            {
+                                if let Ok(decoded) = img_reader.decode() {
+                                    let arc_img = std::sync::Arc::new(decoded.to_rgba8());
+                                    custom_stk_setter.set(Some(arc_img));
+                                    let mut list = active_stk_setter();
+                                    if !list.contains(&"custom".to_string()) {
+                                        list.push("custom".to_string());
                                     }
+                                    active_stk_setter.set(list);
+                                    sel_stk_setter.set(Some("custom".to_string()));
                                 }
                             }
-                        }) as Box<dyn FnMut(_)>);
+                        }
+                    }) as Box<dyn FnMut(_)>);
 
-                        reader.set_onload(Some(onload.as_ref().unchecked_ref()));
-                        let _ = reader.read_as_array_buffer(&file);
-                        onload.forget();
-                    }
+                    reader.set_onload(Some(onload.as_ref().unchecked_ref()));
+                    let _ = reader.read_as_array_buffer(&file);
+                    onload.forget();
                 }
             }
         }
@@ -1200,7 +1420,10 @@ pub fn App() -> Element {
     let trigger_download_with_metadata = std::rc::Rc::new(move || {
         if let Some(poster) = latest_poster() {
             let mut raw_png = Vec::new();
-            if poster.write_to(&mut Cursor::new(&mut raw_png), ImageFormat::Png).is_ok() {
+            if poster
+                .write_to(&mut Cursor::new(&mut raw_png), ImageFormat::Png)
+                .is_ok()
+            {
                 let lic_label = match license_choice().as_str() {
                     "cc-by" => "CC BY 4.0",
                     "cc-by-nc" => "CC BY-NC 4.0",
@@ -1216,7 +1439,8 @@ pub fn App() -> Element {
                     ("Command", cmd.as_str()),
                     ("License", lic_label),
                 ];
-                let final_png = navalha_core::inject_png_metadata(&raw_png, &metadata).unwrap_or(raw_png);
+                let final_png =
+                    navalha_core::inject_png_metadata(&raw_png, &metadata).unwrap_or(raw_png);
                 let b64 = BASE64.encode(&final_png);
                 let uri = format!("data:image/png;base64,{b64}");
                 trigger_download(&uri, "navalha_poster.png");
@@ -1246,7 +1470,10 @@ pub fn App() -> Element {
     let download_svg = move |_| {
         let svg_raw = rendered_svg();
         if !svg_raw.is_empty() {
-            let encoded = format!("data:image/svg+xml;utf8,{}", js_sys::encode_uri_component(&svg_raw));
+            let encoded = format!(
+                "data:image/svg+xml;utf8,{}",
+                js_sys::encode_uri_component(&svg_raw)
+            );
             trigger_download(&encoded, "navalha_poster.svg");
         }
     };
@@ -1256,7 +1483,9 @@ pub fn App() -> Element {
         if let Some(poster) = latest_poster() {
             let config = PlateSeparationConfig::default();
             if let Ok(plates) = separate_plates(&poster, &config) {
-                if let Ok(pdf_bytes) = generate_plates_pdf(&plates, Some("Navalha - Chapas Riso/Silk")) {
+                if let Ok(pdf_bytes) =
+                    generate_plates_pdf(&plates, Some("Navalha - Chapas Riso/Silk"))
+                {
                     let pdf_b64 = BASE64.encode(&pdf_bytes);
                     let pdf_data_uri = format!("data:application/pdf;base64,{pdf_b64}");
                     trigger_download(&pdf_data_uri, "navalha_chapas.pdf");
@@ -1271,30 +1500,30 @@ pub fn App() -> Element {
     let image_zoom_display = format!("{:.2}x ({}%)", (image_zoom() as f32) / 100.0, image_zoom());
 
     let preset_summary = match aesthetic_id().as_str() {
-        "punk-riot"        => "ATKINSON // 720PX // CLÁSSICA PUNK (PRETO/BRANCO/VERMELHO)",
-        "navalha-sata"     => "ATKINSON // 720PX // LINÓLEO & OURO QUEIMADO",
-        "xerox-podre"      => "BAYER 8x8 // 640PX // XEROX & PAPEL OXIDADO",
+        "punk-riot" => "ATKINSON // 720PX // CLÁSSICA PUNK (PRETO/BRANCO/VERMELHO)",
+        "navalha-sata" => "ATKINSON // 720PX // LINÓLEO & OURO QUEIMADO",
+        "xerox-podre" => "BAYER 8x8 // 640PX // XEROX & PAPEL OXIDADO",
         "viagem-solitaria" => "FLOYD-STEINBERG // 640PX // PAPEL KRAFT & OLIVETTI",
-        "lapa-noturna"     => "FLOYD-STEINBERG // 720PX // DUOTONE MAGENTA & CIANO",
-        "teatro-operario"  => "BAYER 4x4 // 720PX // CONSTRUTIVISMO & CARMESIM",
-        "risografia"       => "HALFTONE 45° // 720PX // SEPARAÇÃO MECÂNICA RISO",
-        "fanzine-digital"  => "BAYER 8x8 // 640PX // CYBER-BBS ANOS 90 AZUL/AMARELO",
-        "asfalto-alerta"   => "ATKINSON // 720PX // PRETO PICHE & AMARELO PERIGO",
-        "vga256"           => "BAYER 4x4 // 320PX 13H // PALETA INDEXADA DOS",
-        "cga"              => "BAYER 4x4 // 320PX 1981 // 4 CORES MC6845",
-        "ascii-art"        => "RASTER ASCII REAL // ~82 COLS // FÓSFORO VERDE CRT",
+        "lapa-noturna" => "FLOYD-STEINBERG // 720PX // DUOTONE MAGENTA & CIANO",
+        "teatro-operario" => "BAYER 4x4 // 720PX // CONSTRUTIVISMO & CARMESIM",
+        "risografia" => "HALFTONE 45° // 720PX // SEPARAÇÃO MECÂNICA RISO",
+        "fanzine-digital" => "BAYER 8x8 // 640PX // CYBER-BBS ANOS 90 AZUL/AMARELO",
+        "asfalto-alerta" => "ATKINSON // 720PX // PRETO PICHE & AMARELO PERIGO",
+        "vga256" => "BAYER 4x4 // 320PX 13H // PALETA INDEXADA DOS",
+        "cga" => "BAYER 4x4 // 320PX 1981 // 4 CORES MC6845",
+        "ascii-art" => "RASTER ASCII REAL // ~82 COLS // FÓSFORO VERDE CRT",
         "tabloide-popular" => "FLOYD-STEINBERG // 720PX // ROTATIVA POPULAR NP",
-        "brutalismo"       => "BINARIZAÇÃO GLOBAL // 720PX // CONCRETO & TARJAS MACIÇAS",
-        "trash-polka"      => "FLOYD-STEINBERG // 720PX // GRAYSCALE, CARMIM & SPLATTER",
-        "atari-gaming"     => "TIA STELLA NTSC // 160x192 // 128 CORES & SCANLINES",
-        "mimeografo"       => "BAYER 4x4 // 640PX // VIOLETA ANILINA & SANGRAMENTO",
-        "xilogravura"      => "SAUVOLA 15x15 // 720PX // TALHE EM MADEIRA & KRAFT",
-        "glitch-crt"       => "SYNC JITTER // 640PX // SPLIT CROMÁTICO & V-HOLD",
-        "punk-80-br"       => "ATKINSON // 720PX // ABC PAULISTA & FITAS K7",
-        "anarco-zine"      => "HALFTONE 45° // 640PX // STENCIL & GRAMPOS FANZINE",
-        "paulete-furacao"  => "SAUVOLA // 720PX // LINOGRAVURA & VOZ DAS RUAS",
-        "symmy-larrat"     => "HALFTONE 45° // 720PX // RETÍCULA VIVA & IMPRENSA",
-        _                  => "MOTOR ANTI-DESIGN // DETERMINÍSTICO // 800x1100",
+        "brutalismo" => "BINARIZAÇÃO GLOBAL // 720PX // CONCRETO & TARJAS MACIÇAS",
+        "trash-polka" => "FLOYD-STEINBERG // 720PX // GRAYSCALE, CARMIM & SPLATTER",
+        "atari-gaming" => "TIA STELLA NTSC // 160x192 // 128 CORES & SCANLINES",
+        "mimeografo" => "BAYER 4x4 // 640PX // VIOLETA ANILINA & SANGRAMENTO",
+        "xilogravura" => "SAUVOLA 15x15 // 720PX // TALHE EM MADEIRA & KRAFT",
+        "glitch-crt" => "SYNC JITTER // 640PX // SPLIT CROMÁTICO & V-HOLD",
+        "punk-80-br" => "ATKINSON // 720PX // ABC PAULISTA & FITAS K7",
+        "anarco-zine" => "HALFTONE 45° // 640PX // STENCIL & GRAMPOS FANZINE",
+        "paulete-furacao" => "SAUVOLA // 720PX // LINOGRAVURA & VOZ DAS RUAS",
+        "symmy-larrat" => "HALFTONE 45° // 720PX // RETÍCULA VIVA & IMPRENSA",
+        _ => "MOTOR ANTI-DESIGN // DETERMINÍSTICO // 800x1100",
     };
 
     // Callback para cópia do comando CLI
@@ -4650,7 +4879,11 @@ mod tests {
 
     #[test]
     fn test_background_collection_count() {
-        assert_eq!(BACKGROUND_COLLECTION.len(), 20, "O catálogo de backgrounds deve conter exatamente 20 imagens CC");
+        assert_eq!(
+            BACKGROUND_COLLECTION.len(),
+            20,
+            "O catálogo de backgrounds deve conter exatamente 20 imagens CC"
+        );
     }
 
     #[test]
@@ -4658,8 +4891,16 @@ mod tests {
         let mut paths = std::collections::HashSet::new();
         let mut names = std::collections::HashSet::new();
         for (path, name) in BACKGROUND_COLLECTION {
-            assert!(paths.insert(path), "Caminho duplicado no catálogo: {}", path);
-            assert!(names.insert(name), "Nome de personalidade duplicado: {}", name);
+            assert!(
+                paths.insert(path),
+                "Caminho duplicado no catálogo: {}",
+                path
+            );
+            assert!(
+                names.insert(name),
+                "Nome de personalidade duplicado: {}",
+                name
+            );
         }
     }
 
@@ -4675,11 +4916,13 @@ mod tests {
                 full_path
             );
             let metadata = std::fs::metadata(&full_path).unwrap();
-            assert!(metadata.len() > 1024, "Arquivo de imagem vazio ou corrompido: {:?}", full_path);
+            assert!(
+                metadata.len() > 1024,
+                "Arquivo de imagem vazio ou corrompido: {:?}",
+                full_path
+            );
         }
     }
-
-
 
     #[test]
     fn test_time_slice_determinism_and_bounds() {
@@ -4706,9 +4949,9 @@ mod tests {
         assert_eq!(img.height(), 480);
         // Garante que o fallback tem pixels renderizados
         let has_non_zero_alpha = img.pixels().any(|p| p.0[3] == 255);
-        assert!(has_non_zero_alpha, "O gráfico de fallback deve ter pixels visíveis");
+        assert!(
+            has_non_zero_alpha,
+            "O gráfico de fallback deve ter pixels visíveis"
+        );
     }
-
-
 }
-
