@@ -6,6 +6,10 @@ authors.workspace = true
 license.workspace = true
 repository.workspace = true
 
+[lib]
+name = "navalha_cli"
+path = "src/lib.rs"
+
 [[bin]]
 name = "navalha"
 path = "src/main.rs"
@@ -14,3 +18,8 @@ path = "src/main.rs"
 navalha-core = { workspace = true }
 clap = { workspace = true }
 image = { workspace = true }
+serde = { workspace = true }
+ureq = "3.4.2"
+semver = "1.0"
+toml = "0.8"
+tempfile = "3"
