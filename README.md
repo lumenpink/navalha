@@ -6,7 +6,7 @@
 [![Rust](https://img.shields.io/badge/rust-2024%20edition-orange.svg)](https://www.rust-lang.org/)
 [![Dioxus](https://img.shields.io/badge/dioxus-0.7.10-blue.svg)](https://dioxuslabs.com/)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
-[![Norma: GOST](https://img.shields.io/badge/norma-GOST%201.1.0-blueviolet.svg)](.gost/GOST.md)
+[![Norma: GOST](https://img.shields.io/badge/norma-GOST%201.5.0-blueviolet.svg)](.gost/GOST.md)
 [![Especificação](https://img.shields.io/badge/spec-SPEC--01-green.svg)](SPEC.md)
 [![CI](https://codeberg.org/lumenpink/navalha/workflows/ci.yml/badge.svg)](https://codeberg.org/lumenpink/navalha/actions)
 [![Origin](https://img.shields.io/badge/codeberg-navalha-2185d0.svg)](https://codeberg.org/lumenpink/navalha)
@@ -253,10 +253,13 @@ O ciclo de vida do repositório conta com pipeline unificado em [`.forgejo/workf
 3. **Build WebAssembly:** Compilação com `wasm-pack` gerando os módulos em `site/pkg/` e sincronizando assets estáticos.
 4. **Deploy Automatizado (Main / Tags):** Publicação contínua da aplicação web em `https://navalha.2lp.in` via Cloudflare Workers (`wrangler deploy`) e redundância estática no Codeberg Pages (`actions/pages@v1`).
 
+### Compilação Estática e Otimização Soberana (GOST 1.5.0)
+- **Perfil de Release:** `opt-level = 3`, `lto = "fat"`, `codegen-units = 1`, `panic = "abort"` e `strip = true`.
+- **Linking Estático musl:** Suporte a `target-feature=+crt-static` para distribuição `static-pie` universal sem dependências de sistema.
+
 ---
 
-
-## 📜 Licença & Matriz de Conformidade GOST 1.1.0
+## 📜 Licença & Matriz de Conformidade GOST 1.5.0
 
 O projeto **Navalha** adota a política de licenciamento modular por perfil de aplicação definida na norma técnica [GOST v1.1.0](.gost/GOST.md):
 
