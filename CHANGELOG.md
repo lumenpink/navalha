@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+  - (build) otimizar tamanho de binario com profile.release e habilitar linking estatico musl crt-static (closes #41)
+
 ### Features
   - (updater) integrar auto-atualizador nativo e distribuicao na banca (closes #38)
   - (layout) controle de espacamento vertical entre linhas e palavras em faixas (#28)
