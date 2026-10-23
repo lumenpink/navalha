@@ -25,7 +25,7 @@ A ideia central é direta:
 3. **Escolher uma estética anti-design** pré-definida.
 4. **Ter um pôster pronto em segundos**, exigindo no máximo micro-edições manuais.
 
-Toda a lógica gráfica é compartilhada simetricamente entre um binário nativo de terminal UNIX (`navalha`) e uma interface web reativa em **Dioxus 0.7.10** compilada para **WebAssembly**, sem backend e sem cookies.
+Toda a lógica gráfica é compartilhada simetricamente entre um utilitário nativo de terminal (`navalha`) e uma interface web reativa que roda direto no navegador, sem backend, sem rastreadores e sem cookies.
 
 ---
 
@@ -168,7 +168,7 @@ navalha poster foto.jpg --frase "RESISTÊNCIA" --estetica punk-riot --separar-ch
 
 ### 2. Interface Web & App (`navalha-web` com Dioxus 0.7.10)
 
-A aplicação web roda **100% no navegador da usuária via WebAssembly**. Suas fotos jamais saem da sua máquina.
+A aplicação web roda **100% direto no seu navegador**. Suas fotos jamais saem da sua máquina e nada é enviado para a nuvem.
 
 * **🌐 Acesso Online Oficial:** [**https://navalha.2lp.in**](https://navalha.2lp.in)
 * **📖 Manifesto, Histórico & Especificações dos 22 Presets:** [**https://navalha.2lp.in/doc**](https://navalha.2lp.in/doc) (memorial visual e páginas dedicadas com rigor matemático, matrizes de dither, código de referência em Python/NumPy e shaders GLSL para reimplementação aberta de cada um dos 22 presets canônicos)

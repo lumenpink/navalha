@@ -279,7 +279,10 @@ pub fn App() -> Element {
     let current_bg_subject = use_signal(String::new);
     let current_bg_filename = use_signal(|| {
         let (path, _) = BACKGROUND_COLLECTION[0];
-        path.split('/').last().unwrap_or("foto.jpg").to_string()
+        path.split('/')
+            .next_back()
+            .unwrap_or("foto.jpg")
+            .to_string()
     });
     let mut license_choice = use_signal(|| String::from("cc-by-sa"));
 
@@ -295,7 +298,11 @@ pub fn App() -> Element {
         spawn(async move {
             let idx = pick_time_slice_background_index(0);
             let (path, name) = BACKGROUND_COLLECTION[idx];
-            let filename = path.split('/').last().unwrap_or("foto.jpg").to_string();
+            let filename = path
+                .split('/')
+                .next_back()
+                .unwrap_or("foto.jpg")
+                .to_string();
             if let Some(img) = load_remote_image(path).await {
                 raw_setter.set(Some(img));
                 subject_setter.set(name.to_string());
@@ -1364,7 +1371,11 @@ pub fn App() -> Element {
         spawn(async move {
             let idx = pick_time_slice_background_index(off);
             let (path, name) = BACKGROUND_COLLECTION[idx];
-            let filename = path.split('/').last().unwrap_or("foto.jpg").to_string();
+            let filename = path
+                .split('/')
+                .next_back()
+                .unwrap_or("foto.jpg")
+                .to_string();
             if let Some(img) = load_remote_image(path).await {
                 raw_setter.set(Some(img));
                 subject_setter.set(name.to_string());
