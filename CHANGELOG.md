@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Changed
+  - (ci) remover campo permissions incompativel com forgejo actions (closes #43)
   - (build) otimizar tamanho de binario com profile.release e habilitar linking estatico musl crt-static (closes #41)
 
 ### Features
