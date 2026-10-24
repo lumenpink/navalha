@@ -11,8 +11,8 @@ version = "0.1.0"
 edition = "2024"
 authors = ["Lumen Pink <hi@lumen.pink>"]
 license = "GPL-3.0-or-later"
-repository = "https://git.2lp.in/lumen/navalha"
-homepage = "https://git.2lp.in/lumen/navalha"
+repository = "https://gambi.2lp.in/lumen/navalha"
+homepage = "https://gambi.2lp.in/lumen/navalha"
 
 [workspace.dependencies]
 navalha-core = { path = "crates/navalha-core" }
