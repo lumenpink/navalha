@@ -1,7 +1,7 @@
 use navalha_cli::update::{
-    get_config_path, get_distribution_endpoints, get_download_url, get_state_path,
-    is_version_pinned, load_update_config, load_update_state, resolve_channel, save_default_channel,
-    save_update_config, save_update_state, semver_is_newer, UpdateConfig, UpdateState,
+    UpdateConfig, UpdateState, get_config_path, get_distribution_endpoints, get_download_url,
+    get_state_path, is_version_pinned, load_update_config, load_update_state, resolve_channel,
+    save_default_channel, save_update_config, save_update_state, semver_is_newer,
 };
 use std::env;
 use tempfile::tempdir;

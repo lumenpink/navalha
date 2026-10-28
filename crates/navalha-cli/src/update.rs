@@ -61,9 +61,7 @@ pub fn get_config_path() -> PathBuf {
         .ok()
         .filter(|s| !s.trim().is_empty())
     {
-        return PathBuf::from(xdg.trim())
-            .join(APP_NAME)
-            .join("config.toml");
+        return PathBuf::from(xdg.trim()).join(APP_NAME).join("config.toml");
     }
     if let Ok(home) = std::env::var("HOME") {
         return PathBuf::from(home)
@@ -385,8 +383,13 @@ pub fn cmd_update(
     let cfg = load_update_config(None);
 
     if is_version_pinned(&cfg, current_ver) && !force {
-        eprintln!("✖ Atualização abortada: Versão está fixada (pin: '{}', pinned: {}).", cfg.pin, cfg.pinned);
-        eprintln!("Use --force (-f) para forçar a atualização ou 'navalha config unpin' para liberar.");
+        eprintln!(
+            "✖ Atualização abortada: Versão está fixada (pin: '{}', pinned: {}).",
+            cfg.pin, cfg.pinned
+        );
+        eprintln!(
+            "Use --force (-f) para forçar a atualização ou 'navalha config unpin' para liberar."
+        );
         return Err("Versão fixada impede atualização sem --force".into());
     }
 
@@ -395,7 +398,13 @@ pub fn cmd_update(
         println!("✔ Canal padrão salvo com sucesso: '{}'", channel);
     }
 
-    let pin = pin_override.or_else(|| if !cfg.pin.trim().is_empty() { Some(cfg.pin.as_str()) } else { None });
+    let pin = pin_override.or_else(|| {
+        if !cfg.pin.trim().is_empty() {
+            Some(cfg.pin.as_str())
+        } else {
+            None
+        }
+    });
     let download_url = get_download_url(&channel, pin);
 
     println!("⚡ Navalha Auto-Update");
@@ -407,7 +416,9 @@ pub fn cmd_update(
     println!("Baixando de       : {}", download_url);
 
     if dry_run {
-        println!("✔ Modo de simulação ativado (--dry-run). Nenhuma modificação aplicada ao binário.");
+        println!(
+            "✔ Modo de simulação ativado (--dry-run). Nenhuma modificação aplicada ao binário."
+        );
         return Ok(());
     }
 
