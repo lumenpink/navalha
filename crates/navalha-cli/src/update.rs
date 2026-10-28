@@ -258,71 +258,34 @@ pub fn semver_is_newer(remote: &str, current: &str) -> bool {
     }
 }
 
+/// Aviso canônico de governança centralizada de pacotes e distribuição
+pub const JORNALEIRA_NOTICE: &str =
+    "★ GOSPLAN: A distribuição de binários e atualizações é governada centralmente pela Jornaleira ('jornaleira upgrade navalha').";
+
+/// Retorna a mensagem informativa de delegação de atualizações à Jornaleira
+pub fn jornaleira_notice() -> &'static str {
+    JORNALEIRA_NOTICE
+}
+
+/// Indica que a checagem autônoma de atualizações em background no startup foi descontinuada
+pub fn is_startup_check_discontinued() -> bool {
+    true
+}
+
 /// Obtém a versão compilada atual do Navalha
 pub fn get_current_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
-/// Verificação periódica não-bloqueante no startup do Navalha
-pub fn run_startup_check(current_version: &str) {
-    let cfg = load_update_config(None);
-    if !cfg.auto_check || is_version_pinned(&cfg, current_version) {
-        return;
-    }
-
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0);
-
-    let state = load_update_state(None);
-    let interval_secs = cfg.check_interval_hours.saturating_mul(3600);
-
-    if now.saturating_sub(state.last_check_timestamp) < interval_secs {
-        if !state.latest_remote_version.is_empty()
-            && semver_is_newer(&state.latest_remote_version, current_version)
-        {
-            eprintln!(
-                "★ [navalha] Nova versão disponível: v{} -> v{} (execute 'navalha update' para atualizar)",
-                current_version, state.latest_remote_version
-            );
-        }
-        return;
-    }
-
-    // Timeout ultracurto para não onerar o startup
-    let (_, _, ver_url) = get_distribution_endpoints(&cfg.channel);
-    let ureq_cfg = ureq::config::Config::builder()
-        .timeout_global(Some(Duration::from_millis(1500)))
-        .build();
-    let agent = ureq::Agent::new_with_config(ureq_cfg);
-
-    let mut remote_ver = String::new();
-    if let Ok(mut body) = agent.get(&ver_url).call().map(|r| r.into_body())
-        && let Ok(text) = body.read_to_string()
-    {
-        remote_ver = text.trim().to_string();
-    }
-
-    if !remote_ver.is_empty() {
-        let new_state = UpdateState {
-            last_check_timestamp: now,
-            latest_remote_version: remote_ver.clone(),
-            channel: cfg.channel.clone(),
-        };
-        let _ = save_update_state(&new_state, None);
-
-        if semver_is_newer(&remote_ver, current_version) {
-            eprintln!(
-                "★ [navalha] Nova versão disponível: v{} -> v{} (execute 'navalha update' para atualizar)",
-                current_version, remote_ver
-            );
-        }
-    }
+/// Verificação periódica não-bloqueante no startup do Navalha.
+/// Descontinuado: governança de ciclo de vida transferida para a Jornaleira (Ticket #42).
+pub fn run_startup_check(_current_version: &str) {
+    // Operação no-op intencional para manter a inicialização 100% offline e determinística
 }
 
 /// Consulta o endpoint da Banca para checagem de atualizações
 pub fn cmd_check_update(channel_override: Option<&str>) -> Result<(), Box<dyn std::error::Error>> {
+    println!("{}", jornaleira_notice());
     let channel = resolve_channel(channel_override, None, None);
     let current_ver = get_current_version();
     let (_, _, ver_url) = get_distribution_endpoints(&channel);
@@ -378,6 +341,7 @@ pub fn cmd_update(
     save_channel: bool,
     target_override: Option<&Path>,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    println!("{}", jornaleira_notice());
     let channel = resolve_channel(channel_override, None, None);
     let current_ver = get_current_version();
     let cfg = load_update_config(None);

@@ -578,7 +578,6 @@ enum ConfigCommands {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    navalha_cli::update::run_startup_check(navalha_cli::update::get_current_version());
     let cli = Cli::parse();
 
     match cli.command {
