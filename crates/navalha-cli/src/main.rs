@@ -517,6 +517,14 @@ enum Commands {
         #[arg(long)]
         pin: Option<String>,
 
+        /// Força a atualização mesmo se a versão estiver travada (pinning)
+        #[arg(short = 'f', long)]
+        force: bool,
+
+        /// Simula a atualização sem realizar o download ou alterar o binário
+        #[arg(long)]
+        dry_run: bool,
+
         /// Grava o canal escolhido como padrão em ~/.config/navalha/config.toml
         #[arg(long)]
         save: bool,
@@ -551,11 +559,26 @@ enum ConfigCommands {
         /// Canal desejado: stable ou nightly
         channel: String,
     },
-    /// Exibe o caminho do arquivo de configuração e o canal ativo
+    /// Habilita ou desabilita a checagem automática de atualizações no startup
+    SetAutoCheck {
+        /// true para ativar, false para desativar
+        enabled: bool,
+    },
+    /// Fixa uma versão específica do Navalha (pinning)
+    Pin {
+        /// Versão a fixar (opcional; se omitida usa a versão atual)
+        version: Option<String>,
+    },
+    /// Remove o travamento de versão permitindo atualizações livres
+    Unpin,
+    /// Exibe o caminho do arquivo de configuração e o estado atual
     Show,
+    /// Consulta o valor de uma chave específica da configuração
+    Get,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    navalha_cli::update::run_startup_check(navalha_cli::update::get_current_version());
     let cli = Cli::parse();
 
     match cli.command {
@@ -1153,6 +1176,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Update {
             channel,
             pin,
+            force,
+            dry_run,
             save,
             check,
             target,
@@ -1163,6 +1188,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 navalha_cli::update::cmd_update(
                     channel.as_deref(),
                     pin.as_deref(),
+                    force,
+                    dry_run,
                     save,
                     target.as_deref(),
                 )?;
@@ -1178,11 +1205,55 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 navalha_cli::update::save_default_channel(&channel, None)?;
                 println!("✔ Canal padrão atualizado para '{}'.", channel);
             }
-            ConfigCommands::Show => {
-                let path = navalha_cli::update::get_default_config_path();
-                let active = navalha_cli::update::resolve_channel(None, None, None);
+            ConfigCommands::SetAutoCheck { enabled } => {
+                let mut cfg = navalha_cli::update::load_update_config(None);
+                cfg.auto_check = enabled;
+                navalha_cli::update::save_update_config(&cfg, None)?;
+                println!("✔ Verificação automática configurada para: {}", enabled);
+            }
+            ConfigCommands::Pin { version } => {
+                let mut cfg = navalha_cli::update::load_update_config(None);
+                cfg.pinned = true;
+                if let Some(v) = version {
+                    cfg.pin = v;
+                } else if cfg.pin.is_empty() {
+                    cfg.pin = navalha_cli::update::get_current_version().to_string();
+                }
+                navalha_cli::update::save_update_config(&cfg, None)?;
+                println!("✔ Versão fixada (pinned): {}", cfg.pin);
+            }
+            ConfigCommands::Unpin => {
+                let mut cfg = navalha_cli::update::load_update_config(None);
+                cfg.pinned = false;
+                cfg.pin.clear();
+                navalha_cli::update::save_update_config(&cfg, None)?;
+                println!("✔ Travamento de versão desativado (unpinned).");
+            }
+            ConfigCommands::Show | ConfigCommands::Get => {
+                let path = navalha_cli::update::get_config_path();
+                let cfg = navalha_cli::update::load_update_config(None);
+                let state_path = navalha_cli::update::get_state_path();
+                let state = navalha_cli::update::load_update_state(None);
                 println!("Arquivo de configuração : {}", path.display());
-                println!("Canal ativo resolvido  : {}", active);
+                println!("Canal ativo resolvido   : {}", cfg.channel);
+                println!(
+                    "Versão fixada (pinned)  : {} ({})",
+                    cfg.pinned,
+                    if cfg.pin.is_empty() {
+                        "nenhuma"
+                    } else {
+                        &cfg.pin
+                    }
+                );
+                println!("Checagem automática     : {}", cfg.auto_check);
+                println!("Intervalo de checagem   : {}h", cfg.check_interval_hours);
+                println!("Cache de estado XDG     : {}", state_path.display());
+                if state.last_check_timestamp > 0 {
+                    println!(
+                        "Última checagem remota  : v{} (timestamp {})",
+                        state.latest_remote_version, state.last_check_timestamp
+                    );
+                }
             }
         },
     }

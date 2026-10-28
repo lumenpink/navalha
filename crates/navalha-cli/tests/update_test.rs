@@ -87,6 +87,7 @@ fn test_update_config_full_schema() {
         pinned: true,
         pin: "0.1.0".to_string(),
         auto_check: true,
+        auto_update: false,
         check_interval_hours: 12,
     };
 
@@ -97,6 +98,7 @@ fn test_update_config_full_schema() {
     assert!(loaded.pinned);
     assert_eq!(loaded.pin, "0.1.0");
     assert!(loaded.auto_check);
+    assert!(!loaded.auto_update);
     assert_eq!(loaded.check_interval_hours, 12);
 }
 
@@ -162,8 +164,6 @@ fn test_resolve_channel_precedence() {
 
 #[test]
 fn test_get_download_url_and_pinning() {
-    use navalha_cli::update::get_download_url;
-
     assert_eq!(
         get_download_url("stable", None),
         "https://banca.2lp.in/downloads/navalha/stable-latest/navalha"

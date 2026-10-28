@@ -19,6 +19,7 @@ navalha-core = { workspace = true }
 clap = { workspace = true }
 image = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 ureq = "3.4.2"
 semver = "1.0"
 toml = "0.8"
