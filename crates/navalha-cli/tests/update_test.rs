@@ -228,3 +228,29 @@ fn test_mutation_fortification_updater_edge_cases() {
     assert!(semver_is_newer("0.2.0-dev.10", "0.2.0-dev.5"));
     assert!(semver_is_newer("1.0.0", "invalid"));
 }
+
+#[test]
+fn test_jornaleira_delegation_and_offline_startup() {
+    use navalha_cli::update::{is_startup_check_discontinued, jornaleira_notice, run_startup_check};
+
+    // 1. A checagem em background no startup deve estar formalmente descontinuada
+    assert!(is_startup_check_discontinued());
+
+    // 2. A diretiva da Jornaleira deve orientar o usuário sobre a gestão central
+    let notice = jornaleira_notice();
+    assert!(notice.contains("Jornaleira"));
+    assert!(notice.contains("jornaleira upgrade navalha"));
+
+    // 3. Execução de run_startup_check não deve falhar nem criar arquivo de estado espúrio
+    let tmp = tempdir().unwrap();
+    let state_file = tmp.path().join("fake_state.json");
+    unsafe {
+        std::env::set_var("XDG_STATE_HOME", tmp.path());
+    }
+    run_startup_check("0.1.0");
+    assert!(!state_file.exists());
+    unsafe {
+        std::env::remove_var("XDG_STATE_HOME");
+    }
+}
+
