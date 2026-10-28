@@ -1,7 +1,104 @@
 use navalha_cli::update::{
-    get_distribution_endpoints, resolve_channel, save_default_channel, semver_is_newer,
+    get_config_path, get_distribution_endpoints, get_download_url, get_state_path,
+    is_version_pinned, load_update_config, load_update_state, resolve_channel, save_default_channel,
+    save_update_config, save_update_state, semver_is_newer, UpdateConfig, UpdateState,
 };
+use std::env;
 use tempfile::tempdir;
+
+#[test]
+fn test_xdg_path_resolution_with_custom_env() {
+    let tmp = tempdir().unwrap();
+    let config_dir = tmp.path().join("my_config");
+    let state_dir = tmp.path().join("my_state");
+
+    unsafe {
+        env::set_var("XDG_CONFIG_HOME", &config_dir);
+        env::set_var("XDG_STATE_HOME", &state_dir);
+    }
+
+    let config_path = get_config_path();
+    let state_path = get_state_path();
+
+    assert_eq!(config_path, config_dir.join("navalha").join("config.toml"));
+    assert_eq!(
+        state_path,
+        state_dir.join("navalha").join("update_check.json")
+    );
+
+    unsafe {
+        env::remove_var("XDG_CONFIG_HOME");
+        env::remove_var("XDG_STATE_HOME");
+    }
+}
+
+#[test]
+fn test_pinning_logic_and_safeguards() {
+    let cfg = UpdateConfig::default();
+    assert!(!is_version_pinned(&cfg, "0.1.0"));
+
+    let cfg_pinned = UpdateConfig {
+        pinned: true,
+        ..Default::default()
+    };
+    assert!(is_version_pinned(&cfg_pinned, "0.1.0"));
+
+    let cfg_pin_ver = UpdateConfig {
+        pinned: false,
+        pin: "0.1.0".to_string(),
+        ..Default::default()
+    };
+    assert!(is_version_pinned(&cfg_pin_ver, "0.1.0"));
+
+    let cfg_pin_diff = UpdateConfig {
+        pinned: false,
+        pin: "0.0.9".to_string(),
+        ..Default::default()
+    };
+    assert!(is_version_pinned(&cfg_pin_diff, "0.1.0"));
+}
+
+#[test]
+fn test_state_cache_roundtrip() {
+    let tmp = tempdir().unwrap();
+    let state_file = tmp.path().join("update_check.json");
+
+    let state = UpdateState {
+        last_check_timestamp: 1729411200,
+        latest_remote_version: "0.2.0".to_string(),
+        channel: "nightly".to_string(),
+    };
+
+    save_update_state(&state, Some(&state_file)).unwrap();
+    let loaded = load_update_state(Some(&state_file));
+
+    assert_eq!(loaded.last_check_timestamp, 1729411200);
+    assert_eq!(loaded.latest_remote_version, "0.2.0");
+    assert_eq!(loaded.channel, "nightly");
+}
+
+#[test]
+fn test_update_config_full_schema() {
+    let tmp = tempdir().unwrap();
+    let cfg_file = tmp.path().join("config.toml");
+
+    let cfg = UpdateConfig {
+        channel: "nightly".to_string(),
+        pinned: true,
+        pin: "0.1.0".to_string(),
+        auto_check: true,
+        check_interval_hours: 12,
+    };
+
+    save_update_config(&cfg, Some(&cfg_file)).unwrap();
+    let loaded = load_update_config(Some(&cfg_file));
+
+    assert_eq!(loaded.channel, "nightly");
+    assert!(loaded.pinned);
+    assert_eq!(loaded.pin, "0.1.0");
+    assert!(loaded.auto_check);
+    assert_eq!(loaded.check_interval_hours, 12);
+}
 
 #[test]
 fn test_distribution_endpoints_banca() {
