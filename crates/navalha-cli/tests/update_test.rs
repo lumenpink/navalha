@@ -240,18 +240,35 @@ fn test_jornaleira_delegation_and_offline_startup() {
 
     // 2. A diretiva da Jornaleira deve orientar o usuário sobre a gestão central
     let notice = jornaleira_notice();
+    assert!(notice.starts_with("★ GOSPLAN:"));
+    assert!(notice.contains("distribuição de binários e atualizações"));
     assert!(notice.contains("Jornaleira"));
     assert!(notice.contains("jornaleira upgrade navalha"));
+    assert!(notice.len() > 30);
 
     // 3. Execução de run_startup_check não deve falhar nem criar arquivo de estado espúrio
     let tmp = tempdir().unwrap();
     let state_file = tmp.path().join("fake_state.json");
     unsafe {
         std::env::set_var("XDG_STATE_HOME", tmp.path());
+        std::env::set_var("XDG_CONFIG_HOME", tmp.path());
     }
+    // Testar com diversas versões e garantir que nenhuma cria arquivos ou gera side-effects
     run_startup_check("0.1.0");
+    run_startup_check("");
+    run_startup_check("99.99.99");
     assert!(!state_file.exists());
+    assert!(!tmp.path().join("navalha").exists());
     unsafe {
         std::env::remove_var("XDG_STATE_HOME");
+        std::env::remove_var("XDG_CONFIG_HOME");
     }
+}
+
+#[test]
+fn test_mutation_fortification_jornaleira_constants() {
+    use navalha_cli::update::{JORNALEIRA_NOTICE, jornaleira_notice};
+    // Garantir que a constante canônica coincide exatamente com a função pública
+    assert_eq!(JORNALEIRA_NOTICE, jornaleira_notice());
+    assert!(!JORNALEIRA_NOTICE.is_empty());
 }
