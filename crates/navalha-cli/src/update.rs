@@ -259,8 +259,7 @@ pub fn semver_is_newer(remote: &str, current: &str) -> bool {
 }
 
 /// Aviso canônico de governança centralizada de pacotes e distribuição
-pub const JORNALEIRA_NOTICE: &str =
-    "★ GOSPLAN: A distribuição de binários e atualizações é governada centralmente pela Jornaleira ('jornaleira upgrade navalha').";
+pub const JORNALEIRA_NOTICE: &str = "★ GOSPLAN: A distribuição de binários e atualizações é governada centralmente pela Jornaleira ('jornaleira upgrade navalha').";
 
 /// Retorna a mensagem informativa de delegação de atualizações à Jornaleira
 pub fn jornaleira_notice() -> &'static str {

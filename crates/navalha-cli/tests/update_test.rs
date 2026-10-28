@@ -231,7 +231,9 @@ fn test_mutation_fortification_updater_edge_cases() {
 
 #[test]
 fn test_jornaleira_delegation_and_offline_startup() {
-    use navalha_cli::update::{is_startup_check_discontinued, jornaleira_notice, run_startup_check};
+    use navalha_cli::update::{
+        is_startup_check_discontinued, jornaleira_notice, run_startup_check,
+    };
 
     // 1. A checagem em background no startup deve estar formalmente descontinuada
     assert!(is_startup_check_discontinued());
@@ -253,4 +255,3 @@ fn test_jornaleira_delegation_and_offline_startup() {
         std::env::remove_var("XDG_STATE_HOME");
     }
 }
-
