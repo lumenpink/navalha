@@ -190,3 +190,41 @@ fn test_semver_edge_cases_with_prefixes() {
     assert!(!semver_is_newer("0.1.0", "v0.1.0"));
     assert!(semver_is_newer("0.2.0", "0.1.99"));
 }
+
+#[test]
+fn test_mutation_fortification_updater_edge_cases() {
+    let tmp = tempdir().unwrap();
+    let cfg_file = tmp.path().join("sub").join("config.toml");
+
+    // Salvar configuração cria automaticamente diretórios intermediários
+    let mut cfg = UpdateConfig {
+        channel: "nightly".to_string(),
+        pinned: false,
+        pin: "".to_string(),
+        auto_check: false,
+        auto_update: true,
+        check_interval_hours: 48,
+    };
+    save_update_config(&cfg, Some(&cfg_file)).unwrap();
+    assert!(cfg_file.exists());
+
+    let loaded = load_update_config(Some(&cfg_file));
+    assert_eq!(loaded.channel, "nightly");
+    assert!(!loaded.pinned);
+    assert!(!loaded.auto_check);
+    assert!(loaded.auto_update);
+    assert_eq!(loaded.check_interval_hours, 48);
+
+    // Pinning mutantes: pin vazio e pinned falso -> desativado
+    assert!(!is_version_pinned(&cfg, "0.1.0"));
+
+    // Pinning mutantes: pin preenchido mesmo com pinned false -> ativado
+    cfg.pin = "0.1.0".to_string();
+    assert!(is_version_pinned(&cfg, "0.1.0"));
+
+    // Semver mutantes
+    assert!(!semver_is_newer("0.1.0", "0.1.0"));
+    assert!(!semver_is_newer("invalid-a", "invalid-b"));
+    assert!(semver_is_newer("0.2.0-dev.10", "0.2.0-dev.5"));
+    assert!(semver_is_newer("1.0.0", "invalid"));
+}

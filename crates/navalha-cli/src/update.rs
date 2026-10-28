@@ -247,15 +247,15 @@ pub fn semver_is_newer(remote: &str, current: &str) -> bool {
         return false;
     }
 
-    if let (Ok(r_ver), Ok(c_ver)) = (
-        semver::Version::parse(r_clean),
-        semver::Version::parse(c_clean),
-    ) {
-        return r_ver > c_ver;
-    }
+    let r_parsed = semver::Version::parse(r_clean);
+    let c_parsed = semver::Version::parse(c_clean);
 
-    // Fallback: se houver sufixos de commit ou timestamp
-    r_clean > c_clean
+    match (r_parsed, c_parsed) {
+        (Ok(r), Ok(c)) => r > c,
+        (Ok(_), Err(_)) => true,
+        (Err(_), Ok(_)) => false,
+        (Err(_), Err(_)) => r_clean > c_clean,
+    }
 }
 
 /// Obtém a versão compilada atual do Navalha
