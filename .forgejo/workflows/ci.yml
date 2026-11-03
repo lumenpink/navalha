@@ -1,4 +1,4 @@
-name: "CI/CD & Sovereign Release to Banca"
+name: "CI/CD & Canonical Release to Banca"
 
 on:
   push:
@@ -27,12 +27,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: "Configure Sovereign Lumen Cargo Registry"
+      - name: "Configure Canonical Gambi Cargo Registry"
+        env:
+          TOKEN: ${{ secrets.GAMBI_2LP_IN_TOKEN || secrets.GIT_2LP_TOKEN || secrets.REGISTRY_TOKEN || secrets.LUMEN_REGISTRY_TOKEN || secrets.FORGEJO_TOKEN }}
         run: |
           mkdir -p "$HOME/.cargo"
-          printf '[registries.lumen]\nindex = "sparse+https://gambi.2lp.in/api/packages/lumen/cargo/"\n' > "$HOME/.cargo/config.toml"
-          if [ -n "${{ secrets.LUMEN_REGISTRY_TOKEN }}" ]; then
-            printf '[registries.lumen]\ntoken = "${{ secrets.LUMEN_REGISTRY_TOKEN }}"\n' > "$HOME/.cargo/credentials.toml"
+          printf '[registries.gambi]\nindex = "sparse+https://gambi.2lp.in/api/packages/lumen/cargo/"\n' > "$HOME/.cargo/config.toml"
+          printf '[registries.lumen]\nindex = "sparse+https://gambi.2lp.in/api/packages/lumen/cargo/"\n' >> "$HOME/.cargo/config.toml"
+          if [ -n "$TOKEN" ]; then
+            RAW_TOKEN="${TOKEN#Bearer }"
+            printf '[registries.gambi]\ntoken = "Bearer %s"\n[registries.lumen]\ntoken = "Bearer %s"\n' "$RAW_TOKEN" "$RAW_TOKEN" > "$HOME/.cargo/credentials.toml"
           fi
 
       - name: "Format Check"
@@ -44,18 +48,46 @@ jobs:
       - name: "Run Unit & Integration Tests"
         run: cargo test --workspace
 
-      - name: "Build WebAssembly Bundle (navalha-web)"
+      - name: "Audit CI Permissions & Decoupling"
         run: |
-          mkdir -p site/pkg
-          cd crates/navalha-web
-          wasm-pack build --target web --out-dir ../../site/pkg
-          cp -r assets ../../site/ || true
-          cd ../..
+          bash tests/test-ci-permissions.sh
+          bash tests/test_ci_decouple_jobs.sh
 
       - name: "CCCP Quality Audit"
         run: |
           if command -v cccp >/dev/null 2>&1; then
             cccp check --strict || true
+          fi
+
+  deploy-web:
+    name: "Build WebAssembly & Deploy to Cloudflare Workers"
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: success() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    container:
+      image: gambi.2lp.in/lumen/gost-ci-cross:latest
+    steps:
+      - name: "Checkout repository"
+        uses: https://github.com/actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Compile WebAssembly Bundle & Deploy WebApp to Cloudflare Workers"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "★ Compilando Navalha Web (WASM)..."
+          mkdir -p site/pkg
+          cd crates/navalha-web
+          wasm-pack build --target web --out-dir ../../site/pkg
+          cp -r assets ../../site/ || true
+          cd ../..
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "★ Publicando WebApp em navalha.2lp.in via Cloudflare Workers..."
+            npx wrangler deploy || echo "Aviso: Falha no deploy Cloudflare Workers."
+          else
+            echo "Aviso: CLOUDFLARE_API_TOKEN ausente. Pulando deploy Cloudflare Workers."
           fi
 
   deploy-banca:
@@ -89,27 +121,16 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "★ Canal: $CHANNEL | Versão: $VERSION"
 
-      - name: "Configure Sovereign Lumen Cargo Registry"
+      - name: "Configure Canonical Gambi Cargo Registry"
+        env:
+          TOKEN: ${{ secrets.GAMBI_2LP_IN_TOKEN || secrets.GIT_2LP_TOKEN || secrets.REGISTRY_TOKEN || secrets.LUMEN_REGISTRY_TOKEN || secrets.FORGEJO_TOKEN }}
         run: |
           mkdir -p "$HOME/.cargo"
-          printf '[registries.lumen]\nindex = "sparse+https://gambi.2lp.in/api/packages/lumen/cargo/"\n' > "$HOME/.cargo/config.toml"
-
-      - name: "Compile WebAssembly Bundle & Deploy WebApp to Cloudflare Workers"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          echo "★ Compilando Navalha Web (WASM)..."
-          mkdir -p site/pkg
-          cd crates/navalha-web
-          wasm-pack build --target web --out-dir ../../site/pkg
-          cp -r assets ../../site/ || true
-          cd ../..
-          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "★ Publicando WebApp em navalha.2lp.in via Cloudflare Workers..."
-            npx wrangler deploy || echo "Aviso: Falha no deploy Cloudflare Workers."
-          else
-            echo "Aviso: CLOUDFLARE_API_TOKEN ausente. Pulando deploy Cloudflare Workers."
+          printf '[registries.gambi]\nindex = "sparse+https://gambi.2lp.in/api/packages/lumen/cargo/"\n' > "$HOME/.cargo/config.toml"
+          printf '[registries.lumen]\nindex = "sparse+https://gambi.2lp.in/api/packages/lumen/cargo/"\n' >> "$HOME/.cargo/config.toml"
+          if [ -n "$TOKEN" ]; then
+            RAW_TOKEN="${TOKEN#Bearer }"
+            printf '[registries.gambi]\ntoken = "Bearer %s"\n[registries.lumen]\ntoken = "Bearer %s"\n' "$RAW_TOKEN" "$RAW_TOKEN" > "$HOME/.cargo/credentials.toml"
           fi
 
       - name: "Compile Navalha Multiarch CLI Binaries"
@@ -188,15 +209,16 @@ jobs:
 
       - name: "Rotate Manifest & Commit to Banca"
         env:
-          GIT_2LP_TOKEN: ${{ secrets.GIT_2LP_TOKEN }}
+          TOKEN: ${{ secrets.GAMBI_2LP_IN_TOKEN || secrets.GIT_2LP_TOKEN || secrets.FORGEJO_TOKEN }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
+          RAW_TOKEN="${TOKEN#Bearer }"
           CHANNEL="${{ steps.meta.outputs.channel }}"
           VERSION="${{ steps.meta.outputs.version }}"
 
-          echo "★ Clonando repositório soberano da Banca para rotação e retenção..."
-          git clone --depth 1 "https://lumen:${GIT_2LP_TOKEN}@gambi.2lp.in/lumen/banca.git" /tmp/banca
+          echo "★ Clonando repositório canônico da Banca para rotação e retenção..."
+          git clone --depth 1 "https://lumen:${RAW_TOKEN}@gambi.2lp.in/lumen/banca.git" /tmp/banca
 
           if [ -d "/tmp/banca/site/downloads/navalha" ] && [ -f "/tmp/banca/scripts/rotate-downloads.py" ]; then
             cd /tmp/banca
