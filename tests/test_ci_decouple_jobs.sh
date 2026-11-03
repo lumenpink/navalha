@@ -68,3 +68,49 @@ if ! audit_workflow_decoupling "$CI_FILE"; then
 fi
 
 echo "✔ [GREEN TEST] Validação estrutural da esteira aprovada com sucesso."
+
+echo "=== [MUTATION] Testes de Mutação da Esteira Desacoplada ==="
+TMP_MUTANT=$(mktemp --suffix=.yml)
+trap 'rm -f "$TMP_MUTANT"' EXIT
+
+# Mutante 1: Termo imperial injetado
+cp "$CI_FILE" "$TMP_MUTANT"
+echo "# Repositório soberano" >> "$TMP_MUTANT"
+if audit_workflow_decoupling "$TMP_MUTANT" >/dev/null 2>&1; then
+    echo "  [FAIL] Mutante 1 (termo imperial) não foi detectado!"
+    exit 1
+else
+    echo "  [PASS] Mutante 1 (termo imperial) detectado e rejeitado"
+fi
+
+# Mutante 2: deploy-banca contendo wasm-pack
+cp "$CI_FILE" "$TMP_MUTANT"
+sed -i '/deploy-banca:/a \    steps:\n      - run: wasm-pack build --target web' "$TMP_MUTANT"
+if audit_workflow_decoupling "$TMP_MUTANT" >/dev/null 2>&1; then
+    echo "  [FAIL] Mutante 2 (acoplamento wasm-pack em deploy-banca) não foi detectado!"
+    exit 1
+else
+    echo "  [PASS] Mutante 2 (acoplamento wasm-pack) detectado e rejeitado"
+fi
+
+# Mutante 3: ausência do job deploy-web
+cp "$CI_FILE" "$TMP_MUTANT"
+sed -i 's/deploy-web:/deleted-job:/' "$TMP_MUTANT"
+if audit_workflow_decoupling "$TMP_MUTANT" >/dev/null 2>&1; then
+    echo "  [FAIL] Mutante 3 (ausência de deploy-web) não foi detectado!"
+    exit 1
+else
+    echo "  [PASS] Mutante 3 (ausência de deploy-web) detectado e rejeitado"
+fi
+
+# Mutante 4: deploy-web sem wrangler deploy
+cp "$CI_FILE" "$TMP_MUTANT"
+sed -i 's/wrangler deploy/echo deploy/' "$TMP_MUTANT"
+if audit_workflow_decoupling "$TMP_MUTANT" >/dev/null 2>&1; then
+    echo "  [FAIL] Mutante 4 (deploy-web sem wrangler deploy) não foi detectado!"
+    exit 1
+else
+    echo "  [PASS] Mutante 4 (deploy-web sem wrangler deploy) detectado e rejeitado"
+fi
+
+echo "✔ [MUTATION TEST] Todos os 4 mutantes foram interceptados com sucesso."
