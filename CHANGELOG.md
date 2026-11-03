@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Changed
+  - (ci) desacoplar jobs de web e banca na esteira para evitar timeout (closes #45)
   - (update) descontinuar auto-update interno em favor da jornaleira (closes #42)
   - (ci) remover campo permissions incompativel com forgejo actions (closes #43)
   - (build) otimizar tamanho de binario com profile.release e habilitar linking estatico musl crt-static (closes #41)
