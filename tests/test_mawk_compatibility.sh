@@ -33,3 +33,27 @@ else
 fi
 
 echo "✔ [GREEN TEST] Compatibilidade de sintaxe com mawk aprovada."
+
+echo "=== [MUTATION] Testes de Mutação de Sintaxe mawk ==="
+TMP_MUTANT=$(mktemp --suffix=.sh)
+trap 'rm -f "$TMP_MUTANT"' EXIT
+
+# Mutante 1: Intervalo exato {2} em comando awk
+echo 'awk "/^[[:space:]]{2}/" file' > "$TMP_MUTANT"
+if audit_mawk_syntax "$TMP_MUTANT"; then
+    echo "  [FAIL] Mutante 1 (quantificador exato {2}) não foi interceptado!"
+    exit 1
+else
+    echo "  [PASS] Mutante 1 (quantificador exato {2}) interceptado e rejeitado"
+fi
+
+# Mutante 2: Intervalo variável {1,3} em comando awk
+echo 'awk "/^[[:space:]]{1,3}/" file' > "$TMP_MUTANT"
+if audit_mawk_syntax "$TMP_MUTANT"; then
+    echo "  [FAIL] Mutante 2 (quantificador variável {1,3}) não foi interceptado!"
+    exit 1
+else
+    echo "  [PASS] Mutante 2 (quantificador variável {1,3}) interceptado e rejeitado"
+fi
+
+echo "✔ [MUTATION TEST] Todos os mutantes interceptados com sucesso."
