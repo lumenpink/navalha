@@ -10,6 +10,14 @@ SPEC_FILE="$ROOT_DIR/docs/specs/47_mawk_compatibility.md"
 
 echo "==> [TEST] Validando ausência de quantificadores de intervalo no script de teste (#47)..."
 
+audit_mawk_syntax() {
+    local file="$1"
+    if grep -E "awk.*\{[0-9]+(,[0-9]*)?\}" "$file" >/dev/null 2>&1; then
+        return 1
+    fi
+    return 0
+}
+
 # 1. Validar existência da especificação
 if [[ ! -f "$SPEC_FILE" ]]; then
     echo "  [FAIL] Arquivo de especificação ausente: $SPEC_FILE"
@@ -17,7 +25,7 @@ if [[ ! -f "$SPEC_FILE" ]]; then
 fi
 
 # 2. Validar que não há quantificadores de intervalo {n} ou {n,m} em comandos awk
-if grep -E "awk.*\{[0-9]+(,[0-9]*)?\}" "$TEST_SCRIPT" >/dev/null 2>&1; then
+if ! audit_mawk_syntax "$TEST_SCRIPT"; then
     echo "  [FAIL] Quantificador de intervalo incompatível com mawk detectado em awk!"
     exit 1
 else
