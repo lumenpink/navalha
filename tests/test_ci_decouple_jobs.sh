@@ -22,7 +22,7 @@ audit_workflow_decoupling() {
 
     # 2. Presença dos três jobs
     for job in "test" "deploy-web" "deploy-banca"; do
-        if ! grep -E "^[[:space:]]{2}${job}:" "$file" >/dev/null 2>&1; then
+        if ! grep -E "^  ${job}:" "$file" >/dev/null 2>&1; then
             echo "  [FAIL] Job '${job}' ausente em $(basename "$file")"
             failed=1
         fi
@@ -30,7 +30,7 @@ audit_workflow_decoupling() {
 
     # 3. deploy-banca não pode conter wasm-pack ou wrangler deploy
     local banca_section
-    banca_section=$(awk '/^[[:space:]]{2}deploy-banca:/{flag=1; next} /^[[:space:]]{2}[a-zA-Z0-9_-]+:/{flag=0} flag' "$file")
+    banca_section=$(awk '/^  deploy-banca:/{flag=1; next} /^  [a-zA-Z0-9_-]+:/{flag=0} flag' "$file")
     if echo "$banca_section" | grep -iE '(wasm-pack|navalha-web|wrangler deploy)' >/dev/null 2>&1; then
         echo "  [FAIL] deploy-banca acoplado indevidamente a WASM/Wrangler"
         failed=1
@@ -38,7 +38,7 @@ audit_workflow_decoupling() {
 
     # 4. deploy-web deve conter wasm-pack e wrangler deploy
     local web_section
-    web_section=$(awk '/^[[:space:]]{2}deploy-web:/{flag=1; next} /^[[:space:]]{2}[a-zA-Z0-9_-]+:/{flag=0} flag' "$file")
+    web_section=$(awk '/^  deploy-web:/{flag=1; next} /^  [a-zA-Z0-9_-]+:/{flag=0} flag' "$file")
     if ! echo "$web_section" | grep -E 'wasm-pack build --target web' >/dev/null 2>&1 || \
        ! echo "$web_section" | grep -E 'wrangler deploy' >/dev/null 2>&1; then
         echo "  [FAIL] deploy-web ausente de wasm-pack ou wrangler deploy"
