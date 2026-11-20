@@ -12,7 +12,7 @@ Celebrar o **anti-design** e a estética de fanzine punk contracultural como pro
 2. **Preservação de Homenagens Históricas**: Nenhuma homenagem ou memorial biográfico (ex.: Neon Cunha lutando por autodeterminação corporal e dignidade) deve ser alterada ou apagada.
 3. **Eliminação de Jargões Técnicos de Infraestrutura e Compilação**:
    - `via WebAssembly em Rust` / `via Wasm` / `na memória do seu navegador` → `criação direta no seu navegador`, `sem mandar suas fotos para a nuvem`
-   - `Soberania e Privacidade Absoluta` → `Privacidade Absoluta (100% no seu Navegador)`
+   - `autonomia e Privacidade Absoluta` → `Privacidade Absoluta (100% no seu Navegador)`
 
 ## 3. Arquivos Afetados
 - `site/index.html`

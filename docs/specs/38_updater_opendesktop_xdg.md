@@ -1,4 +1,4 @@
-# Especificação Técnica: Auto-Atualizador OpenDesktop XDG e Distribuição Soberana
+# Especificação Técnica: Auto-Atualizador OpenDesktop XDG e Distribuição autônoma
 
 **Ticket:** #38  
 **Componente:** `crates/navalha-cli`  
@@ -9,7 +9,7 @@
 
 ## 1. Contexto e Motivação
 
-O `navalha` adota a infraestrutura soberana da Banca (`https://banca.2lp.in/downloads/navalha/`) para entrega de binários pré-compilados em canais estável e nightly. Para assegurar total alinhamento com os demais aplicativos do ecossistema soberano (`ishcondidim`, `papeli`, `cccp`), o gerenciador de atualizações e configurações do Navalha deve adotar estritamente o padrão OpenDesktop XDG, permitindo fixação de versões (*pinning*), verificação periódica de atualizações em plano de fundo sem bloqueio do usuário, e gestão simplificada via subcomando `navalha config`.
+O `navalha` adota a infraestrutura autônoma da Banca (`https://banca.2lp.in/downloads/navalha/`) para entrega de binários pré-compilados em canais estável e nightly. Para assegurar total alinhamento com os demais aplicativos do ecossistema autônomo (`ishcondidim`, `papeli`, `cccp`), o gerenciador de atualizações e configurações do Navalha deve adotar estritamente o padrão OpenDesktop XDG, permitindo fixação de versões (*pinning*), verificação periódica de atualizações em plano de fundo sem bloqueio do usuário, e gestão simplificada via subcomando `navalha config`.
 
 ---
 
@@ -42,7 +42,7 @@ O `navalha` adota a infraestrutura soberana da Banca (`https://banca.2lp.in/down
 
 ---
 
-## 3. Endpoints e Resolução Soberana da Banca
+## 3. Endpoints e Resolução autônoma da Banca
 
 - **Canal Stable:**
   - Binário mais recente: `https://banca.2lp.in/downloads/navalha/stable-latest/navalha`

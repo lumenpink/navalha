@@ -1,10 +1,10 @@
 # Especificação Técnica: Auto-Atualizador & Distribuição na Banca (Ticket #38)
 
 ## 1. Contexto e Motivação
-Em conformidade com a norma GOST v1.5.0, a compilação de binários nativos de release e desenvolvimento é restrita à esteira sequencial (Forgejo Runner). A distribuição oficial ocorre através da vitrine soberana da Banca (`https://banca.2lp.in/downloads/navalha/`), com retenção estrita de 5 versões estáveis e 10 compilações de desenvolvimento (nightly).
+Em conformidade com a norma GOST v1.5.0, a compilação de binários nativos de release e desenvolvimento é restrita à esteira sequencial (Forgejo Runner). A distribuição oficial ocorre através da vitrine autônoma da Banca (`https://banca.2lp.in/downloads/navalha/`), com retenção estrita de 5 versões estáveis e 10 compilações de desenvolvimento (nightly).
 O binário do `navalha` passa a incorporar funcionalidade nativa de auto-atualização atômica e verificação de novas versões, consumindo diretamente esses canais.
 
-## 2. Endpoints Soberanos da Banca
+## 2. Endpoints autônomos da Banca
 O módulo de atualização resolve os seguintes endpoints:
 - **Canal Estável (Produção)**:
   - Binário mais recente: `https://banca.2lp.in/downloads/navalha/stable-latest/navalha`
@@ -15,7 +15,7 @@ O módulo de atualização resolve os seguintes endpoints:
 - **Versão Fixada (Pin)**:
   - `https://banca.2lp.in/downloads/navalha/releases/v{pin}/navalha`
 
-Nenhum fallback para releases do Codeberg ou GitHub é executado, mantendo a soberania da infraestrutura.
+Nenhum fallback para releases do Codeberg ou GitHub é executado, mantendo a autonomia da infraestrutura.
 
 ## 3. Persistência de Configuração e Canal Padrão
 Para permitir que o usuário defina seu canal de preferência (por exemplo, `nightly` para receber compilações frequentes ou `stable` para lançamentos validados):

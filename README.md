@@ -6,7 +6,7 @@
 [![Rust](https://img.shields.io/badge/rust-2024%20edition-orange.svg)](https://www.rust-lang.org/)
 [![Dioxus](https://img.shields.io/badge/dioxus-0.7.10-blue.svg)](https://dioxuslabs.com/)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
-[![Norma: GOST](https://img.shields.io/badge/norma-GOST%201.5.0-blueviolet.svg)](.gost/GOST.md)
+[![Norma: GOST](https://img.shields.io/badge/norma-GOST%203.0.0-blueviolet.svg)](.gost/GOST.md)
 [![Especificação](https://img.shields.io/badge/spec-SPEC--01-green.svg)](SPEC.md)
 [![CI](https://codeberg.org/lumenpink/navalha/workflows/ci.yml/badge.svg)](https://codeberg.org/lumenpink/navalha/actions)
 [![Origin](https://img.shields.io/badge/codeberg-navalha-2185d0.svg)](https://codeberg.org/lumenpink/navalha)
@@ -253,16 +253,20 @@ O ciclo de vida do repositório conta com pipeline unificado em [`.forgejo/workf
 3. **Build WebAssembly:** Compilação com `wasm-pack` gerando os módulos em `site/pkg/` e sincronizando assets estáticos.
 4. **Deploy Automatizado (Main / Tags):** Publicação contínua da aplicação web em `https://navalha.2lp.in` via Cloudflare Workers (`wrangler deploy`) e redundância estática no Codeberg Pages (`actions/pages@v1`).
 
-### Compilação Estática e Otimização Soberana (GOST 1.5.0)
+### Compilação Estática e Otimização (GOST 3.0.0)
 - **Perfil de Release:** `opt-level = 3`, `lto = "fat"`, `codegen-units = 1`, `panic = "abort"` e `strip = true`.
 - **Linking Estático musl:** Suporte a `target-feature=+crt-static` para distribuição `static-pie` universal sem dependências de sistema.
 
 ---
 
-## 📜 Licença & Matriz de Conformidade GOST 1.5.0
+## 📜 Licença & Matriz de Conformidade GOST v3.0.0
 
-O projeto **Navalha** adota a política de licenciamento modular por perfil de aplicação definida na norma técnica [GOST v1.1.0](.gost/GOST.md):
+O projeto **Navalha** adota a política de licenciamento modular definida na norma técnica [GOST v3.0.0](.gost/GOST.md):
 
 * **Código-Fonte da Aplicação e Crates (`crates/navalha-*`):** Licenciado sob a [GNU General Public License v3.0 (GPL-3.0)](LICENSE) (ou qualquer versão posterior).
 * **Mídias Visuais, Pôsteres e Imagens de Demonstração (`assets/`, `site/assets/exemplos/`):** Licenciados sob a [Creative Commons Atribuição-CompartilhaIgual 4.0 Internacional (CC-BY-SA 4.0)](LICENSE-MEDIA). A atribuição canônica detalhada de cada fotografia original encontra-se em [docs/assets-attribution.md](docs/assets-attribution.md) e na [documentação oficial](https://navalha.2lp.in/doc).
 * **Identidade Visual, Marca e Insígnia do Navalha:** Licenciadas sob [Creative Commons Atribuição-SemDerivações 4.0 Internacional (CC-BY-ND 4.0)](LICENSE-LOGO).
+
+---
+
+Feito com amor travesti por [Lumen Pink](https://lumen.pink).

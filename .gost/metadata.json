@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "slug": "navalha",
+  "title": "Navalha",
+  "site_type": "app",
+  "tagline": "Motor gráfico e ambiente de composição visual anti-design e fanzine punk",
+  "summary": "Motor gráfico determinístico e gerador anti-design fanzine punk em Rust e WebAssembly.",
+  "abstract": "O Navalha é um ambiente de composição visual anti-design e fanzine punk com difusão de erro determinística, alto contraste tonal e execução 100% no cliente.",
+  "tags": [
+    "navalha",
+    "graphics",
+    "wasm",
+    "dither",
+    "fanzine",
+    "rust",
+    "cli"
+  ],
+  "icon": "🗡️",
+  "theme": {
+    "bg_color": "#181825",
+    "accent_color": "#f38ba8"
+  }
+}

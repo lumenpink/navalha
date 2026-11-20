@@ -26,6 +26,6 @@ O arquivo `.forgejo/workflows/ci.yml` deve conter três jobs principais, desacop
    - Empacota os arquivos em `dist/packages/`, gera `SHA256SUMS`, faz upload para o Cloudflare R2 e executa rotação no manifesto da Banca.
 
 ### 2.2 Purificação Terminológica e Credenciais
-- Proibido o uso de termos relacionados a imperialismos como "soberano" ou "soberana".
+- Proibido o uso de termos relacionados a imperialismos como "autônomo" ou "autônoma".
 - Configurações de registro de pacotes e autenticação devem referenciar "Canônico" / "Gambi Cargo Registry".
 - Unificação do fallback de tokens: `GAMBI_2LP_IN_TOKEN || GIT_2LP_TOKEN || REGISTRY_TOKEN || LUMEN_REGISTRY_TOKEN || FORGEJO_TOKEN` com saneamento de prefixo `Bearer`.
