@@ -40,8 +40,8 @@ audit_workflow_decoupling() {
     local web_section
     web_section=$(awk '/^  deploy-web:/{flag=1; next} /^  [a-zA-Z0-9_-]+:/{flag=0} flag' "$file")
     if ! echo "$web_section" | grep -E 'wasm-pack build --target web' >/dev/null 2>&1 || \
-       ! echo "$web_section" | grep -E 'wrangler deploy' >/dev/null 2>&1; then
-        echo "  [FAIL] deploy-web ausente de wasm-pack ou wrangler deploy"
+       ! echo "$web_section" | grep -E 'cccp package upload site' >/dev/null 2>&1; then
+        echo "  [FAIL] deploy-web ausente de wasm-pack ou cccp package upload site"
         failed=1
     fi
 
@@ -103,14 +103,14 @@ else
     echo "  [PASS] Mutante 3 (ausência de deploy-web) detectado e rejeitado"
 fi
 
-# Mutante 4: deploy-web sem wrangler deploy
+# Mutante 4: deploy-web sem cccp package upload site
 cp "$CI_FILE" "$TMP_MUTANT"
-sed -i 's/wrangler deploy/echo deploy/' "$TMP_MUTANT"
+sed -i 's/cccp package upload site/echo deploy/' "$TMP_MUTANT"
 if audit_workflow_decoupling "$TMP_MUTANT" >/dev/null 2>&1; then
-    echo "  [FAIL] Mutante 4 (deploy-web sem wrangler deploy) não foi detectado!"
+    echo "  [FAIL] Mutante 4 (deploy-web sem cccp package upload site) não foi detectado!"
     exit 1
 else
-    echo "  [PASS] Mutante 4 (deploy-web sem wrangler deploy) detectado e rejeitado"
+    echo "  [PASS] Mutante 4 (deploy-web sem cccp package upload site) detectado e rejeitado"
 fi
 
 echo "✔ [MUTATION TEST] Todos os 4 mutantes foram interceptados com sucesso."

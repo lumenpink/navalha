@@ -3,6 +3,9 @@
 ## [Unreleased]
 
 ### Changed
+- **ci:** delegar entregas ao Kombinat via Generic Packages (`cccp package upload`) (closes #50)
+
+### Changed
   - (ci) compatibilizar regex do awk no teste de esteira com mawk (closes #47)
   - (ci) desacoplar jobs de web e banca na esteira para evitar timeout (closes #45)
   - (update) descontinuar auto-update interno em favor da jornaleira (closes #42)
